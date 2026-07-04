@@ -156,26 +156,31 @@
   }
 
   .wordmark {
+    display: inline-block;
+  }
+
+  .wm-text {
     font-family: 'Cormorant Garamond', serif;
     font-weight: 400;
     font-size: 22px;
     letter-spacing: 0.42em;
+    margin-right: -0.42em; /* компенсация хвостовой разрядки последней буквы */
     color: var(--pearl);
     text-shadow: 0 0 28px rgba(217, 212, 232, 0.4);
   }
 
-  .wordmark::after {
-    content: 'истина внутри';
-    display: block;
+  .tagline {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 5px;
     font-family: 'Manrope', sans-serif;
     font-weight: 300;
     font-size: 9.5px;
-    letter-spacing: 0.36em;
     color: var(--faint);
-    margin-top: 4px;
     text-transform: lowercase;
-    text-shadow: none;
   }
+
+  .tagline .tg-gap { flex: 0 0 0.7em; }
 
   .lotus {
     width: 68px;
@@ -979,6 +984,9 @@
     line-height: 1.85;
     color: var(--soft-ink);
     max-width: 330px;
+    text-align: justify;
+    hyphens: auto;
+    -webkit-hyphens: auto;
   }
 
   /* ===== AUDIO PLAYER ===== */
@@ -1200,7 +1208,7 @@
 
 <div class="app">
   <header>
-    <div class="wordmark">VERUM</div>
+    <div class="wordmark"><div class="wm-text">VERUM</div><div class="tagline"><span>и</span><span>с</span><span>т</span><span>и</span><span>н</span><span>а</span><span class="tg-gap"></span><span>в</span><span>н</span><span>у</span><span>т</span><span>р</span><span>и</span></div></div>
     <svg class="lotus" viewBox="0 0 104 50" fill="none" xmlns="http://www.w3.org/2000/svg">
       <g stroke="rgba(201,174,125,0.75)" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" fill="none">
         <path d="M52 6 C57.5 15 57.5 29 52 39 C46.5 29 46.5 15 52 6 Z"/>
@@ -1490,7 +1498,8 @@ if (tg) {
   tg.expand();
   tg.setHeaderColor('#0c0e1a');
   tg.setBackgroundColor('#0c0e1a');
-  if (tg.disableVerticalSwipes) tg.disableVerticalSwipes();
+  // Запрет свайпа-закрытия — только на iOS: на Android эта команда ломает прокрутку
+  if (tg.disableVerticalSwipes && tg.platform === 'ios') tg.disableVerticalSwipes();
   cloudAvailable = !!(tg.CloudStorage && tg.isVersionAtLeast && tg.isVersionAtLeast('6.9'));
 }
 
@@ -2104,7 +2113,7 @@ function renderPath() {
 
   const grid = document.getElementById('calGrid');
   grid.innerHTML = '';
-  ['вс','пн','вт','ср','чт','пт','сб'].forEach(l => {
+  ['пн','вт','ср','чт','пт','сб','вс'].forEach(l => {
     const el = document.createElement('div');
     el.className = 'cal-day-label';
     el.textContent = l;
@@ -2115,7 +2124,8 @@ function renderPath() {
   const practiced = new Set(sessions.map(s => new Date(s.date).toDateString()));
   const start = new Date(today);
   start.setDate(start.getDate() - 27);
-  start.setDate(start.getDate() - start.getDay());
+  // выравнивание сетки на понедельник
+  start.setDate(start.getDate() - ((start.getDay() + 6) % 7));
 
   for (let i = 0; i < 35; i++) {
     const d = new Date(start);
