@@ -325,6 +325,8 @@
 
   /* Thought of the day */
   .thought-card {
+    background: linear-gradient(150deg, rgba(139,125,190,0.20), rgba(139,125,190,0.08) 60%, rgba(217,212,232,0.05)) !important;
+    border-color: rgba(160,145,210,0.32) !important;
     padding: 24px 26px;
     margin-bottom: 14px;
     text-align: center;
@@ -1236,7 +1238,7 @@
     letter-spacing: 0.32em;
     color: var(--gold);
     text-transform: uppercase;
-    margin-bottom: 12px;
+    margin: 26px 0 12px; /* заголовок ниже кнопок Telegram, читабельно */
   }
 
   .fp-title {
@@ -1312,16 +1314,45 @@
 
   .fp-play:active { transform: scale(0.93); }
 
+  .fp-desc-wrap {
+    width: 100%;
+    max-width: 360px;
+    border-radius: 20px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    overflow: hidden;
+  }
+
+  .fp-desc-head {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 13px;
+    font-size: 11px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--soft-ink);
+    cursor: pointer;
+  }
+
+  .fp-desc-head .chev { transition: transform 0.3s ease; font-size: 9px; color: var(--gold); }
+  .fp-desc-wrap.open .fp-desc-head .chev { transform: rotate(180deg); }
+
   .fp-desc {
+    max-height: 0;
+    transition: max-height 0.45s ease;
     font-size: 13px;
     line-height: 1.85;
     color: var(--soft-ink);
-    max-width: 330px;
     text-align: justify;
     hyphens: auto;
     -webkit-hyphens: auto;
-    white-space: pre-line; /* абзацы через пустую строку в descLong */
+    white-space: pre-line;
+    padding: 0 20px;
   }
+
+  .fp-desc-wrap.open .fp-desc { max-height: 1200px; padding-bottom: 20px; }
 
   /* ===== AUDIO PLAYER ===== */
   .player {
@@ -1847,7 +1878,10 @@
     <div class="fp-time"><span id="fpCur">0:00</span><span id="fpDur">–:––</span></div>
   </div>
   <button class="fp-play" id="fpBtn"></button>
-  <div class="fp-desc" id="fpDesc"></div>
+  <div class="fp-desc-wrap" id="fpDescWrap">
+    <div class="fp-desc-head" onclick="haptic('light'); this.parentElement.classList.toggle('open');">О практике <span class="chev">▼</span></div>
+    <div class="fp-desc" id="fpDesc"></div>
+  </div>
 </div>
 
 <div class="player" id="player">
@@ -1885,20 +1919,20 @@
     <div class="glass-card plan-card" onclick="choosePlan('month')">
       <div>
         <div class="plan-name">Подписка — месяц</div>
-        <div class="plan-note">автопродление · отмена в любой момент</div>
+        <div class="plan-note" id="planNoteM">автопродление · отмена в любой момент</div>
       </div>
-      <div><span class="plan-price">2 900 ₽</span><div class="plan-per">в месяц</div></div>
+      <div><span class="plan-price" id="planPriceM">2 900 ₽</span><div class="plan-per">в месяц</div></div>
     </div>
 
     <div class="glass-card plan-card best" onclick="choosePlan('year')">
       <div>
         <div class="plan-name">Подписка — год</div>
-        <div class="plan-note">два месяца в подарок</div>
+        <div class="plan-note" id="planNoteY">два месяца в подарок</div>
       </div>
-      <div><span class="plan-price">24 900 ₽</span><div class="plan-per">в год</div></div>
+      <div><span class="plan-price" id="planPriceY">24 900 ₽</span><div class="plan-per">в год</div></div>
     </div>
 
-    <div class="pw-founders">🌙 Для <b>первых 20 участниц</b> — цена основательниц: <b>1 900 ₽/мес</b> или <b>19 900 ₽/год</b>. Фиксируется на первые 12 месяцев. Выбор тарифа — на странице оплаты.</div>
+    <div class="pw-founders" id="pwFounders">🌙 Для <b>первых 20 участниц</b> — цена основательниц: <b>1 900 ₽/мес</b> или <b>19 900 ₽/год</b>. Фиксируется на первые 12 месяцев.</div>
 
     <div class="pw-fine">Оплата защищена · чек на почту · подписка продлевается автоматически, отключается в один клик, доступ сохраняется до конца оплаченного периода. Продукт 18+, не является медицинской услугой. Оформляя подписку, ты принимаешь условия оферты.</div>
   </div>
@@ -3061,11 +3095,9 @@ function openFull() {
   fp.classList.add('show');
   startEq();
   syncBack();
-  // выстраиваем сцену: эквалайзер и кнопка — в центре видимой области
-  requestAnimationFrame(() => {
-    const btn = document.getElementById('fpBtn');
-    fp.scrollTop = Math.max(0, btn.offsetTop + btn.offsetHeight / 2 - fp.clientHeight / 2 - 30);
-  });
+  fp.scrollTop = 0;
+  // описание при открытии свёрнуто — вся сцена помещается на экран
+  document.getElementById('fpDescWrap').classList.remove('open');
 }
 
 function minimizeFull() {
@@ -3278,8 +3310,9 @@ let currentPlan = 'month';
 function choosePlan(plan) {
   haptic('light');
   currentPlan = plan;
-  document.getElementById('psTitle').textContent =
-    plan === 'year' ? 'Год · 24 900 ₽' : 'Месяц · 2 900 ₽';
+  document.getElementById('psTitle').textContent = FOUNDING
+    ? (plan === 'year' ? 'Год · 19 900 ₽ · первые 20' : 'Месяц · 1 900 ₽ · первые 20')
+    : (plan === 'year' ? 'Год · 24 900 ₽' : 'Месяц · 2 900 ₽');
   document.getElementById('paysheet').classList.add('show');
   syncBack();
 }
@@ -3293,12 +3326,25 @@ function closePaysheet() {
 // DIRECT_PAY = false → старый путь через чат с ботом (если Продамус требует подпись ссылок)
 const DIRECT_PAY = true;
 
+// FOUNDING = true → режим первых 20: на экране и в оплате цены основательниц (1900/19900)
+// Когда 20 мест заняты: поменять на false — вернутся стандартные 2900/24900
+const FOUNDING = true;
+
+if (FOUNDING) {
+  document.getElementById('planPriceM').textContent = '1 900 ₽';
+  document.getElementById('planPriceY').textContent = '19 900 ₽';
+  document.getElementById('planNoteM').textContent = 'цена первых 20 · далее 2 900 ₽';
+  document.getElementById('planNoteY').textContent = 'цена первых 20 · далее 24 900 ₽';
+  document.getElementById('pwFounders').innerHTML = '🌙 Ты входишь по цене <b>основательниц</b> — она зафиксирована на твои первые 12 месяцев. Мест по этой цене: <b>20</b>.';
+}
+
 function payRub() {
   haptic('success');
   if (DIRECT_PAY) {
     closePaysheet();
     const init = tg ? encodeURIComponent(tg.initData || '') : '';
-    const link = WORKER_URL + '/pay?plan=' + currentPlan + '&init=' + init;
+    const payPlan = FOUNDING ? (currentPlan === 'year' ? 'fyear' : 'fmonth') : currentPlan;
+    const link = WORKER_URL + '/pay?plan=' + payPlan + '&init=' + init;
     if (tg && tg.openLink) tg.openLink(link);
     else window.open(link, '_blank');
     return;
