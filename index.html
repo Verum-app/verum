@@ -1445,6 +1445,13 @@
 
   .path-lock { display: none; padding: 40px 26px; text-align: center; }
   .sub-locked .path-lock { display: block; }
+
+  #screen-path.sub-locked.active {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: calc(100vh - 300px);
+  }
   .sub-locked .stats-row, .sub-locked .section-eyebrow,
   .sub-locked .cal-card, .sub-locked .history-list { display: none; }
   .path-lock .pl-icon { font-size: 30px; margin-bottom: 14px; }
@@ -1952,17 +1959,22 @@ if (tg) {
     try {
       const sa = tg.safeAreaInset || {};
       const ca = tg.contentSafeAreaInset || {};
-      const top = (sa.top || 0) + (ca.top || 0);
+      let top = (sa.top || 0) + (ca.top || 0);
+      // запасной отступ: полноэкранный режим, а инсеты не пришли
+      if (tg.isFullscreen && top < 40) top = tg.platform === 'ios' ? 102 : 86;
+      if (tg.isFullscreen) top += 6; // воздух под кнопками Telegram
       const bottom = (ca.bottom || 0);
       document.documentElement.style.setProperty('--tg-content-safe-area-inset-top', top + 'px');
       document.documentElement.style.setProperty('--tg-content-safe-area-inset-bottom', bottom + 'px');
     } catch (e) {}
   }
   applySafeArea();
+  setTimeout(applySafeArea, 400); // повтор после входа в полноэкранный режим
   try {
     tg.onEvent('safeAreaChanged', applySafeArea);
     tg.onEvent('contentSafeAreaChanged', applySafeArea);
     tg.onEvent('fullscreenChanged', applySafeArea);
+    tg.onEvent('activated', applySafeArea);
   } catch (e) {}
   tg.setHeaderColor('#0c0e1a');
   tg.setBackgroundColor('#0c0e1a');
@@ -3049,6 +3061,11 @@ function openFull() {
   fp.classList.add('show');
   startEq();
   syncBack();
+  // выстраиваем сцену: эквалайзер и кнопка — в центре видимой области
+  requestAnimationFrame(() => {
+    const btn = document.getElementById('fpBtn');
+    fp.scrollTop = Math.max(0, btn.offsetTop + btn.offsetHeight / 2 - fp.clientHeight / 2 - 30);
+  });
 }
 
 function minimizeFull() {
@@ -3462,6 +3479,21 @@ function placePotok() {
 }
 
 loadPotok(() => { renderPotok(); placePotok(); });
+
+
+// Пауза тяжёлой графики при сворачивании — лечит чёрный экран при разворачивании
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    document.body.classList.add('bg-paused');
+    stopEq();
+  } else {
+    setTimeout(() => {
+      document.body.classList.remove('bg-paused');
+      if (document.getElementById('fullplayer').classList.contains('show')) startEq();
+      if (typeof applySafeArea === 'function') applySafeArea();
+    }, 80);
+  }
+});
 
 loadSessions(() => {
   updateTimerDisplay();
