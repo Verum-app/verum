@@ -1285,22 +1285,25 @@
     50% { transform: scale(1.35); opacity: 1; }
   }
 
-  .fb-card { text-align: center; padding: 26px 22px; margin-top: 26px; }
+  .fb-card { text-align: center; padding: 18px 20px 16px; margin-top: 24px; }
   .fb-heart {
-    width: 26px; height: 24px;
-    margin-bottom: 10px;
-    filter: drop-shadow(0 0 8px rgba(217,212,232,0.45));
+    width: 13px; height: 12px;
+    filter: drop-shadow(0 0 5px rgba(217,212,232,0.6));
+    flex: none;
   }
   .fb-sign {
-    text-align: right;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px;
     font-family: 'Cormorant Garamond', serif;
     font-style: italic;
     font-size: 14px;
     color: var(--pearl);
-    margin: 4px 6px 14px 0;
+    margin: 2px 4px 12px 0;
   }
-  .fb-title { font-family: 'Cormorant Garamond', serif; font-size: 19px; color: var(--pearl); margin-bottom: 8px; }
-  .fb-sub { font-size: 12px; line-height: 1.65; color: var(--soft-ink); margin-bottom: 16px; }
+  .fb-title { font-family: 'Cormorant Garamond', serif; font-size: 17px; line-height: 1.35; color: var(--pearl); margin-bottom: 6px; }
+  .fb-sub { font-size: 11.5px; line-height: 1.55; color: var(--soft-ink); margin-bottom: 4px; }
   .fb-input { border-radius: 20px; min-height: 110px; resize: none; line-height: 1.6; }
 
   .path-links { text-align: center; margin: 22px 0 6px; }
@@ -1893,7 +1896,7 @@
 
     <div class="glass-card today-hero">
       <div class="today-date" id="todayDate"></div>
-      <div class="today-title">Возвращение<br>к <em>себе Подлинной</em></div>
+      <div class="today-title">Реальность начинается<br><em>внутри</em></div>
       <div class="today-sub" id="dailySub"></div>
       <div class="practice-row">
         <div class="play-orb" onclick="playDaily()"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" style="margin-left:3px"><path d="M7.5 5.2c0-.9 1-1.5 1.8-1L19 11a1.2 1.2 0 0 1 0 2L9.3 19.8c-.8.5-1.8-.1-1.8-1V5.2Z"/></svg></div>
@@ -2088,13 +2091,22 @@
     <div class="history-list" id="historyList"></div>
 
     <div class="glass-card fb-card">
-      <svg class="fb-heart" viewBox="0 0 24 22" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M12 20.2 C7 15.8 2.4 12.2 2.4 7.6 C2.4 4.6 4.7 2.4 7.5 2.4 C9.3 2.4 11 3.4 12 5 C13 3.4 14.7 2.4 16.5 2.4 C19.3 2.4 21.6 4.6 21.6 7.6 C21.6 12.2 17 15.8 12 20.2 Z" stroke="rgba(233,230,244,0.9)" stroke-width="1.2" stroke-linejoin="round"/>
-      </svg>
       <div class="fb-title">Поделитесь впечатлениями<br>о приложении и любимых практиках</div>
       <div class="fb-sub">Мне важно каждое слово. Это анонимно.</div>
-      <div class="fb-sign">— Анна</div>
-      <button class="glass-pill gold" onclick="openFeedback('path')">Написать анонимно</button>
+      <div class="fb-sign">— Анна
+        <svg class="fb-heart" viewBox="0 0 24 22" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="fbHeartG" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#f3f0fb"/>
+              <stop offset="55%" stop-color="#d9d4e8"/>
+              <stop offset="100%" stop-color="#b9b2d4"/>
+            </linearGradient>
+          </defs>
+          <path d="M12 20.2 C7 15.8 2.4 12.2 2.4 7.6 C2.4 4.6 4.7 2.4 7.5 2.4 C9.3 2.4 11 3.4 12 5 C13 3.4 14.7 2.4 16.5 2.4 C19.3 2.4 21.6 4.6 21.6 7.6 C21.6 12.2 17 15.8 12 20.2 Z" fill="url(#fbHeartG)" opacity="0.92"/>
+          <ellipse cx="9" cy="7" rx="2.6" ry="1.7" fill="rgba(255,255,255,0.55)" transform="rotate(-24 9 7)"/>
+        </svg>
+      </div>
+      <button class="glass-pill gold" onclick="openFeedback('path')">Написать</button>
     </div>
 
     <div class="path-links">
@@ -2297,13 +2309,11 @@ if (tg) {
     tg.onEvent('fullscreenChanged', applySafeArea);
     tg.onEvent('activated', applySafeArea);
   } catch (e) {}
-  // после сворачивания iOS-webview лениво пересобирает слои размытия — будим отрисовку
+  // при разворачивании показываем искру, пока iOS пересобирает экран
   document.addEventListener('visibilitychange', function () {
     if (!document.hidden) {
       applySafeArea(); setTimeout(applySafeArea, 350);
-      document.body.style.display = 'none';
-      void document.body.offsetHeight;
-      document.body.style.display = '';
+      if (window.showSplash) window.showSplash(800);
     }
   });
   try { tg.onEvent('activated', function () { if (window.__reapplySafe) window.__reapplySafe(); }); } catch (e) {}
@@ -3850,17 +3860,39 @@ async function checkSubscription() {
 }
 checkSubscription();
 
-// сплэш: гаснет, когда приложение готово (включая перезагрузки после выгрузки из памяти)
+// сплэш: показывается на старте и при разворачивании, гаснет когда экран готов
 (function () {
-  const hide = () => {
+  function ensureSplash() {
+    let sp = document.getElementById('splash');
+    if (!sp) {
+      sp = document.createElement('div');
+      sp.id = 'splash';
+      sp.innerHTML = '<div class="splash-spark"></div>';
+      document.body.appendChild(sp);
+    }
+    sp.classList.remove('hide');
+    return sp;
+  }
+  function hideSplash() {
     const sp = document.getElementById('splash');
     if (!sp) return;
     sp.classList.add('hide');
-    setTimeout(() => sp.remove(), 700);
+    setTimeout(() => { if (sp.parentNode) sp.remove(); }, 700);
+  }
+  // показать искру минимум на minMs и до двух кадров реальной отрисовки
+  window.showSplash = function (minMs) {
+    ensureSplash();
+    const start = Date.now();
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      const left = Math.max(0, (minMs || 600) - (Date.now() - start));
+      setTimeout(hideSplash, left);
+    }));
+    setTimeout(hideSplash, 4000); // страховка
   };
-  if (document.readyState === 'complete') setTimeout(hide, 350);
-  else window.addEventListener('load', () => setTimeout(hide, 350));
-  setTimeout(hide, 4000); // страховка: сплэш не может висеть дольше 4 секунд
+  // старт: искра из HTML уже на экране — гасим по готовности
+  if (document.readyState === 'complete') setTimeout(hideSplash, 350);
+  else window.addEventListener('load', () => setTimeout(hideSplash, 350));
+  setTimeout(hideSplash, 4000);
 })();
 
 
