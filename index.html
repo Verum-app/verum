@@ -3788,19 +3788,6 @@ async function submitClaim() {
       closePaywall();
       showToast('✨ Подписка активна — всё пространство открыто для вас', true);
       checkSubscription();
-
-// сплэш: гаснет, когда приложение готово (включая перезагрузки после выгрузки из памяти)
-(function () {
-  const hide = () => {
-    const sp = document.getElementById('splash');
-    if (!sp) return;
-    sp.classList.add('hide');
-    setTimeout(() => sp.remove(), 700);
-  };
-  if (document.readyState === 'complete') setTimeout(hide, 350);
-  else window.addEventListener('load', () => setTimeout(hide, 350));
-  setTimeout(hide, 4000); // страховка: сплэш не может висеть дольше 4 секунд
-})();
     } else if (data.reason === 'not_found') {
       showToast('Оплата пока не прошла. Подождите 1–2 минуты и попробуйте снова. Email вводите тот, который указывали при оплате. Либо напишите в службу заботы 🤍', false, 6000);
     } else {
@@ -3862,6 +3849,19 @@ async function checkSubscription() {
   } catch (e) {}
 }
 checkSubscription();
+
+// сплэш: гаснет, когда приложение готово (включая перезагрузки после выгрузки из памяти)
+(function () {
+  const hide = () => {
+    const sp = document.getElementById('splash');
+    if (!sp) return;
+    sp.classList.add('hide');
+    setTimeout(() => sp.remove(), 700);
+  };
+  if (document.readyState === 'complete') setTimeout(hide, 350);
+  else window.addEventListener('load', () => setTimeout(hide, 350));
+  setTimeout(hide, 4000); // страховка: сплэш не может висеть дольше 4 секунд
+})();
 
 
 // ===== СИСТЕМНАЯ КНОПКА НАЗАД =====
