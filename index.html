@@ -1964,13 +1964,13 @@
   <div class="pw-close" onclick="closePaywall()">✕</div>
   <div class="pw-inner">
     <div class="pw-eyebrow">Подписка VERUM</div>
-    <div class="pw-title">Всё пространство —<br><em>открыто для тебя</em></div>
+    <div class="pw-title">Всё пространство —<br><em>открыто для вас</em></div>
     <div class="pw-sub">Это не просто набор медитаций, а путь: из усталости и чужих сценариев — к управлению своей реальностью через состояние Творца.</div>
 
     <div class="pw-list">
       <div class="pw-item">Все медитации библиотеки</div>
       <div class="pw-item">Квантовые практики соединения с Высшим Я и перехода на новую ветку вероятностей</div>
-      <div class="pw-item">Дыхательные практики, таймер тишины и твой путь в цифрах</div>
+      <div class="pw-item">Дыхательные практики, таймер тишины и ваш путь в цифрах</div>
       <div class="pw-item">Каждый месяц — новая медитация</div>
     </div>
 
@@ -1992,7 +1992,7 @@
 
     <div class="pw-founders" id="pwFounders">🌙 Для <b>первых 20 участниц</b> — цена основательниц: <b>1 900 ₽/мес</b> или <b>19 900 ₽/год</b>. Фиксируется на первые 12 месяцев.</div>
 
-    <div class="pw-fine">Оплата защищена · чек на почту · подписка продлевается автоматически, отключается в один клик, доступ сохраняется до конца оплаченного периода. Продукт 18+, не является медицинской услугой. Оформляя подписку, ты принимаешь условия оферты.</div>
+    <div class="pw-fine">Оплата защищена · чек на почту · подписка продлевается автоматически, отключается в один клик, доступ сохраняется до конца оплаченного периода. Продукт 18+, не является медицинской услугой. Оформляя подписку, вы принимаете условия оферты.</div>
   </div>
 </div>
 
@@ -2002,7 +2002,7 @@
     <div class="ps-sub">выбери способ оплаты</div>
     <button class="ps-btn" onclick="payRub()">Картой РФ · в рублях</button>
     <button class="ps-btn" onclick="payValuta()">Зарубежной картой · $ / €</button>
-    <div class="ps-claim" onclick="openClaim()">Уже оплатила зарубежной картой? Активировать →</div>
+    <div class="ps-claim" onclick="openClaim()">Уже оплатили зарубежной картой? Активировать →</div>
     <div class="ps-cancel" onclick="closePaysheet()">← назад</div>
   </div>
 </div>
@@ -2010,10 +2010,10 @@
 <div class="paysheet" id="claimsheet" onclick="if(event.target===this)closeClaim()">
   <div class="paysheet-card">
     <div class="ps-title">Активация подписки</div>
-    <div class="ps-sub">введи email, который ты указала при оплате</div>
-    <input class="claim-input" id="claimEmail" type="email" inputmode="email" autocomplete="email" placeholder="твой@email.com">
+    <div class="ps-sub">введите email, который вы указывали при оплате</div>
+    <input class="claim-input" id="claimEmail" type="email" inputmode="email" autocomplete="email" placeholder="ваш@email.com">
     <button class="ps-btn" id="claimBtn" onclick="submitClaim()">Открыть доступ</button>
-    <div class="ps-support" onclick="openSupport()">Не получается? Напиши в службу заботы →</div>
+    <div class="ps-support" onclick="openSupport()">🤍 Служба заботы →</div>
     <div class="ps-cancel" onclick="closeClaim()">← назад</div>
   </div>
 </div>
@@ -2021,8 +2021,8 @@
 <div class="completion" id="potokBridge">
   <div class="completion-inner glass-card">
     <div class="comp-icon">✨</div>
-    <h2>Ты дошла до источника</h2>
-    <p>Пять дней — и ты вспомнила: ты и есть Творец. Это не финал — это дверь. Дальше — глубже: квантовые практики пространства VERUM.</p>
+    <h2>Вы дошли до источника</h2>
+    <p>Пять дней — и вы вспомнили: вы и есть Творец. Это не финал — это дверь. Дальше — глубже: квантовые практики пространства VERUM.</p>
     <button class="glass-pill gold" onclick="document.getElementById('potokBridge').classList.remove('show'); openPaywall();">Открыть пространство VERUM</button>
     <div class="comp-later" onclick="document.getElementById('potokBridge').classList.remove('show')" style="margin-top:14px;font-size:12px;color:var(--faint);cursor:pointer;">позже</div>
   </div>
@@ -3060,13 +3060,13 @@ function fmt(t) {
   return m + ':' + String(sec).padStart(2, '0');
 }
 
-function showToast(msg, gold) {
+function showToast(msg, gold, ms) {
   const t = document.getElementById('toast');
   t.textContent = msg;
   t.classList.toggle('gold', !!gold);
   t.classList.add('show');
   clearTimeout(t._h);
-  t._h = setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.classList.remove('gold'), 400); }, gold ? 4200 : 2600);
+  t._h = setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.classList.remove('gold'), 400); }, ms || (gold ? 4200 : 2600));
 }
 
 function playMeditation(m) {
@@ -3411,7 +3411,7 @@ const LAVA_FOUNDING = 'https://app.lava.top/products/c3283244-1a6b-43f6-8e56-92e
 function payValuta() {
   haptic('success');
   const link = FOUNDING ? LAVA_FOUNDING : LAVA_STANDARD;
-  showToast('После оплаты вернись сюда и нажми «Активировать»');
+  showToast('После оплаты вернитесь сюда и нажмите «Активировать»');
   if (tg && tg.openLink) tg.openLink(link);
   else window.open(link, '_blank');
 }
@@ -3441,7 +3441,7 @@ function closeClaim() {
 async function submitClaim() {
   const email = (document.getElementById('claimEmail').value || '').trim().toLowerCase();
   if (!email || !email.includes('@') || !email.includes('.')) {
-    showToast('Проверь email — кажется, в нём опечатка');
+    showToast('Проверьте email — кажется, в нём опечатка');
     return;
   }
   const btn = document.getElementById('claimBtn');
@@ -3454,15 +3454,15 @@ async function submitClaim() {
       haptic('success');
       closeClaim();
       closePaywall();
-      showToast('✨ Подписка активна — всё пространство открыто для тебя', true);
+      showToast('✨ Подписка активна — всё пространство открыто для вас', true);
       checkSubscription();
     } else if (data.reason === 'not_found') {
-      showToast('Оплата пока не найдена. Подожди 1–2 минуты и попробуй ещё раз — или напиши в службу заботы');
+      showToast('Оплата пока не прошла. Подождите 1–2 минуты и попробуйте снова. Email вводите тот, который указывали при оплате. Либо напишите в службу заботы 🤍', false, 6000);
     } else {
-      showToast('Не получилось открыть доступ — попробуй ещё раз или напиши в службу заботы');
+      showToast('Не получилось открыть доступ — попробуйте снова или напишите в службу заботы 🤍', false, 5000);
     }
   } catch (e) {
-    showToast('Нет связи — проверь интернет и попробуй ещё раз');
+    showToast('Нет связи — проверьте интернет и попробуйте снова');
   }
   btn.textContent = 'Открыть доступ';
 }
@@ -3472,7 +3472,7 @@ if (FOUNDING) {
   document.getElementById('planPriceY').textContent = '19 900 ₽';
   document.getElementById('planNoteM').textContent = 'цена первых 20 · далее 2 900 ₽';
   document.getElementById('planNoteY').textContent = 'цена первых 20 · далее 24 900 ₽';
-  document.getElementById('pwFounders').innerHTML = '🌙 Ты входишь по цене <b>основательниц</b> — она зафиксирована на твои первые 12 месяцев. Мест по этой цене: <b>20</b>.';
+  document.getElementById('pwFounders').innerHTML = '🌙 Вы входите по цене <b>основательниц</b> — она зафиксирована на ваши первые 12 месяцев. Мест по этой цене: <b>20</b>.';
 }
 
 function payRub() {
@@ -3611,9 +3611,9 @@ function renderPotok() {
         playMeditation({ name: 'День ' + day.d + ' · ' + day.name, dur: day.dur, cat: 'Поток',
                          free: true, file: day.file, descLong: day.descLong, potokDay: day.d });
       } else if (st === 'locked_tomorrow') {
-        showToast('Откроется завтра — дай сегодняшней практике прожиться ✨');
+        showToast('Откроется завтра — дайте сегодняшней практике прожиться ✨');
       } else {
-        showToast('Сначала пройди день ' + (day.d - 1));
+        showToast('Сначала пройдите день ' + (day.d - 1));
       }
     };
     box.appendChild(row);
