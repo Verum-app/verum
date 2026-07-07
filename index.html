@@ -1159,6 +1159,37 @@
     cursor: pointer;
   }
 
+  .ps-claim {
+    text-align: center;
+    margin: 4px 0 12px;
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    color: var(--pearl);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    cursor: pointer;
+    opacity: 0.85;
+  }
+
+  .claim-input {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 15px 18px;
+    margin-bottom: 12px;
+    border-radius: 50px;
+    border: 1px solid rgba(255,255,255,0.18);
+    background: rgba(255,255,255,0.07);
+    color: var(--text);
+    font-family: 'Manrope', sans-serif;
+    font-weight: 300;
+    font-size: 14px;
+    letter-spacing: 0.04em;
+    outline: none;
+  }
+  .claim-input::placeholder { color: var(--faint); }
+  .claim-input:focus { border-color: rgba(201,174,125,0.5); }
+
   .ps-btn.disabled {
     border-color: rgba(255,255,255,0.1);
     background: rgba(255,255,255,0.04);
@@ -1943,8 +1974,19 @@
     <div class="ps-title" id="psTitle">Оплата подписки</div>
     <div class="ps-sub">выбери способ оплаты</div>
     <button class="ps-btn" onclick="payRub()">Картой РФ · в рублях</button>
-    <button class="ps-btn disabled">$ · € · крипта — скоро</button>
+    <button class="ps-btn" onclick="payValuta()">Зарубежной картой · $ / €</button>
+    <div class="ps-claim" onclick="openClaim()">Уже оплатила зарубежной картой? Активировать →</div>
     <div class="ps-cancel" onclick="closePaysheet()">← назад</div>
+  </div>
+</div>
+
+<div class="paysheet" id="claimsheet" onclick="if(event.target===this)closeClaim()">
+  <div class="paysheet-card">
+    <div class="ps-title">Активация подписки</div>
+    <div class="ps-sub">введи email, который ты указала при оплате</div>
+    <input class="claim-input" id="claimEmail" type="email" inputmode="email" autocomplete="email" placeholder="твой@email.com">
+    <button class="ps-btn" id="claimBtn" onclick="submitClaim()">Открыть доступ</button>
+    <div class="ps-cancel" onclick="closeClaim()">← назад</div>
   </div>
 </div>
 
@@ -3332,6 +3374,62 @@ const DIRECT_PAY = true;
 // Когда 20 мест заняты: поменять на false — вернутся стандартные 2900/24900
 const FOUNDING = true;
 
+// Валютная оплата через Lava.top ($ / €). Ссылки на подписки:
+// стандарт: $39/мес · $329/год; основательницы: $25/мес · $259/год (период выбирается на странице Lava)
+const LAVA_STANDARD = 'https://app.lava.top/products/c3283244-1a6b-43f6-8e56-92e6b9aa147a/8335e4fe-67df-40a3-aefa-43ef7dc24f7d';
+const LAVA_FOUNDING = 'https://app.lava.top/products/c3283244-1a6b-43f6-8e56-92e6b9aa147a/d444a706-0a38-43f9-a3a1-d737a9d886df';
+
+function payValuta() {
+  haptic('success');
+  const link = FOUNDING ? LAVA_FOUNDING : LAVA_STANDARD;
+  showToast('После оплаты вернись сюда и нажми «Активировать»');
+  if (tg && tg.openLink) tg.openLink(link);
+  else window.open(link, '_blank');
+}
+
+// Активация подписки Lava по email (после оплаты $ / €)
+function openClaim() {
+  haptic('light');
+  closePaysheet();
+  document.getElementById('claimsheet').classList.add('show');
+  syncBack();
+  setTimeout(() => { try { document.getElementById('claimEmail').focus(); } catch (e) {} }, 250);
+}
+
+function closeClaim() {
+  document.getElementById('claimsheet').classList.remove('show');
+  syncBack();
+}
+
+async function submitClaim() {
+  const email = (document.getElementById('claimEmail').value || '').trim().toLowerCase();
+  if (!email || !email.includes('@') || !email.includes('.')) {
+    showToast('Проверь email — кажется, в нём опечатка');
+    return;
+  }
+  const btn = document.getElementById('claimBtn');
+  btn.textContent = 'Проверяю…';
+  try {
+    const init = tg ? encodeURIComponent(tg.initData || '') : '';
+    const r = await fetch(WORKER_URL + '/claim?email=' + encodeURIComponent(email) + '&init=' + init);
+    const data = await r.json();
+    if (data.ok) {
+      haptic('success');
+      closeClaim();
+      closePaywall();
+      showToast('Подписка активна — всё пространство открыто ✨');
+      checkSubscription();
+    } else if (data.reason === 'not_found') {
+      showToast('Оплата пока не найдена — проверь email или подожди минуту');
+    } else {
+      showToast('Не получилось — попробуй ещё раз');
+    }
+  } catch (e) {
+    showToast('Нет связи — попробуй ещё раз');
+  }
+  btn.textContent = 'Открыть доступ';
+}
+
 if (FOUNDING) {
   document.getElementById('planPriceM').textContent = '1 900 ₽';
   document.getElementById('planPriceY').textContent = '19 900 ₽';
@@ -3388,6 +3486,7 @@ checkSubscription();
 function syncBack() {
   if (!tg || !tg.BackButton) return;
   const need =
+    document.getElementById('claimsheet').classList.contains('show') ||
     document.getElementById('paysheet').classList.contains('show') ||
     document.getElementById('paywall').classList.contains('show') ||
     document.getElementById('fullplayer').classList.contains('show');
@@ -3397,7 +3496,8 @@ function syncBack() {
 if (tg && tg.BackButton) {
   tg.BackButton.onClick(() => {
     haptic('light');
-    if (document.getElementById('paysheet').classList.contains('show')) closePaysheet();
+    if (document.getElementById('claimsheet').classList.contains('show')) closeClaim();
+    else if (document.getElementById('paysheet').classList.contains('show')) closePaysheet();
     else if (document.getElementById('paywall').classList.contains('show')) closePaywall();
     else if (document.getElementById('fullplayer').classList.contains('show')) minimizeFull();
     syncBack();
