@@ -384,16 +384,29 @@
     margin-bottom: 18px;
     text-align: center;
     box-shadow:
-      0 0 30px rgba(226,222,240,0.28),
-      0 0 90px rgba(226,222,240,0.10),
+      0 0 34px rgba(226,222,240,0.30),
+      0 0 95px rgba(226,222,240,0.11),
       inset 0 0 26px rgba(226,222,240,0.16),
       inset 0 1px 0 rgba(255,255,255,0.28);
+  }
+
+  /* дыхание — отдельным слоем через прозрачность: дёшево для GPU */
+  .thought-card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    box-shadow:
+      inset 0 0 38px rgba(226,222,240,0.22),
+      inset 0 1px 0 rgba(255,255,255,0.30);
+    opacity: 0;
     animation: pearlBreath 6s ease-in-out infinite;
   }
 
   @keyframes pearlBreath {
-    0%, 100% { box-shadow: 0 0 30px rgba(226,222,240,0.28), 0 0 90px rgba(226,222,240,0.10), inset 0 0 26px rgba(226,222,240,0.16), inset 0 1px 0 rgba(255,255,255,0.28); }
-    50% { box-shadow: 0 0 44px rgba(226,222,240,0.40), 0 0 110px rgba(226,222,240,0.15), inset 0 0 36px rgba(226,222,240,0.24), inset 0 1px 0 rgba(255,255,255,0.34); }
+    0%, 100% { opacity: 0; }
+    50% { opacity: 1; }
   }
 
   .thought-eyebrow {
@@ -1267,6 +1280,9 @@
   }
   .claim-input::placeholder { color: var(--faint); }
   .claim-input:focus { border-color: rgba(201,174,125,0.5); }
+  /* при открытой клавиатуре шторка прижимается к верху, чтобы поле было видно */
+  .paysheet.kb { align-items: flex-start !important; }
+  .paysheet.kb .paysheet-card { margin-top: calc(30px + env(safe-area-inset-top)); }
 
   .pw-author {
     display: flex;
@@ -1297,6 +1313,39 @@
     cursor: pointer;
     opacity: 0.9;
   }
+
+  #tgGate {
+    position: fixed;
+    inset: 0;
+    z-index: 950;
+    background: radial-gradient(ellipse 120% 80% at 50% 40%, #14162e, #0c0e1a 70%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 30px;
+  }
+  .gate-card {
+    max-width: 340px;
+    text-align: center;
+    padding: 34px 26px;
+    border-radius: 26px;
+    background: linear-gradient(155deg, rgba(255,255,255,0.075), rgba(255,255,255,0.035));
+    border: 1px solid rgba(255,255,255,0.14);
+    box-shadow: 0 24px 70px rgba(0,0,5,0.6), inset 0 1px 0 rgba(255,255,255,0.2);
+  }
+  .gate-t {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px;
+    color: var(--ink);
+    margin-bottom: 12px;
+  }
+  .gate-s {
+    font-size: 12.5px;
+    line-height: 1.7;
+    color: var(--soft-ink);
+    margin-bottom: 20px;
+  }
+  .gate-btn { display: block; text-decoration: none; }
 
   #splash {
     position: fixed;
@@ -1964,8 +2013,8 @@
       <div class="potok-body">
         <div class="potok-eyebrow">Бесплатная программа</div>
         <div class="potok-title">Игра-медитация ПОТОК<br><em>Возвращение к себе</em></div>
-        <div class="potok-desc">Пять дней — пять уровней твоей жизни: тело, психика, пространство, дело и дух. Каждый день — одна практика-игра, соединяющая тебя с твоей потенциальной версией. Пятый уровень — самый волшебный и глубокий: соединение с Творцом и вспоминание себя подлинной. Результат — возвращённая энергия, ясность на всех уровнях и состояние, из которого начинаются перемены.</div>
-        <div class="potok-rec">✦ Рекомендация: проходи игру 5 дней подряд, в одно и то же время. Каждый следующий день открывается после прослушанного предыдущего.</div>
+        <div class="potok-desc">Пять дней — пять уровней твоей жизни: тело, психика, пространство, дело и дух. Каждое утро — одна практика-игра, а на пятый день — встреча с Источником. Результат: возвращённая энергия и состояние, из которого начинаются перемены.</div>
+        <div class="potok-rec">✦ Проходи 5 дней подряд — следующий день открывается после прослушанного.</div>
         <div id="potokDays"></div>
       </div>
     </div>
@@ -2190,7 +2239,7 @@
       <div class="path-link" onclick="openSupport()">🤍 Служба заботы</div>
       <div class="path-link" onclick="openChannel()">Telegram-канал VERUM →</div>
     </div>
-    <div class="app-ver">сборка 37</div>
+    <div class="app-ver" id="appVer"></div>
   </div>
 </div>
 </div>
@@ -3387,6 +3436,10 @@ function renderPath() {
 // ===== АУДИОПЛЕЕР МЕДИТАЦИЙ =====
 const audio = new Audio();
 audio.preload = 'none';
+audio.addEventListener('error', () => {
+  if (!audio.src) return;
+  showToast('Практика сейчас недоступна — попробуйте через минуту 🤍');
+});
 let currentMed = null;
 let medSaved = false;
 
@@ -3786,8 +3839,13 @@ const FOUNDING = true;
 
 // Валютная оплата через Lava.top ($ / €). Ссылки на подписки:
 // стандарт: $39/мес · $329/год; основательницы: $25/мес · $259/год (период выбирается на странице Lava)
-const LAVA_STANDARD = 'https://app.lava.top/products/c3283244-1a6b-43f6-8e56-92e6b9aa147a/8335e4fe-67df-40a3-aefa-43ef7dc24f7d';
-const LAVA_FOUNDING = 'https://app.lava.top/products/c3283244-1a6b-43f6-8e56-92e6b9aa147a/d444a706-0a38-43f9-a3a1-d737a9d886df';
+const APP_BUILD = 40; // метка сборки: внизу Пути, детектор кэша Telegram
+
+// клавиатура iOS: поле email в фокусе → шторка поднимается наверх
+document.querySelectorAll('.claim-input').forEach(inp => {
+  inp.addEventListener('focus', () => { const p = inp.closest('.paysheet'); if (p) p.classList.add('kb'); });
+  inp.addEventListener('blur', () => { const p = inp.closest('.paysheet'); if (p) p.classList.remove('kb'); });
+});
 
 // Валютная оплата: счёт создаётся через API Lava — только такие оплаты
 // шлют вебхуки, и доступ открывается автоматически (прямые ссылки не шлют)
@@ -3861,6 +3919,8 @@ async function submitLavaPay() {
       showToast('После оплаты вернитесь сюда — доступ откроется сам ✨', false, 5000);
       if (tg && tg.openLink) tg.openLink(data.url);
       else window.open(data.url, '_blank');
+    } else if (data.reason === 'often') {
+      showToast('Прошлый счёт ещё создаётся — подождите полминуты 🤍');
     } else {
       showToast('Не получилось создать оплату (код: ' + (data.reason || '?') + ') — попробуйте ещё раз или напишите в службу заботы 🤍', false, 6000);
     }
@@ -4025,6 +4085,22 @@ async function checkSubscription() {
   } catch (e) {}
 }
 checkSubscription();
+document.getElementById('appVer').textContent = 'сборка ' + APP_BUILD;
+
+// ворота: без подписи Telegram (открыто как сайт) приложение не работает —
+// показываем мягкий экран со ссылкой на вход через бота
+(function () {
+  const inTg = !!(window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData);
+  if (inTg) return;
+  const g = document.createElement('div');
+  g.id = 'tgGate';
+  g.innerHTML = '<div class="gate-card">' +
+    '<div class="gate-t">Пространство VERUM живёт в Telegram</div>' +
+    '<div class="gate-s">Похоже, страница открыта как обычный сайт. Откройте приложение через бота — и практики, доступ и оплата заработают.</div>' +
+    '<a class="ps-btn gate-btn" href="https://t.me/Annaverum_bot/verum">Открыть в Telegram ✨</a>' +
+    '</div>';
+  document.body.appendChild(g);
+})();
 
 // сплэш: показывается на старте и при разворачивании, гаснет когда экран готов
 (function () {
