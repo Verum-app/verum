@@ -3827,7 +3827,7 @@ async function submitLavaPay() {
       if (tg && tg.openLink) tg.openLink(data.url);
       else window.open(data.url, '_blank');
     } else {
-      showToast('Не получилось создать оплату — попробуйте ещё раз или напишите в службу заботы 🤍', false, 5000);
+      showToast('Не получилось создать оплату (код: ' + (data.reason || '?') + ') — попробуйте ещё раз или напишите в службу заботы 🤍', false, 6000);
     }
   } catch (e) {
     showToast('Нет связи — проверьте интернет и попробуйте снова');
