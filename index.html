@@ -1355,6 +1355,13 @@
   .fb-input { border-radius: 20px; min-height: 110px; resize: none; line-height: 1.6; }
 
   .path-links { text-align: center; margin: 22px 0 6px; }
+  .app-ver {
+    text-align: center;
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    color: rgba(120,116,146,0.55);
+    margin: 8px 0 2px;
+  }
   .path-link {
     display: inline-block;
     margin: 0 10px;
@@ -2183,6 +2190,7 @@
       <div class="path-link" onclick="openSupport()">🤍 Служба заботы</div>
       <div class="path-link" onclick="openChannel()">Telegram-канал VERUM →</div>
     </div>
+    <div class="app-ver">сборка 37</div>
   </div>
 </div>
 </div>
@@ -2296,8 +2304,8 @@
     <div class="ps-sub">введите email — на него придёт чек, а доступ откроется сам после оплаты</div>
     <input class="claim-input" id="lavaEmail" type="email" inputmode="email" autocomplete="email" placeholder="ваш@email.com">
     <div class="cur-row">
-      <div class="cur-pill active" id="curUSD" onclick="setCur('USD')">$ · доллары</div>
-      <div class="cur-pill" id="curEUR" onclick="setCur('EUR')">€ · евро</div>
+      <div class="cur-pill active" id="curUSD" onclick="setCur('USD')">$ —</div>
+      <div class="cur-pill" id="curEUR" onclick="setCur('EUR')">€ —</div>
     </div>
     <button class="ps-btn" id="lavaBtn" onclick="submitLavaPay()">Перейти к оплате</button>
     <div class="ps-support" onclick="openSupport()">🤍 Служба заботы →</div>
@@ -3784,17 +3792,40 @@ const LAVA_FOUNDING = 'https://app.lava.top/products/c3283244-1a6b-43f6-8e56-92e
 // Валютная оплата: счёт создаётся через API Lava — только такие оплаты
 // шлют вебхуки, и доступ открывается автоматически (прямые ссылки не шлют)
 let lavaCurrency = 'USD';
+
+// цены Lava по тарифам — для кнопок шторки
+const LAVA_PRICES = {
+  month:  { USD: 39, EUR: 34, label: 'месяц' },
+  year:   { USD: 329, EUR: 285, label: 'год' },
+  fmonth: { USD: 25, EUR: 22, label: 'месяц' },
+  fyear:  { USD: 259, EUR: 225, label: 'год' },
+};
+
+function lavaPlanKey() {
+  return FOUNDING ? (currentPlan === 'year' ? 'fyear' : 'fmonth') : currentPlan;
+}
+
+function updateLavaUI() {
+  const p = LAVA_PRICES[lavaPlanKey()] || LAVA_PRICES.month;
+  document.getElementById('curUSD').textContent = '$ ' + p.USD + ' · ' + p.label;
+  document.getElementById('curEUR').textContent = '€ ' + p.EUR + ' · ' + p.label;
+  const amount = lavaCurrency === 'EUR' ? '€ ' + p.EUR : '$ ' + p.USD;
+  document.getElementById('lavaBtn').textContent = 'Перейти к оплате · ' + amount;
+}
+
 function setCur(c) {
   haptic('light');
   lavaCurrency = c;
   document.getElementById('curUSD').classList.toggle('active', c === 'USD');
   document.getElementById('curEUR').classList.toggle('active', c === 'EUR');
+  updateLavaUI();
 }
 
 function payValuta() {
   haptic('light');
   closePaysheet();
   document.getElementById('lavasheet').classList.add('show');
+  updateLavaUI();
   syncBack();
   setTimeout(() => { try { document.getElementById('lavaEmail').focus(); } catch (e) {} }, 250);
 }
@@ -3816,7 +3847,12 @@ async function submitLavaPay() {
     const r = await fetch(WORKER_URL + '/lavapay', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ init: (tg && tg.initData) || '', email: email, plan: currentPlan, currency: lavaCurrency }),
+      body: JSON.stringify({
+        init: (tg && tg.initData) || '',
+        email: email,
+        plan: lavaPlanKey(),
+        currency: lavaCurrency,
+      }),
     });
     const data = await r.json();
     if (data.ok && data.url) {
