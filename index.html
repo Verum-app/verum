@@ -629,6 +629,36 @@
     margin-bottom: 4px;
   }
 
+  .step-intro { text-align: center; padding: 2px 14px 16px; }
+  .si-text {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 15.5px;
+    line-height: 1.75;
+    color: var(--pearl);
+  }
+  .si-text em {
+    font-style: italic;
+    color: var(--gold);
+  }
+  .si-line {
+    margin-top: 14px;
+    height: 1px;
+    background: linear-gradient(to right, transparent, rgba(201,174,125,0.45), transparent);
+    position: relative;
+    width: 150px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .si-line span {
+    position: absolute;
+    left: 50%; top: 50%;
+    transform: translate(-50%, -50%);
+    width: 4px; height: 4px;
+    border-radius: 50%;
+    background: var(--gold);
+    box-shadow: 0 0 8px rgba(201,174,125,0.7);
+  }
+
   .lib-head { text-align: center; margin: 4px 0 14px; }
   .lib-eyebrow {
     font-size: 9px;
@@ -944,6 +974,42 @@
 
   .cal-day.today { border: 1.5px solid var(--gold); color: var(--gold); }
 
+  .pathmap-card { padding: 20px 22px 16px; margin-bottom: 24px; }
+  .pm-row { margin-bottom: 14px; }
+  .pm-row:last-child { margin-bottom: 4px; }
+  .pm-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 7px;
+  }
+  .pm-name {
+    font-size: 9.5px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--soft-ink);
+  }
+  .pm-count {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 14px;
+    color: var(--gold);
+  }
+  .pm-bar {
+    height: 3px;
+    border-radius: 3px;
+    background: rgba(255,255,255,0.08);
+    overflow: hidden;
+  }
+  .pm-bar i {
+    display: block;
+    height: 100%;
+    border-radius: 3px;
+    background: linear-gradient(to right, rgba(176,146,95,0.85), rgba(224,203,160,0.95));
+    box-shadow: 0 0 8px rgba(201,174,125,0.4);
+    transition: width 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .pm-done .pm-name { color: var(--gold); }
+
   .history-list { display: flex; flex-direction: column; gap: 10px; }
 
   .history-item {
@@ -954,6 +1020,7 @@
   }
 
   .history-date { font-size: 10px; letter-spacing: 0.12em; color: var(--faint); }
+  .history-step { font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; color: rgba(201,174,125,0.65); margin-top: 3px; }
   .history-type { font-family: 'Cormorant Garamond', serif; font-size: 16px; color: var(--ink); margin-top: 3px; }
   .history-dur { font-family: 'Cormorant Garamond', serif; font-size: 20px; color: var(--gold); }
 
@@ -2085,7 +2152,10 @@
       <div class="lib-title">5 шагов</div>
     </div>
     <div class="cat-scroll" id="catScroll"></div>
-    <div class="lib-note">выберите, что откликается сегодня</div>
+    <div class="step-intro">
+      <div class="si-text" id="stepIntro"></div>
+      <div class="si-line"><span></span></div>
+    </div>
     <div class="med-list" id="medList"></div>
   </div>
 
@@ -2210,6 +2280,9 @@
     <div class="glass-card cal-card">
       <div class="cal-grid" id="calGrid"></div>
     </div>
+
+    <div class="section-eyebrow">Карта пути</div>
+    <div class="glass-card pathmap-card" id="pathMap"></div>
 
     <div class="section-eyebrow">История практик</div>
     <div class="history-list" id="historyList"></div>
@@ -2906,6 +2979,16 @@ function nav(name) {
 // ===== LIBRARY: категории + уровни метода =====
 const categories = ['Общие', 'Шаг 1 · Тело', 'Шаг 2 · Психика', 'Шаг 3 · Идентичность', 'Шаг 4 · Мета-Я', 'Шаг 5 · Управление реальностью'];
 
+// философия каждого шага — показывается над списком практик
+const STEP_INTROS = {
+  'Общие': 'Пять шагов — один путь: от тела, которому безопасно, до реальности, которая слушается. Каждая практика стоит на своей ступени, и ни одну нельзя перепрыгнуть — но начать можно с любой. <em>Путь сам поведёт.</em>',
+  'Шаг 1 · Тело': 'Тело — единственный дом, в котором ты живёшь всю жизнь, и первая ступень силы. Пока нервная система в тревоге, никакие практики не работают: выживание всегда громче творения. Здесь ты возвращаешься в тело и учишь его безопасности. <em>С этой земли начинается всё.</em>',
+  'Шаг 2 · Психика': 'Здесь живёт то, что управляло тобой из тени: запертые эмоции, старые страхи, части, которые жмут на тормоз. Ты не будешь с ними воевать — ты вернёшь силу, запертую в них. Каждая расчищенная эмоция — твоя энергия, вернувшаяся домой. <em>Свобода начинается с освобождения.</em>',
+  'Шаг 3 · Идентичность': 'Этот шаг отвечает на вопрос «кто я?». Ты меняешь главную героиню: из выученной, выжившей, удобной — в подлинную. Меняются убеждения, осанка, выборы — сама ткань твоего «я». <em>Ты становишься той, кем была всегда — под слоями.</em>',
+  'Шаг 4 · Мета-Я': 'А здесь вопрос глубже: кто та, что спрашивает «кто я»? Ты обнаруживаешь: и прежняя, и новая я — твои творения, костюмы. А ты — та, кто в гардеробной: не роль, а автор ролей. <em>Шаг 3 даёт главную роль твоей жизни. Шаг 4 сажает тебя в кресло режиссёра.</em>',
+  'Шаг 5 · Управление реальностью': 'Вершина пути: режиссёр снимает свой фильм. Из точки Мета-Я ты творишь — намерением из полноты, а не желанием из нужды. Здесь выбирают из поля возможностей, живут из «уже есть» и держат фокус без контроля. <em>Реальность начинается внутри — здесь ты начинаешь ею управлять.</em>',
+};
+
 // АДРЕС ТВОЕГО WORKER — замени после создания в Cloudflare:
 const WORKER_URL = 'https://verum-audio.annverum-aaf.workers.dev';
 
@@ -2942,6 +3025,7 @@ renderMeds(); };
 }
 
 function renderMeds() {
+  document.getElementById('stepIntro').innerHTML = STEP_INTROS[activeCat] || '';
   const list = document.getElementById('medList');
   list.innerHTML = '';
   const shown = activeCat === 'Общие' ? meditations : meditations.filter(m => m.step === activeCat);
@@ -3410,6 +3494,36 @@ function renderPath() {
     grid.appendChild(el);
   }
 
+  // — Карта пути: сколько практик каждого шага уже прожито
+  const stepOf = (sess) => {
+    if (sess.step && sess.step !== 'Игра ПОТОК') return sess.step;
+    const med = meditations.find(m => m.name === sess.type);
+    return med ? med.step : null;
+  };
+  const pmBox = document.getElementById('pathMap');
+  if (pmBox) {
+    const stepNames = categories.slice(1); // без «Общие»
+    let pmHtml = '';
+    stepNames.forEach(st => {
+      const inLib = meditations.filter(m => m.step === st);
+      if (!inLib.length) return; // шаг без практик пока не показываем
+      const heard = new Set(
+        sessions.filter(x => stepOf(x) === st).map(x => x.type)
+      );
+      const done = [...heard].filter(n => inLib.some(m => m.name === n)).length;
+      const pct = Math.round((done / inLib.length) * 100);
+      pmHtml += `
+        <div class="pm-row${done === inLib.length ? ' pm-done' : ''}">
+          <div class="pm-top">
+            <span class="pm-name">${st}</span>
+            <span class="pm-count">${done} из ${inLib.length}</span>
+          </div>
+          <div class="pm-bar"><i style="width:${pct}%"></i></div>
+        </div>`;
+    });
+    pmBox.innerHTML = pmHtml || '<div class="empty-state" style="padding:10px">карта откроется с первой практикой</div>';
+  }
+
   const list = document.getElementById('historyList');
   if (!sessions.length) {
     list.innerHTML = '<div class="glass-card empty-state">практика ещё не начата<br>начните первую сессию</div>';
@@ -3424,6 +3538,7 @@ function renderPath() {
       <div>
         <div class="history-date">${d.toLocaleDateString('ru', {day:'numeric', month:'long', weekday:'short'})}</div>
         <div class="history-type">${s.type}</div>
+        ${(function(){ const st = s.step || (meditations.find(m => m.name === s.type) || {}).step || ''; return st ? '<div class="history-step">' + st + '</div>' : ''; })()}
       </div>
       <div class="history-dur">${s.minutes} мин</div>`;
     list.appendChild(item);
@@ -3534,7 +3649,7 @@ function saveMedSession(full) {
   const mins = Math.round((full ? audio.duration : audio.currentTime) / 60);
   if (mins >= 3) {
     medSaved = true;
-    sessions.unshift({ date: new Date().toISOString(), type: currentMed.name, minutes: mins });
+    sessions.unshift({ date: new Date().toISOString(), type: currentMed.name, minutes: mins, step: currentMed.step || (currentMed.potokDay ? 'Игра ПОТОК' : '') });
     saveSessions();
     renderTodayStats();
     haptic('success');
@@ -3833,7 +3948,7 @@ const FOUNDING = true;
 
 // Валютная оплата через Lava.top ($ / €). Ссылки на подписки:
 // стандарт: $39/мес · $329/год; основательницы: $25/мес · $259/год (период выбирается на странице Lava)
-const APP_BUILD = 42; // метка сборки: внизу Пути, детектор кэша Telegram
+const APP_BUILD = 44; // метка сборки: внизу Пути, детектор кэша Telegram
 
 // клавиатура iOS: поле email в фокусе → шторка поднимается наверх
 document.querySelectorAll('.claim-input').forEach(inp => {
