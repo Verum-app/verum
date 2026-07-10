@@ -1004,11 +1004,31 @@
     display: block;
     height: 100%;
     border-radius: 3px;
-    background: linear-gradient(to right, rgba(176,146,95,0.85), rgba(224,203,160,0.95));
-    box-shadow: 0 0 8px rgba(201,174,125,0.4);
     transition: width 0.8s cubic-bezier(0.22, 1, 0.36, 1);
   }
-  .pm-done .pm-name { color: var(--gold); }
+  /* круги глубины: жемчуг → золото → сияние → аметист */
+  .pm-c1 .pm-bar i {
+    background: linear-gradient(to right, rgba(190,186,210,0.7), rgba(226,222,240,0.9));
+    box-shadow: 0 0 8px rgba(217,212,232,0.35);
+  }
+  .pm-c1 .pm-count { color: var(--pearl); }
+  .pm-c2 .pm-bar i {
+    background: linear-gradient(to right, rgba(176,146,95,0.85), rgba(224,203,160,0.95));
+    box-shadow: 0 0 8px rgba(201,174,125,0.4);
+  }
+  .pm-c2 .pm-count { color: var(--gold); }
+  .pm-c3 .pm-bar i {
+    background: linear-gradient(to right, rgba(224,196,130,1), rgba(255,232,170,1));
+    box-shadow: 0 0 12px rgba(240,214,150,0.65);
+  }
+  .pm-c3 .pm-count { color: #eed9a4; }
+  .pm-c3 .pm-name { color: var(--gold); }
+  .pm-c4 .pm-bar i {
+    background: linear-gradient(to right, rgba(128,100,220,0.9), rgba(170,140,245,0.95));
+    box-shadow: 0 0 12px rgba(150,120,235,0.6);
+  }
+  .pm-c4 .pm-count { color: #c9b8f2; }
+  .pm-c4 .pm-name { color: #b9a6ea; }
 
   .history-list { display: flex; flex-direction: column; gap: 10px; }
 
@@ -1471,13 +1491,6 @@
   .fb-input { border-radius: 20px; min-height: 110px; resize: none; line-height: 1.6; }
 
   .path-links { text-align: center; margin: 22px 0 6px; }
-  .app-ver {
-    text-align: center;
-    font-size: 9px;
-    letter-spacing: 0.2em;
-    color: rgba(120,116,146,0.55);
-    margin: 8px 0 2px;
-  }
   .path-link {
     display: inline-block;
     margin: 0 10px;
@@ -1877,6 +1890,7 @@
   }
   .sub-locked .stats-row, .sub-locked .section-eyebrow,
   .sub-locked .cal-card, .sub-locked .history-list,
+  .sub-locked .pathmap-card,
   .sub-locked .fb-card { display: none; }
   .path-lock .pl-icon { font-size: 30px; margin-bottom: 14px; }
   .path-lock .pl-title {
@@ -2254,7 +2268,7 @@
   ===== конец скрытого раздела Программы ===== -->
 
   <!-- ===== PATH ===== -->
-  <div class="screen" id="screen-path">
+  <div class="screen sub-locked" id="screen-path">
     <div class="glass-card path-lock">
       <div class="pl-icon">🔒</div>
       <div class="pl-title">Твой путь откроется с подпиской</div>
@@ -2310,7 +2324,6 @@
       <div class="path-link" onclick="openSupport()">🤍 Служба заботы</div>
       <div class="path-link" onclick="openChannel()">Telegram-канал VERUM →</div>
     </div>
-    <div class="app-ver" id="appVer"></div>
   </div>
 </div>
 </div>
@@ -3507,16 +3520,23 @@ function renderPath() {
     stepNames.forEach(st => {
       const inLib = meditations.filter(m => m.step === st);
       if (!inLib.length) return; // шаг без практик пока не показываем
-      const heard = new Set(
-        sessions.filter(x => stepOf(x) === st).map(x => x.type)
-      );
-      const done = [...heard].filter(n => inLib.some(m => m.name === n)).length;
-      const pct = Math.round((done / inLib.length) * 100);
+
+      // сколько раз прожита каждая практика шага
+      const plays = {};
+      sessions.forEach(x => { if (stepOf(x) === st) plays[x.type] = (plays[x.type] || 0) + 1; });
+      const counts = inLib.map(m => plays[m.name] || 0);
+
+      // круг глубины: шаг углубляется бесконечно — финиша нет
+      const circle = Math.min(...counts) + 1;            // текущий круг
+      const doneInCircle = counts.filter(c => c >= circle).length;
+      const pct = Math.round((doneInCircle / inLib.length) * 100);
+      const tier = Math.min(circle, 4);                   // 1 жемчуг · 2 золото · 3 сияние · 4+ аметист
+
       pmHtml += `
-        <div class="pm-row${done === inLib.length ? ' pm-done' : ''}">
+        <div class="pm-row pm-c${tier}">
           <div class="pm-top">
             <span class="pm-name">${st}</span>
-            <span class="pm-count">${done} из ${inLib.length}</span>
+            <span class="pm-count">Круг ${circle} · ${doneInCircle} из ${inLib.length}</span>
           </div>
           <div class="pm-bar"><i style="width:${pct}%"></i></div>
         </div>`;
@@ -3571,9 +3591,37 @@ function showToast(msg, gold, ms) {
   t._h = setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.classList.remove('gold'), 400); }, ms || (gold ? 4200 : 2600));
 }
 
+// анонимная статистика для Анны: что слушают и дослушивают ли
+let statEndSent = false;
+function sendStat(ev) {
+  try {
+    if (!currentMed || !tg || !tg.initData) return;
+    if (ev === 'end') {
+      if (statEndSent || !audio.duration) return;
+      statEndSent = true;
+    }
+    fetch(WORKER_URL + '/stat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      keepalive: true,
+      body: JSON.stringify({
+        init: tg.initData,
+        ev: ev,
+        file: currentMed.file,
+        name: currentMed.name,
+        played: audio.currentTime || 0,
+        dur: audio.duration || 0,
+      }),
+    }).catch(() => {});
+  } catch (e) {}
+}
+
 function playMeditation(m) {
+  if (currentMed && !audio.paused) sendStat('end'); // сменила практику на середине — фиксируем прослушанное
   currentMed = m;
   medSaved = false;
+  statEndSent = false;
+  sendStat('start');
   const init = tg ? encodeURIComponent(tg.initData || '') : '';
   // поддержка двух режимов: Worker (/audio/...) и временный публичный r2.dev (прямой путь)
   audio.src = WORKER_URL.includes('r2.dev')
@@ -3602,6 +3650,7 @@ document.getElementById('playerBtn').addEventListener('click', () => {
 
 document.getElementById('playerClose').addEventListener('click', () => {
   haptic('light');
+  sendStat('end');
   minimizeFull();
   saveMedSession();
   audio.pause();
@@ -3627,6 +3676,7 @@ document.getElementById('playerProgress').addEventListener('input', e => {
 });
 
 audio.addEventListener('ended', () => {
+  sendStat('end');
   releaseWake();
   minimizeFull();
   document.getElementById('playerBtn').innerHTML = ICON_PLAY;
@@ -3948,7 +3998,7 @@ const FOUNDING = true;
 
 // Валютная оплата через Lava.top ($ / €). Ссылки на подписки:
 // стандарт: $39/мес · $329/год; основательницы: $25/мес · $259/год (период выбирается на странице Lava)
-const APP_BUILD = 44; // метка сборки: внизу Пути, детектор кэша Telegram
+const APP_BUILD = 48; // внутренняя метка, в интерфейсе не показывается // метка сборки: внизу Пути, детектор кэша Telegram
 
 // клавиатура iOS: поле email в фокусе → шторка поднимается наверх
 document.querySelectorAll('.claim-input').forEach(inp => {
@@ -4194,7 +4244,6 @@ async function checkSubscription() {
   } catch (e) {}
 }
 checkSubscription();
-document.getElementById('appVer').textContent = 'сборка ' + APP_BUILD;
 
 // ворота: без подписи Telegram (открыто как сайт) приложение не работает —
 // показываем мягкий экран со ссылкой на вход через бота
