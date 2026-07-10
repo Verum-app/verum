@@ -186,13 +186,32 @@
     to { transform: translate(2.5%, 1.5%); }
   }
 
+  /* киноплёнка: живое зерно поверх всего — убирает «пластиковость» градиентов */
   body::before {
     content: '';
     position: fixed;
-    inset: 0;
+    inset: -12%;
     background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
     pointer-events: none;
     z-index: 999;
+    animation: grainLive 7s steps(10) infinite;
+  }
+
+  @keyframes grainLive {
+    0%, 100% { transform: translate(0, 0); }
+    10% { transform: translate(-4%, -6%); }
+    20% { transform: translate(-7%, 3%); }
+    30% { transform: translate(5%, -8%); }
+    40% { transform: translate(-3%, 8%); }
+    50% { transform: translate(-8%, 4%); }
+    60% { transform: translate(8%, 0); }
+    70% { transform: translate(0, 6%); }
+    80% { transform: translate(-6%, 0); }
+    90% { transform: translate(6%, 3%); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    body::before { animation: none; }
   }
 
   .app {
@@ -543,6 +562,19 @@
   }
 
   .manifesto p { margin-bottom: 14px; }
+
+  /* буквица: первая буква манифеста — крупным золотым Cormorant, как в старинных книгах */
+  .manifesto p:first-of-type::first-letter {
+    float: left;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 46px;
+    line-height: 0.82;
+    font-weight: 500;
+    color: var(--gold);
+    padding: 5px 8px 0 0;
+    text-shadow: 0 0 18px rgba(201,174,125,0.3);
+  }
+
   .manifesto em { color: var(--gold); font-style: italic; }
   .manifesto .m-sign {
     text-align: right;
@@ -685,8 +717,25 @@
   }
 
   .med-desc { font-size: 11px; color: var(--faint); }
+  .med-side { display: flex; flex-direction: column; align-items: flex-end; gap: 7px; }
+  .fav-heart {
+    width: 15px; height: 14px;
+    fill: none;
+    stroke: rgba(226,222,240,0.4);
+    stroke-width: 1.4;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    padding: 2px;
+    box-sizing: content-box;
+  }
+  .fav-heart.on {
+    fill: #ddd5ee;
+    stroke: none;
+    filter: drop-shadow(0 0 5px rgba(217,212,232,0.55));
+  }
   .med-dur { font-size: 11px; letter-spacing: 0.1em; color: var(--soft-ink); flex-shrink: 0; }
-  .lock-chip { font-size: 12px; color: var(--faint); flex-shrink: 0; opacity: 0.7; }
+  .lock-chip { flex-shrink: 0; opacity: 0.75; }
+  .lock-chip svg { width: 15px; height: 15px; display: block; filter: drop-shadow(0 0 4px rgba(201,174,125,0.25)); }
 
   /* ===== TIMER ===== */
   .timer-wrap { display: flex; flex-direction: column; align-items: center; }
@@ -973,6 +1022,20 @@
   }
 
   .cal-day.today { border: 1.5px solid var(--gold); color: var(--gold); }
+
+  .path-hello { text-align: center; margin: 2px 0 20px; }
+  .ph-eyebrow {
+    font-size: 9px;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 6px;
+  }
+  .ph-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 26px;
+    color: var(--ink);
+  }
 
   .pathmap-card { padding: 20px 22px 16px; margin-bottom: 24px; }
   .pm-row { margin-bottom: 14px; }
@@ -1656,22 +1719,23 @@
 
   .fp-progress-zone { width: 100%; max-width: 340px; margin-bottom: 20px; }
 
+  /* тончайшая золотая нить + сияющая точка-бинду вместо ползунка */
   .fp-progress {
     -webkit-appearance: none;
     appearance: none;
     width: 100%;
-    height: 3px;
-    border-radius: 3px;
-    background: rgba(255,255,255,0.12);
+    height: 2px;
+    border-radius: 2px;
+    background: rgba(255,255,255,0.10);
     cursor: pointer;
   }
 
   .fp-progress::-webkit-slider-thumb {
     -webkit-appearance: none;
-    width: 14px; height: 14px;
+    width: 16px; height: 16px;
     border-radius: 50%;
-    background: var(--gold);
-    box-shadow: 0 0 12px rgba(201,174,125,0.6);
+    background: radial-gradient(circle, #fff7e6 0%, #ecd9b0 26%, rgba(201,174,125,0.9) 52%, rgba(201,174,125,0) 76%);
+    box-shadow: 0 0 14px rgba(201,174,125,0.6), 0 0 30px rgba(201,174,125,0.28);
   }
 
   .fp-time {
@@ -1698,6 +1762,62 @@
   }
 
   .fp-play:active { transform: scale(0.93); }
+
+  .descsheet {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 155;
+    background:
+      radial-gradient(ellipse 120% 70% at 50% -10%, rgba(50,45,95,0.55), transparent 60%),
+      rgba(10, 12, 24, 0.98);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .descsheet.show { display: block; }
+  .ds-close {
+    position: fixed;
+    top: calc(16px + env(safe-area-inset-top) + var(--tg-content-safe-area-inset-top, 0px));
+    right: 20px;
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.14);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--soft-ink);
+    font-size: 14px;
+    z-index: 2;
+  }
+  .ds-inner {
+    max-width: 420px;
+    margin: 0 auto;
+    padding: calc(70px + env(safe-area-inset-top) + var(--tg-content-safe-area-inset-top, 0px)) 28px calc(50px + env(safe-area-inset-bottom));
+  }
+  .ds-eyebrow {
+    font-size: 9px;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    color: var(--gold);
+    text-align: center;
+    margin-bottom: 10px;
+  }
+  .ds-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 25px;
+    color: var(--ink);
+    text-align: center;
+    margin-bottom: 22px;
+  }
+  .ds-text {
+    font-size: 13.5px;
+    line-height: 1.85;
+    color: var(--soft-ink);
+    text-align: justify;
+    hyphens: none;
+    white-space: pre-line;
+    margin-bottom: 30px;
+  }
+  .ds-btn { max-width: 300px; margin: 0 auto; display: block; }
 
   .fp-desc-wrap {
     width: 100%;
@@ -1812,19 +1932,19 @@
     -webkit-appearance: none;
     appearance: none;
     width: 100%;
-    height: 3px;
-    border-radius: 3px;
-    background: rgba(255,255,255,0.12);
+    height: 2px;
+    border-radius: 2px;
+    background: rgba(255,255,255,0.10);
     margin-top: 13px;
     cursor: pointer;
   }
 
   .player-progress::-webkit-slider-thumb {
     -webkit-appearance: none;
-    width: 13px; height: 13px;
+    width: 14px; height: 14px;
     border-radius: 50%;
-    background: var(--gold);
-    box-shadow: 0 0 10px rgba(201,174,125,0.5);
+    background: radial-gradient(circle, #fff7e6 0%, #ecd9b0 26%, rgba(201,174,125,0.9) 52%, rgba(201,174,125,0) 76%);
+    box-shadow: 0 0 12px rgba(201,174,125,0.55), 0 0 24px rgba(201,174,125,0.25);
   }
 
   .player-time {
@@ -1892,7 +2012,8 @@
   .sub-locked .cal-card, .sub-locked .history-list,
   .sub-locked .pathmap-card,
   .sub-locked .fb-card { display: none; }
-  .path-lock .pl-icon { font-size: 30px; margin-bottom: 14px; }
+  .path-lock .pl-icon { margin-bottom: 14px; display: flex; justify-content: center; }
+  .path-lock .pl-icon svg { width: 34px; height: 34px; filter: drop-shadow(0 0 10px rgba(201,174,125,0.35)); }
   .path-lock .pl-title {
     font-family: 'Cormorant Garamond', serif;
     font-size: 21px; color: var(--ink); margin-bottom: 8px;
@@ -1900,6 +2021,20 @@
   .path-lock .pl-sub { font-size: 12.5px; line-height: 1.7; color: var(--soft-ink); margin-bottom: 20px; }
 
   /* ===== DOCK ===== */
+  /* растворение: контент мягко уходит «под кромку тумана» перед доком */
+  .dock-fade {
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    height: calc(118px + env(safe-area-inset-bottom));
+    z-index: 90;
+    pointer-events: none;
+    background: linear-gradient(to top,
+      rgba(12,14,26,0.94) 0%,
+      rgba(12,14,26,0.62) 34%,
+      rgba(12,14,26,0.22) 62%,
+      transparent 100%);
+  }
+
   .dock {
     position: fixed;
     bottom: calc(14px + env(safe-area-inset-bottom));
@@ -2269,8 +2404,24 @@
 
   <!-- ===== PATH ===== -->
   <div class="screen sub-locked" id="screen-path">
+    <div class="path-hello">
+      <div class="ph-eyebrow">Путь</div>
+      <div class="ph-name" id="pathName"></div>
+    </div>
     <div class="glass-card path-lock">
-      <div class="pl-icon">🔒</div>
+      <div class="pl-icon">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="plLockG" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#e9d6ae"/>
+              <stop offset="100%" stop-color="#b0925f"/>
+            </linearGradient>
+          </defs>
+          <rect x="5" y="10.6" width="14" height="9.8" rx="3.4" stroke="url(#plLockG)" stroke-width="1.4"/>
+          <path d="M8.3 10.6V7.9c0-2.3 1.6-4.1 3.7-4.1s3.7 1.8 3.7 4.1v2.7" stroke="url(#plLockG)" stroke-width="1.4" stroke-linecap="round"/>
+          <circle cx="12" cy="15.5" r="1.3" fill="url(#plLockG)"/>
+        </svg>
+      </div>
       <div class="pl-title">Твой путь откроется с подпиской</div>
       <div class="pl-sub">Серия дней, календарь практик и история — часть пространства VERUM. Начни путь — и становись архитектором своего главного проекта под названием ЖИЗНЬ.</div>
       <button class="glass-pill gold" onclick="openPaywall()">Открыть пространство</button>
@@ -2328,6 +2479,8 @@
 </div>
 </div>
 
+<div class="dock-fade"></div>
+
 <nav class="dock">
   <div class="dock-item active" data-screen="today" onclick="nav('today')">
     <div class="d-icon">☼</div><div class="d-label">Сегодня</div>
@@ -2355,8 +2508,18 @@
   </div>
   <button class="fp-play" id="fpBtn"></button>
   <div class="fp-desc-wrap" id="fpDescWrap">
-    <div class="fp-desc-head" onclick="haptic('light'); this.parentElement.classList.toggle('open');">О практике <span class="chev">▼</span></div>
-    <div class="fp-desc" id="fpDesc"></div>
+    <div class="fp-desc-head" onclick="openDesc()">О практике <span class="chev">▼</span></div>
+  </div>
+</div>
+
+<!-- полноэкранное описание практики: собственный простой скролл -->
+<div class="descsheet" id="descsheet">
+  <div class="ds-close" onclick="closeDesc()">✕</div>
+  <div class="ds-inner">
+    <div class="ds-eyebrow">О практике</div>
+    <div class="ds-title" id="dsTitle"></div>
+    <div class="ds-text" id="dsText"></div>
+    <button class="ps-btn ds-btn" onclick="closeDesc()">Вернуться к практике</button>
   </div>
 </div>
 
@@ -2990,10 +3153,11 @@ function nav(name) {
 }
 
 // ===== LIBRARY: категории + уровни метода =====
-const categories = ['Общие', 'Шаг 1 · Тело', 'Шаг 2 · Психика', 'Шаг 3 · Идентичность', 'Шаг 4 · Мета-Я', 'Шаг 5 · Управление реальностью'];
+const categories = ['Общие', '♡ Любимые', 'Шаг 1 · Тело', 'Шаг 2 · Психика', 'Шаг 3 · Идентичность', 'Шаг 4 · Мета-Я', 'Шаг 5 · Управление реальностью'];
 
 // философия каждого шага — показывается над списком практик
 const STEP_INTROS = {
+  '♡ Любимые': 'Твоя личная полка. Отмечай сердечком практики, которые откликаются глубже всего, — и они всегда будут под рукой. <em>Сердце знает, что тебе сейчас нужно.</em>',
   'Общие': 'Пять шагов — один путь: от тела, которому безопасно, до реальности, которая слушается. Каждая практика стоит на своей ступени, и ни одну нельзя перепрыгнуть — но начать можно с любой. <em>Путь сам поведёт.</em>',
   'Шаг 1 · Тело': 'Тело — единственный дом, в котором ты живёшь всю жизнь, и первая ступень силы. Пока нервная система в тревоге, никакие практики не работают: выживание всегда громче творения. Здесь ты возвращаешься в тело и учишь его безопасности. <em>С этой земли начинается всё.</em>',
   'Шаг 2 · Психика': 'Здесь живёт то, что управляло тобой из тени: запертые эмоции, старые страхи, части, которые жмут на тормоз. Ты не будешь с ними воевать — ты вернёшь силу, запертую в них. Каждая расчищенная эмоция — твоя энергия, вернувшаяся домой. <em>Свобода начинается с освобождения.</em>',
@@ -3022,6 +3186,42 @@ document.getElementById('dailyName').textContent = daily.name;
 document.getElementById('dailyDesc').textContent = daily.desc;
 document.getElementById('dailyDur').textContent = daily.dur.toUpperCase();
 
+// избранные практики: сердечко на карточке, полка «Любимые», сигнал в статистику
+let favs = new Set();
+try { favs = new Set(JSON.parse(localStorage.getItem('verum_favs') || '[]')); } catch (e) {}
+if (typeof tg !== 'undefined' && tg && tg.CloudStorage) {
+  tg.CloudStorage.getItem('verum_favs', (err, val) => {
+    if (!err && val) {
+      try { JSON.parse(val).forEach(n => favs.add(n)); renderMeds(); } catch (e) {}
+    }
+  });
+}
+function saveFavs() {
+  const data = JSON.stringify([...favs]);
+  localStorage.setItem('verum_favs', data);
+  try { if (tg && tg.CloudStorage) tg.CloudStorage.setItem('verum_favs', data, () => {}); } catch (e) {}
+}
+function toggleFav(name, ev) {
+  ev.stopPropagation();
+  const med = meditations.find(m => m.name === name);
+  const on = !favs.has(name);
+  if (on) { favs.add(name); haptic('success'); }
+  else { favs.delete(name); haptic('light'); }
+  saveFavs();
+  renderMeds();
+  // анонимный сигнал в статистику Анны
+  try {
+    if (med && tg && tg.initData) {
+      fetch(WORKER_URL + '/stat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        keepalive: true,
+        body: JSON.stringify({ init: tg.initData, ev: on ? 'fav' : 'unfav', file: med.file, name: med.name }),
+      }).catch(() => {});
+    }
+  } catch (e) {}
+}
+
 let activeCat = 'Общие';
 
 function renderCats() {
@@ -3041,9 +3241,13 @@ function renderMeds() {
   document.getElementById('stepIntro').innerHTML = STEP_INTROS[activeCat] || '';
   const list = document.getElementById('medList');
   list.innerHTML = '';
-  const shown = activeCat === 'Общие' ? meditations : meditations.filter(m => m.step === activeCat);
+  const shown = activeCat === 'Общие' ? meditations
+    : activeCat === '♡ Любимые' ? meditations.filter(m => favs.has(m.name))
+    : meditations.filter(m => m.step === activeCat);
   if (!shown.length) {
-    list.innerHTML = '<div class="lib-note" style="padding:30px 20px">Практики этого шага скоро появятся ✨</div>';
+    list.innerHTML = activeCat === '♡ Любимые'
+      ? '<div class="lib-note" style="padding:30px 20px">Отмечайте сердечком практики, которые откликаются, —<br>они соберутся здесь 🤍</div>'
+      : '<div class="lib-note" style="padding:30px 20px">Практики этого шага скоро появятся ✨</div>';
     return;
   }
   shown.forEach(m => {
@@ -3064,8 +3268,13 @@ function renderMeds() {
             <span class="med-desc">${m.desc}</span>
           </div>
         </div>
-        <div class="med-dur">${m.dur}</div>
-        ${(m.free || subActive) ? '' : '<div class="lock-chip">🔒</div>'}
+        <div class="med-side">
+          <svg class="fav-heart${favs.has(m.name) ? ' on' : ''}" viewBox="0 0 24 22" onclick="toggleFav('${m.name.replace(/'/g, "\\'")}', event)">
+            <path d="M12 20.2 C7 15.8 2.4 12.2 2.4 7.6 C2.4 4.6 4.7 2.4 7.5 2.4 C9.3 2.4 11 3.4 12 5 C13 3.4 14.7 2.4 16.5 2.4 C19.3 2.4 21.6 4.6 21.6 7.6 C21.6 12.2 17 15.8 12 20.2 Z"/>
+          </svg>
+          <div class="med-dur">${m.dur}</div>
+        </div>
+        ${(m.free || subActive) ? '' : '<div class="lock-chip"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="5" y="10.6" width="14" height="9.8" rx="3.4" stroke="rgba(201,174,125,0.8)" stroke-width="1.5"/><path d="M8.3 10.6V7.9c0-2.3 1.6-4.1 3.7-4.1s3.7 1.8 3.7 4.1v2.7" stroke="rgba(201,174,125,0.8)" stroke-width="1.5" stroke-linecap="round"/><circle cx="12" cy="15.5" r="1.25" fill="rgba(201,174,125,0.85)"/></svg></div>'}
       `;
       list.appendChild(card);
     });
@@ -3570,8 +3779,12 @@ function renderPath() {
 const audio = new Audio();
 audio.preload = 'none';
 audio.addEventListener('error', () => {
-  if (!audio.src) return;
-  showToast('Практика сейчас недоступна — попробуйте через минуту 🤍');
+  const err = audio.error;
+  if (!err) return;
+  if (err.code === 1) return;                    // ABORTED: смена трека — не ошибка
+  if (!currentMed) return;
+  if (!audio.currentSrc || audio.currentSrc === location.href) return; // src сброшен закрытием
+  showToast('Практика сейчас недоступна — попробуйте через минуту 🤍', false, 6000);
 });
 let currentMed = null;
 let medSaved = false;
@@ -3616,8 +3829,32 @@ function sendStat(ev) {
   } catch (e) {}
 }
 
+function openDesc() {
+  haptic('light');
+  if (!currentMed) return;
+  document.getElementById('dsTitle').textContent = currentMed.name;
+  document.getElementById('dsText').textContent = currentMed.descLong || currentMed.desc || '';
+  document.getElementById('descsheet').classList.add('show');
+  syncBack();
+}
+function closeDesc() {
+  document.getElementById('descsheet').classList.remove('show');
+  syncBack();
+}
+
+// золотая нить: закрашивает пройденную часть дорожки воспроизведения
+function paintSeek(el) {
+  const v = Math.max(0, Math.min(100, parseFloat(el.value) || 0));
+  el.style.background = 'linear-gradient(90deg, rgba(201,174,125,0.95) 0%, rgba(236,217,176,0.95) ' + v + '%, rgba(255,255,255,0.10) ' + v + '%)';
+}
+
 function playMeditation(m) {
   if (currentMed && !audio.paused) sendStat('end'); // сменила практику на середине — фиксируем прослушанное
+  ['fpProgress', 'playerProgress'].forEach(id => {
+    const el = document.getElementById(id);
+    el.value = 0;
+    paintSeek(el);
+  });
   currentMed = m;
   medSaved = false;
   statEndSent = false;
@@ -3654,14 +3891,17 @@ document.getElementById('playerClose').addEventListener('click', () => {
   minimizeFull();
   saveMedSession();
   audio.pause();
-  audio.src = '';
+  audio.removeAttribute('src');
+  audio.load();
   releaseWake();
   document.getElementById('player').classList.remove('show');
 });
 
 audio.addEventListener('timeupdate', () => {
   if (isFinite(audio.duration) && audio.duration > 0) {
-    document.getElementById('playerProgress').value = (audio.currentTime / audio.duration) * 100;
+    const pp = document.getElementById('playerProgress');
+    pp.value = (audio.currentTime / audio.duration) * 100;
+    paintSeek(pp);
     document.getElementById('playerCur').textContent = fmt(audio.currentTime);
     document.getElementById('playerDur').textContent = fmt(audio.duration);
     // день Потока засчитывается с 80% прослушивания
@@ -3673,6 +3913,7 @@ audio.addEventListener('timeupdate', () => {
 
 document.getElementById('playerProgress').addEventListener('input', e => {
   if (isFinite(audio.duration)) audio.currentTime = (e.target.value / 100) * audio.duration;
+  paintSeek(e.target);
 });
 
 audio.addEventListener('ended', () => {
@@ -3715,14 +3956,13 @@ function openFull() {
   if (!currentMed) return;
   document.getElementById('fpTitle').textContent = currentMed.name;
   document.getElementById('fpMeta').textContent = currentMed.cat + ' · ' + currentMed.dur;
-  document.getElementById('fpDesc').textContent = currentMed.descLong || currentMed.desc || '';
   syncPlayIcons();
   fp.classList.add('show');
   startEq();
   syncBack();
   fp.scrollTop = 0;
   // описание при открытии свёрнуто — вся сцена помещается на экран
-  document.getElementById('fpDescWrap').classList.remove('open');
+  closeDesc();
 }
 
 function minimizeFull() {
@@ -3758,11 +3998,14 @@ audio.addEventListener('pause', syncPlayIcons);
 
 document.getElementById('fpProgress').addEventListener('input', e => {
   if (isFinite(audio.duration)) audio.currentTime = (e.target.value / 100) * audio.duration;
+  paintSeek(e.target);
 });
 
 audio.addEventListener('timeupdate', () => {
   if (isFinite(audio.duration) && audio.duration > 0) {
-    document.getElementById('fpProgress').value = (audio.currentTime / audio.duration) * 100;
+    const fp = document.getElementById('fpProgress');
+    fp.value = (audio.currentTime / audio.duration) * 100;
+    paintSeek(fp);
     document.getElementById('fpCur').textContent = fmt(audio.currentTime);
     document.getElementById('fpDur').textContent = fmt(audio.duration);
   }
@@ -3998,7 +4241,7 @@ const FOUNDING = true;
 
 // Валютная оплата через Lava.top ($ / €). Ссылки на подписки:
 // стандарт: $39/мес · $329/год; основательницы: $25/мес · $259/год (период выбирается на странице Lava)
-const APP_BUILD = 48; // внутренняя метка, в интерфейсе не показывается // метка сборки: внизу Пути, детектор кэша Telegram
+const APP_BUILD = 50; // внутренняя метка, в интерфейсе не показывается // метка сборки: внизу Пути, детектор кэша Telegram
 
 // клавиатура iOS: поле email в фокусе → шторка поднимается наверх
 document.querySelectorAll('.claim-input').forEach(inp => {
@@ -4245,6 +4488,16 @@ async function checkSubscription() {
 }
 checkSubscription();
 
+// имя участницы в шапке Пути
+(function () {
+  try {
+    const u = tg && tg.initDataUnsafe && tg.initDataUnsafe.user;
+    document.getElementById('pathName').textContent = (u && u.first_name) ? u.first_name : 'Твой путь';
+  } catch (e) {
+    document.getElementById('pathName').textContent = 'Твой путь';
+  }
+})();
+
 // ворота: без подписи Telegram (открыто как сайт) приложение не работает —
 // показываем мягкий экран со ссылкой на вход через бота
 (function () {
@@ -4300,6 +4553,7 @@ checkSubscription();
 function syncBack() {
   if (!tg || !tg.BackButton) return;
   const need =
+    document.getElementById('descsheet').classList.contains('show') ||
     document.getElementById('lavasheet').classList.contains('show') ||
     document.getElementById('fbsheet').classList.contains('show') ||
     document.getElementById('claimsheet').classList.contains('show') ||
@@ -4312,7 +4566,8 @@ function syncBack() {
 if (tg && tg.BackButton) {
   tg.BackButton.onClick(() => {
     haptic('light');
-    if (document.getElementById('lavasheet').classList.contains('show')) closeLava();
+    if (document.getElementById('descsheet').classList.contains('show')) closeDesc();
+    else if (document.getElementById('lavasheet').classList.contains('show')) closeLava();
     else if (document.getElementById('fbsheet').classList.contains('show')) closeFeedback();
     else if (document.getElementById('claimsheet').classList.contains('show')) closeClaim();
     else if (document.getElementById('paysheet').classList.contains('show')) closePaysheet();
