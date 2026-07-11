@@ -19,7 +19,7 @@
     --deep-gold: #b0925f;
     --glass: rgba(255, 255, 255, 0.055);
     --glass-strong: rgba(255, 255, 255, 0.09);
-    --glass-border: rgba(255, 255, 255, 0.14);
+    --glass-border: rgba(255, 255, 255, 0.17);
     --glass-highlight: rgba(255, 255, 255, 0.35);
     --glass-shadow: 0 12px 40px rgba(0, 0, 5, 0.45), 0 2px 8px rgba(0, 0, 5, 0.3);
   }
@@ -115,6 +115,13 @@
     pointer-events: none;
     overflow: hidden;
   }
+  /* мягкий свет сверху: приподнимает сцену, убирает «плоскую тьму» */
+  .aurora::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(120vw 70vh at 50% 16%, rgba(150,130,225,0.13), rgba(201,174,125,0.04) 45%, transparent 68%);
+  }
   .aurora i {
     position: absolute;
     display: block;
@@ -124,19 +131,19 @@
   .au1 {
     width: 95vw; height: 95vw;
     left: -28vw; top: -10vh;
-    background: radial-gradient(circle closest-side, rgba(104,80,215,0.26), transparent 70%);
+    background: radial-gradient(circle closest-side, rgba(104,80,215,0.34), transparent 70%);
     animation: aur1 24s ease-in-out infinite alternate;
   }
   .au2 {
     width: 90vw; height: 90vw;
     right: -32vw; top: 22vh;
-    background: radial-gradient(circle closest-side, rgba(206,176,120,0.19), transparent 70%);
+    background: radial-gradient(circle closest-side, rgba(206,176,120,0.26), transparent 70%);
     animation: aur2 30s ease-in-out infinite alternate;
   }
   .au3 {
     width: 110vw; height: 110vw;
     left: 0vw; bottom: -46vh;
-    background: radial-gradient(circle closest-side, rgba(146,120,230,0.12), transparent 72%);
+    background: radial-gradient(circle closest-side, rgba(146,120,230,0.18), transparent 72%);
     animation: aur3 36s ease-in-out infinite alternate;
   }
   @keyframes aur1 { to { transform: translate(26vw, 18vh) scale(1.22); } }
@@ -261,13 +268,13 @@
   /* ===== GLASS ===== */
   .glass-card {
     background:
-      linear-gradient(180deg, rgba(255,255,255,0.055), transparent 26%),
-      linear-gradient(155deg, rgba(255,255,255,0.075), rgba(255,255,255,0.035) 55%, rgba(139,125,190,0.045));
+      linear-gradient(180deg, rgba(255,255,255,0.07), transparent 26%),
+      linear-gradient(155deg, rgba(255,255,255,0.095), rgba(255,255,255,0.045) 55%, rgba(139,125,190,0.06));
     backdrop-filter: blur(28px) saturate(1.4);
     -webkit-backdrop-filter: blur(28px) saturate(1.4);
     border: 1px solid var(--glass-border);
     border-radius: 26px;
-    box-shadow: var(--glass-shadow), inset 0 1px 0 rgba(255,255,255,0.20);
+    box-shadow: var(--glass-shadow), inset 0 1px 0 rgba(255,255,255,0.24);
     position: relative;
     overflow: hidden;
   }
@@ -1549,7 +1556,25 @@
   }
   .fb-title { font-family: 'Cormorant Garamond', serif; font-size: 17px; line-height: 1.35; color: var(--pearl); margin-bottom: 6px; }
   .fb-sub { font-size: 11.5px; line-height: 1.55; color: var(--soft-ink); margin-bottom: 4px; }
-  .fb-input { border-radius: 20px; min-height: 110px; resize: none; line-height: 1.6; }
+  .fb-input {
+    border-radius: 20px;
+    min-height: 132px;
+    resize: none;
+    line-height: 1.65;
+    padding: 16px 18px;
+    margin: 4px 0 16px;
+    font-size: 14px;
+    text-align: left;
+  }
+  .fb-pub {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    margin: -4px 0 16px; cursor: pointer;
+    font-size: 11.5px; letter-spacing: 0.05em; color: var(--soft-ink);
+  }
+  .fb-pub input { width: 15px; height: 15px; accent-color: var(--gold); cursor: pointer; }
+  /* воздух в окне отзыва: карточка дальше от краёв экрана, поле — от контура */
+  #fbsheet .paysheet-card { padding: 32px 28px 26px; width: calc(100% - 48px); max-width: 420px; }
+  #fbsheet .ps-sub { margin-bottom: 18px; }
 
   .path-links { text-align: center; margin: 22px 0 6px; }
   .path-link {
@@ -2480,9 +2505,6 @@
       <div class="cal-grid" id="calGrid"></div>
     </div>
 
-    <div class="section-eyebrow">Карта пути</div>
-    <div class="glass-card pathmap-card" id="pathMap"></div>
-
     <div class="section-eyebrow">История практик</div>
     <div class="history-list" id="historyList"></div>
 
@@ -2506,7 +2528,7 @@
     </div>
 
     <div class="path-links">
-      <div class="path-link" onclick="openSupport()">🤍 Служба заботы</div>
+      <div class="path-link" onclick="openSupport()">Служба заботы</div>
       <div class="path-link" onclick="openChannel()">Telegram-канал VERUM →</div>
     </div>
   </div>
@@ -2651,7 +2673,8 @@
   <div class="paysheet-card">
     <div class="ps-title">Поделитесь впечатлениями</div>
     <div class="ps-sub">это анонимно — сообщение уйдёт Анне без вашего имени</div>
-    <textarea class="claim-input fb-input" id="fbText" rows="5" placeholder="Что вы почувствовали? Что изменилось? Что нравится в приложении и как часто им пользуетесь?"></textarea>
+    <textarea class="claim-input fb-input" id="fbText" rows="5" placeholder="Что вы почувствовали?"></textarea>
+    <label class="fb-pub"><input type="checkbox" id="fbPub"><span>можно опубликовать анонимно</span></label>
     <button class="ps-btn" id="fbBtn" onclick="submitFeedback()">Отправить 🤍</button>
     <div class="ps-cancel" onclick="closeFeedback()">← назад</div>
   </div>
@@ -3978,7 +4001,9 @@ audio.addEventListener('ended', () => {
   saveMedSession(true);
   if (currentMed && currentMed.potokDay) {
     markPotokDone(currentMed.potokDay);
-    if (currentMed.potokDay === 5) {
+    // мостик к подписке — только тем, у кого её ещё нет;
+    // подписчица, переслушивая день 5, видит обычное завершение
+    if (currentMed.potokDay === 5 && !subActive) {
       document.getElementById('potokBridge').classList.add('show');
       return;
     }
@@ -4285,6 +4310,13 @@ function openPaywall() {
   haptic('light');
   document.getElementById('paywall').classList.add('show');
   syncBack();
+  // воронка: открытие окна оплаты (анонимный счётчик месяца, свои клики Анны не считаются)
+  try {
+    if (tg && tg.initData) fetch(WORKER_URL + '/stat', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, keepalive: true,
+      body: JSON.stringify({ init: tg.initData, ev: 'pw' }),
+    });
+  } catch (e) {}
 }
 
 function closePaywall() {
@@ -4321,7 +4353,7 @@ const FOUNDING = true;
 
 // Валютная оплата через Lava.top ($ / €). Ссылки на подписки:
 // стандарт: $39/мес · $329/год; основательницы: $25/мес · $259/год (период выбирается на странице Lava)
-const APP_BUILD = 60; // внутренняя метка, в интерфейсе не показывается // метка сборки: внизу Пути, детектор кэша Telegram
+const APP_BUILD = 62; // внутренняя метка, в интерфейсе не показывается // метка сборки: внизу Пути, детектор кэша Telegram
 
 // клавиатура iOS: поле email в фокусе → шторка поднимается наверх
 document.querySelectorAll('.claim-input').forEach(inp => {
@@ -4436,6 +4468,12 @@ function openFeedback(ctx) {
 }
 function closeFeedback() {
   document.getElementById('fbsheet').classList.remove('show');
+  // если отзыв открыт из мостика после 5-го дня Потока — возвращаем мостик
+  // с кнопкой «Открыть пространство VERUM», а не главный экран
+  if (fbContext === 'potok5') {
+    document.getElementById('potokBridge').classList.add('show');
+    fbContext = 'path';
+  }
   syncBack();
 }
 async function submitFeedback() {
@@ -4447,12 +4485,14 @@ async function submitFeedback() {
     const r = await fetch(WORKER_URL + '/feedback', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ init: (tg && tg.initData) || '', text: text, context: fbContext }),
+      body: JSON.stringify({ init: (tg && tg.initData) || '', text: text, context: fbContext,
+        publish: !!(document.getElementById('fbPub') && document.getElementById('fbPub').checked) }),
     });
     const data = await r.json();
     if (data.ok) {
       haptic('success');
       document.getElementById('fbText').value = '';
+      const fbPub = document.getElementById('fbPub'); if (fbPub) fbPub.checked = false;
       closeFeedback();
       showToast('🤍 Спасибо — ваши слова уже у Анны', true);
     } else if (data.reason === 'rate') {
