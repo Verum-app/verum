@@ -571,7 +571,7 @@
 
   /* печать-бинду: финальная виньетка манифеста, как оттиск под письмом */
   .m-seal { display: flex; justify-content: center; margin: 24px 0 14px; }
-  .m-seal svg { width: 36px; height: 36px; filter: drop-shadow(0 0 9px rgba(201,174,125,0.3)); }
+  .m-seal svg { width: 76px; height: 45px; filter: drop-shadow(0 0 9px rgba(201,174,125,0.3)); }
   .manifesto .m-sign {
     text-align: right;
     font-style: italic;
@@ -1665,7 +1665,7 @@
 
   .fp-minimize {
     position: absolute;
-    top: calc(18px + env(safe-area-inset-top) + var(--tg-content-safe-area-inset-top, 0px));
+    top: calc(26px + env(safe-area-inset-top) + var(--tg-content-safe-area-inset-top, 0px));
     left: 22px;
     width: 42px; height: 42px;
     border-radius: 50%;
@@ -1680,7 +1680,7 @@
   /* сердечко практики — зеркально кнопке сворачивания */
   .fp-fav {
     position: absolute;
-    top: calc(18px + env(safe-area-inset-top) + var(--tg-content-safe-area-inset-top, 0px));
+    top: calc(26px + env(safe-area-inset-top) + var(--tg-content-safe-area-inset-top, 0px));
     right: 22px;
     width: 42px; height: 42px;
     border-radius: 50%;
@@ -1781,7 +1781,41 @@
     background: rgba(255,255,255,0.05);
     border: 1px solid rgba(255,255,255,0.1);
     overflow: hidden;
+    /* КЛЮЧЕВОЙ ФИКС: overflow:hidden в флекс-колонке обнуляет min-height,
+       и флексбокс сжимал блок до видимой области, обрезая текст. flex-shrink:0
+       запрещает сжатие — раскрытый текст честно удлиняет плеер, и он прокручивается */
+    flex-shrink: 0;
   }
+
+  /* кнопки прокрутки описания: справа, поверх плеера, видны при раскрытом тексте */
+  .fp-scroll-btns {
+    position: fixed;
+    right: 14px;
+    bottom: calc(110px + env(safe-area-inset-bottom));
+    display: none;
+    flex-direction: column;
+    gap: 12px;
+    z-index: 160;
+  }
+  .fp-scroll-btns.on { display: flex; animation: fadeUp 0.35s ease; }
+  .fp-scroll-btn {
+    width: 42px; height: 42px;
+    border-radius: 50%;
+    background: rgba(20, 22, 40, 0.72);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(201,174,125,0.35);
+    color: var(--gold);
+    font-size: 15px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 8px 24px rgba(0,0,5,0.45);
+    transition: transform 0.2s ease;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  .fp-scroll-btn:active { transform: scale(0.9); }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 
   .fp-desc-head {
     display: flex;
@@ -2266,20 +2300,34 @@
           <p>Отсюда начинается главное: ты — <em>Творец!</em> Реальность больше не происходит с тобой. Она рождается из тебя. Мир вокруг — это лишь чуткое, мгновенное эхо того состояния, в котором ты пребываешь.</p>
           <p>Истина внутри. Всегда была.</p>
           <div class="m-seal">
-            <svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+            <!-- та же бинду, что в шапке приложения: искра, лучи и три кольца -->
+            <svg viewBox="0 0 104 62" fill="none" xmlns="http://www.w3.org/2000/svg">
               <defs>
-                <linearGradient id="mSealG" x1="0" y1="0" x2="1" y2="1">
-                  <stop offset="0%" stop-color="#e9d6ae"/>
-                  <stop offset="100%" stop-color="#b0925f"/>
-                </linearGradient>
-                <radialGradient id="mSealHalo" cx="50%" cy="50%" r="50%">
-                  <stop offset="0%" stop-color="rgba(236,214,168,0.5)"/>
-                  <stop offset="100%" stop-color="rgba(201,174,125,0)"/>
+                <radialGradient id="msCore" cx="50%" cy="50%" r="50%">
+                  <stop offset="0%" stop-color="#fff8e4" stop-opacity="1"/>
+                  <stop offset="35%" stop-color="#f4d696" stop-opacity="0.85"/>
+                  <stop offset="100%" stop-color="#c9ae7d" stop-opacity="0"/>
                 </radialGradient>
+                <linearGradient id="msRayV" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#f4d696" stop-opacity="0"/>
+                  <stop offset="50%" stop-color="#fff4d8" stop-opacity="0.95"/>
+                  <stop offset="100%" stop-color="#f4d696" stop-opacity="0"/>
+                </linearGradient>
+                <linearGradient id="msRayH" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0%" stop-color="#f4d696" stop-opacity="0"/>
+                  <stop offset="50%" stop-color="#fff4d8" stop-opacity="0.8"/>
+                  <stop offset="100%" stop-color="#f4d696" stop-opacity="0"/>
+                </linearGradient>
               </defs>
-              <circle cx="20" cy="20" r="15.5" fill="none" stroke="url(#mSealG)" stroke-width="1.1" opacity="0.85"/>
-              <circle cx="20" cy="20" r="8" fill="url(#mSealHalo)"/>
-              <circle cx="20" cy="20" r="3" fill="url(#mSealG)"/>
+              <g fill="none" stroke-linecap="round">
+                <circle cx="52" cy="31" r="11" stroke="rgba(224,203,160,0.85)" stroke-width="1.1"/>
+                <circle cx="52" cy="31" r="19.5" stroke="rgba(201,174,125,0.5)" stroke-width="1"/>
+                <circle cx="52" cy="31" r="28" stroke="rgba(201,174,125,0.26)" stroke-width="1"/>
+              </g>
+              <circle cx="52" cy="31" r="9" fill="url(#msCore)"/>
+              <rect x="51.45" y="14" width="1.1" height="34" fill="url(#msRayV)"/>
+              <rect x="40" y="30.5" width="24" height="1" fill="url(#msRayH)"/>
+              <circle cx="52" cy="31" r="1.7" fill="#fff8e4"/>
             </svg>
           </div>
           <p class="m-sign">— Анна VERUM</p>
@@ -2508,6 +2556,11 @@
     <div class="fp-desc-head" onclick="toggleDesc()">О практике <span class="chev">▼</span></div>
     <div class="fp-desc" id="fpDesc"></div>
   </div>
+  <!-- прокрутка описания без зажимания: вверх / вниз -->
+  <div class="fp-scroll-btns" id="fpScrollBtns">
+    <div class="fp-scroll-btn" onclick="fpScroll(-1)">▲</div>
+    <div class="fp-scroll-btn" onclick="fpScroll(1)">▼</div>
+  </div>
 </div>
 
 <div class="player" id="player">
@@ -2668,8 +2721,12 @@ if (tg) {
       const sa = tg.safeAreaInset || {};
       const ca = tg.contentSafeAreaInset || {};
       let top = (sa.top || 0) + (ca.top || 0);
-      // запасной отступ: полноэкранный режим, а инсеты не пришли
-      if (tg.isFullscreen && top < 40) top = tg.platform === 'ios' ? 102 : 86;
+      // запасной отступ: в полноэкранном режиме Telegram рисует «назад» и шеврон
+      // ПОВЕРХ приложения. iOS часто присылает только высоту статус-бара (~47–59px)
+      // без высоты ряда кнопок — прежняя проверка top < 40 это пропускала,
+      // и кнопки плеера прятались под стрелками. Теперь минимум = полный ряд.
+      const minTop = tg.platform === 'ios' ? 102 : 86;
+      if (tg.isFullscreen && top < minTop) top = minTop;
       if (tg.isFullscreen) top += 6; // воздух под кнопками Telegram
       const bottom = (ca.bottom || 0);
       // защита: в полноэкранном режиме отступ не может резко схлопнуться —
@@ -2702,7 +2759,7 @@ if (tg) {
   tg.setHeaderColor('#0c0e1a');
   tg.setBackgroundColor('#0c0e1a');
   // Запрет свайпа-закрытия — только на iOS: на Android эта команда ломает прокрутку
-  if (tg.disableVerticalSwipes && tg.platform === 'ios') tg.disableVerticalSwipes();
+  if (tg.disableVerticalSwipes) tg.disableVerticalSwipes(); // свайп внутри приложения — прокрутка, а не сворачивание
   cloudAvailable = !!(tg.CloudStorage && tg.isVersionAtLeast && tg.isVersionAtLeast('6.9'));
 }
 
@@ -3842,6 +3899,8 @@ function toggleDesc() {
     document.getElementById('fpDesc').textContent = currentMed.descLong || currentMed.desc || '';
   }
   wrap.classList.toggle('open', open);
+  // кнопки прокрутки видны, пока описание раскрыто
+  document.getElementById('fpScrollBtns').classList.toggle('on', open);
   // мягко подвозим раскрытый текст в поле зрения — плеер прокручивается целиком
   if (open) setTimeout(() => {
     wrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -3849,6 +3908,14 @@ function toggleDesc() {
 }
 function closeDesc() {
   document.getElementById('fpDescWrap').classList.remove('open');
+  document.getElementById('fpScrollBtns').classList.remove('on');
+}
+
+// прокрутка плеера по кнопке: на пол-экрана вверх (-1) или вниз (1), плавно
+function fpScroll(dir) {
+  haptic('light');
+  const p = document.getElementById('fullplayer');
+  p.scrollBy({ top: dir * Math.round(p.clientHeight * 0.55), behavior: 'smooth' });
 }
 
 // золотая нить: закрашивает пройденную часть дорожки воспроизведения
@@ -4276,7 +4343,7 @@ const FOUNDING = true;
 
 // Валютная оплата через Lava.top ($ / €). Ссылки на подписки:
 // стандарт: $39/мес · $329/год; основательницы: $25/мес · $259/год (период выбирается на странице Lava)
-const APP_BUILD = 57; // внутренняя метка, в интерфейсе не показывается // метка сборки: внизу Пути, детектор кэша Telegram
+const APP_BUILD = 59; // внутренняя метка, в интерфейсе не показывается // метка сборки: внизу Пути, детектор кэша Telegram
 
 // клавиатура iOS: поле email в фокусе → шторка поднимается наверх
 document.querySelectorAll('.claim-input').forEach(inp => {
