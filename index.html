@@ -182,7 +182,7 @@
   }
   /* длинные названия («Исцеление отношений с мамой», «Поток · утренняя медитация»)
      на Android переносились: шрифты там шире. Название чуть компактнее, карточке — больше места */
-  .droid .med-card { padding-right: 52px; gap: 13px; }
+  .droid .med-card { padding-right: 48px; gap: 13px; }
   .droid .med-name { font-size: 15px; letter-spacing: -0.01em; }
 
   /* полосы прокрутки Android отъедали ширину — окна казались разной ширины */
@@ -749,10 +749,10 @@
 
   .med-card {
     width: 100%;
-    padding: 21px 56px 21px 22px; /* правое поле вмещает замок и стрелку — текст одинаков у всех */
+    padding: 21px 48px 21px 20px; /* справа этаж для ♡/времени/замка/стрелки — все вне потока */
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 14px;
     cursor: pointer;
     transition: transform 0.25s ease;
   }
@@ -799,8 +799,11 @@
   .med-name {
     font-family: 'Cormorant Garamond', serif;
     font-size: 16px;
-    color: var(--ink);
+    color: #f5f3fb;
     margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .step-intro { text-align: center; padding: 2px 14px 16px; }
@@ -848,7 +851,7 @@
   }
 
   /* под описание всегда две строки — карточки одной высоты, с замками и без */
-  .med-tags { display: flex; gap: 8px; align-items: flex-start; flex-wrap: wrap; min-height: 36px; }
+  .med-tags { display: flex; gap: 8px; align-items: flex-start; flex-wrap: wrap; min-height: 28px; padding-right: 56px; }
 
   .level-badge {
     font-size: 9px;
@@ -860,7 +863,19 @@
   }
 
   .med-desc { font-size: 11px; color: var(--faint); line-height: 1.6; }
-  .med-side { display: flex; flex-direction: column; align-items: flex-end; gap: 7px; }
+  /* правая колонка вне потока: заголовок получает всю ширину карточки
+     (в потоке она + замок отнимали до 100px — «Исцеление отношений с мамой»
+     физически не помещалось в одну строку, замерено: заголовку нужно 202px) */
+  .med-side {
+    position: absolute;
+    right: 48px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 7px;
+  }
   .fav-heart {
     width: 15px; height: 14px;
     fill: none;
@@ -953,7 +968,7 @@
      только у закрытых практик — карточки с подпиской и без выглядели по-разному */
   .lock-chip {
     position: absolute;
-    right: 33px;
+    right: 28px;
     top: 50%;
     transform: translateY(-50%);
     opacity: 0.75;
@@ -4900,7 +4915,7 @@ const FOUNDING = true;
 
 // Валютная оплата через Lava.top ($ / €). Ссылки на подписки:
 // стандарт: $39/мес · $329/год; основательницы: $25/мес · $259/год (период выбирается на странице Lava)
-const APP_BUILD = 75; // внутренняя метка, в интерфейсе не показывается // метка сборки: внизу Пути, детектор кэша Telegram
+const APP_BUILD = 76; // внутренняя метка, в интерфейсе не показывается // метка сборки: внизу Пути, детектор кэша Telegram
 
 // клавиатура iOS: поле email в фокусе → шторка поднимается наверх
 document.querySelectorAll('.claim-input').forEach(inp => {
