@@ -12,7 +12,7 @@
   :root {
     --abyss: #0c0e1a;
     --ink: #e8e5f0;
-    --soft-ink: #a29fb8;
+    --soft-ink: #b6b2c9;
     --faint: #6d6a85;
     --pearl: #d9d4e8;
     --gold: #c9ae7d;
@@ -261,23 +261,30 @@
   /* ===== GLASS ===== */
   .glass-card {
     background:
+      linear-gradient(115deg, rgba(255,255,255,0.085), transparent 34%),
       linear-gradient(180deg, rgba(255,255,255,0.055), transparent 26%),
       linear-gradient(155deg, rgba(255,255,255,0.075), rgba(255,255,255,0.035) 55%, rgba(139,125,190,0.045));
     backdrop-filter: blur(28px) saturate(1.4);
     -webkit-backdrop-filter: blur(28px) saturate(1.4);
-    border: 1px solid var(--glass-border);
-    border-radius: 26px;
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    border-radius: 30px;
     box-shadow: var(--glass-shadow), inset 0 1px 0 rgba(255,255,255,0.20);
     position: relative;
     overflow: hidden;
   }
 
+  /* градиентная кромка: верх ловит свет, низ растворяется — стекло обретает толщину */
   .glass-card::before {
     content: '';
     position: absolute;
-    top: 0; left: 8%; right: 8%;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, var(--glass-highlight), transparent);
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.32), rgba(255,255,255,0.10) 38%, rgba(255,255,255,0.02) 82%);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
   }
 
   .glass-pill {
@@ -632,10 +639,46 @@
     margin-bottom: 18px;
   }
 
-  .med-list { display: flex; flex-direction: column; gap: 16px; }
+  .med-list { display: flex; flex-direction: column; gap: 20px; }
+
+  /* карусель шагов на Сегодня: лёгкое стекло без blur — бережём прокрутку */
+  .path-carousel {
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    padding: 4px 2px 10px;
+    margin: 0 -2px 18px;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .path-carousel::-webkit-scrollbar { display: none; }
+  .pc-card {
+    min-width: 128px;
+    padding: 15px 16px 13px;
+    border-radius: 24px;
+    background:
+      linear-gradient(115deg, rgba(255,255,255,0.07), transparent 40%),
+      linear-gradient(165deg, rgba(255,255,255,0.06), rgba(139,125,190,0.05));
+    border: 1px solid rgba(255,255,255,0.10);
+    box-shadow: 0 8px 24px rgba(0,0,5,0.3), inset 0 1px 0 rgba(255,255,255,0.16);
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: transform 0.25s ease;
+  }
+  .pc-card:active { transform: scale(0.96); }
+  .pc-glyph { width: 18px; height: 18px; color: var(--gold); opacity: 0.9; margin-bottom: 9px; }
+  .pc-glyph svg { width: 100%; height: 100%; }
+  .pc-step { font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--faint); margin-bottom: 3px; }
+  .pc-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 15.5px;
+    color: var(--ink);
+    white-space: nowrap;
+  }
+  .pc-count { font-size: 10.5px; color: var(--faint); margin-top: 4px; }
 
   .med-card {
-    padding: 18px 20px;
+    padding: 21px 22px;
     display: flex;
     align-items: center;
     gap: 16px;
@@ -658,6 +701,27 @@
   }
 
   .med-body { flex: 1; min-width: 0; }
+
+  .step-glyph {
+    display: inline-flex;
+    width: 14px; height: 14px;
+    margin-right: 9px;
+    vertical-align: -1px;
+    color: var(--gold);
+    opacity: 0.85;
+  }
+  .step-glyph svg { width: 100%; height: 100%; }
+
+  .med-arrow {
+    align-self: center;
+    margin-left: 2px;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px;
+    line-height: 1;
+    color: var(--gold);
+    opacity: 0.5;
+    flex-shrink: 0;
+  }
 
   .med-name {
     font-family: 'Cormorant Garamond', serif;
@@ -721,7 +785,7 @@
     padding: 2px 9px;
   }
 
-  .med-desc { font-size: 11px; color: var(--faint); }
+  .med-desc { font-size: 11px; color: var(--faint); line-height: 1.6; }
   .med-side { display: flex; flex-direction: column; align-items: flex-end; gap: 7px; }
   .fav-heart {
     width: 15px; height: 14px;
@@ -1697,7 +1761,7 @@
 
   .fp-minimize {
     position: absolute;
-    top: calc(26px + env(safe-area-inset-top) + var(--tg-content-safe-area-inset-top, 0px));
+    top: calc(38px + env(safe-area-inset-top) + var(--tg-content-safe-area-inset-top, 0px));
     left: 22px;
     width: 42px; height: 42px;
     border-radius: 50%;
@@ -1712,7 +1776,7 @@
   /* сердечко практики — зеркально кнопке сворачивания */
   .fp-fav {
     position: absolute;
-    top: calc(26px + env(safe-area-inset-top) + var(--tg-content-safe-area-inset-top, 0px));
+    top: calc(38px + env(safe-area-inset-top) + var(--tg-content-safe-area-inset-top, 0px));
     right: 22px;
     width: 42px; height: 42px;
     border-radius: 50%;
@@ -2275,6 +2339,9 @@
       </div>
     </div>
 
+    <div class="section-eyebrow" style="margin-top:22px">Продолжить путь</div>
+    <div class="path-carousel" id="pathCarousel"></div>
+
     <div class="glass-card thought-card">
       <div class="thought-eyebrow">Мысль дня</div>
       <div class="thought-text" id="thoughtText"></div>
@@ -2735,7 +2802,7 @@ if (tg) {
       // ПОВЕРХ приложения. iOS часто присылает только высоту статус-бара (~47–59px)
       // без высоты ряда кнопок — прежняя проверка top < 40 это пропускала,
       // и кнопки плеера прятались под стрелками. Теперь минимум = полный ряд.
-      const minTop = tg.platform === 'ios' ? 102 : 86;
+      const minTop = tg.platform === 'ios' ? 128 : 106;
       if (tg.isFullscreen && top < minTop) top = minTop;
       if (tg.isFullscreen) top += 6; // воздух под кнопками Telegram
       const bottom = (ca.bottom || 0);
@@ -3321,7 +3388,7 @@ function renderMeds() {
       card.innerHTML = `
         <div class="med-icon">${(m.free || subActive) ? `<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" style="margin-left:2px"><path d="M7.5 5.2c0-.9 1-1.5 1.8-1L19 11a1.2 1.2 0 0 1 0 2L9.3 19.8c-.8.5-1.8-.1-1.8-1V5.2Z"/></svg>` : '✦'}</div>
         <div class="med-body">
-          <div class="med-name">${m.name}</div>
+          <div class="med-name"><span class="step-glyph">${stepGlyph(m)}</span>${m.name}</div>
           <div class="med-tags">
             <span class="med-desc">${m.desc}</span>
           </div>
@@ -3332,14 +3399,49 @@ function renderMeds() {
           </svg>
           <div class="med-dur">${m.dur}</div>
         </div>
+        <div class="med-arrow">›</div>
         ${(m.free || subActive) ? '' : '<div class="lock-chip"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="5" y="10.6" width="14" height="9.8" rx="3.4" stroke="rgba(201,174,125,0.8)" stroke-width="1.5"/><path d="M8.3 10.6V7.9c0-2.3 1.6-4.1 3.7-4.1s3.7 1.8 3.7 4.1v2.7" stroke="rgba(201,174,125,0.8)" stroke-width="1.5" stroke-linecap="round"/><circle cx="12" cy="15.5" r="1.25" fill="rgba(201,174,125,0.85)"/></svg></div>'}
       `;
       list.appendChild(card);
     });
 }
 
+// якорь-пиктограммы шагов: тонкие золотые знаки, одна линия — один шаг
+const STEP_GLYPHS = {
+  1: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="2.6" fill="currentColor" stroke="none"/></svg>',
+  2: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M3 12c3-5.4 6-5.4 9 0s6 5.4 9 0"/></svg>',
+  3: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M12 4l1.9 6.1L20 12l-6.1 1.9L12 20l-1.9-6.1L4 12l6.1-1.9Z"/></svg>',
+  4: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2.6 12S6.2 6.6 12 6.6 21.4 12 21.4 12 17.8 17.4 12 17.4 2.6 12 2.6 12Z"/><circle cx="12" cy="12" r="2.5"/></svg>',
+  5: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M12 12a1.7 1.7 0 0 0 1.7-1.7A3.3 3.3 0 0 0 10.3 7 5.7 5.7 0 0 0 4.8 12.7 8 8 0 0 0 12.9 20.4 9.6 9.6 0 0 0 21 12.6"/></svg>',
+  0: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="7.2"/><circle cx="12" cy="12" r="1.9" fill="currentColor" stroke="none"/><path d="M12 1.8v2.4M12 19.8v2.4" stroke-linecap="round"/></svg>',
+};
+function stepGlyph(m) {
+  const match = /Шаг\s*(\d)/.exec(m.level || m.step || '');
+  return STEP_GLYPHS[match ? Number(match[1]) : 0] || STEP_GLYPHS[0];
+}
+
+function renderPathCarousel() {
+  const box = document.getElementById('pathCarousel');
+  if (!box) return;
+  box.innerHTML = '';
+  categories.filter(c => c.startsWith('Шаг')).forEach(cat => {
+    const n = /Шаг\s*(\d)/.exec(cat)[1];
+    const short = cat.split('·')[1].trim();
+    const cnt = meditations.filter(m => m.step === cat).length;
+    const el = document.createElement('div');
+    el.className = 'pc-card';
+    el.innerHTML = `<div class="pc-glyph">${STEP_GLYPHS[Number(n)]}</div>
+      <div class="pc-step">Шаг ${n}</div>
+      <div class="pc-name">${short}</div>
+      <div class="pc-count">${cnt ? cnt + (cnt === 1 ? ' практика' : cnt < 5 ? ' практики' : ' практик') : 'скоро'}</div>`;
+    el.onclick = () => { haptic('light'); activeCat = cat; renderCats(); renderMeds(); nav('library'); };
+    box.appendChild(el);
+  });
+}
+
 renderCats();
 renderMeds();
+renderPathCarousel();
 
 // ===== SOUND ENGINE (Web Audio, без файлов) =====
 let audioCtx = null;
@@ -4353,7 +4455,7 @@ const FOUNDING = true;
 
 // Валютная оплата через Lava.top ($ / €). Ссылки на подписки:
 // стандарт: $39/мес · $329/год; основательницы: $25/мес · $259/год (период выбирается на странице Lava)
-const APP_BUILD = 64; // внутренняя метка, в интерфейсе не показывается // метка сборки: внизу Пути, детектор кэша Telegram
+const APP_BUILD = 66; // внутренняя метка, в интерфейсе не показывается // метка сборки: внизу Пути, детектор кэша Telegram
 
 // клавиатура iOS: поле email в фокусе → шторка поднимается наверх
 document.querySelectorAll('.claim-input').forEach(inp => {
