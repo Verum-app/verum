@@ -4059,7 +4059,9 @@ function scheduleChime(ctx, dest, base) {
   });
 }
 
-let chimeAudio = null, chimeUrl = null, chimeRendering = false;
+let chimeAudio = null;   // якорь: беззвучный цикл держит аудиосессию всю практику
+let chimeBell = null;    // колокольчик: отдельный элемент, разблокирован в жесте, заряжен заранее
+let chimeUrl = null, chimeRendering = false, bellArmed = false;
 
 // беззвучный цикл: играет всю практику и держит аудиосессию открытой —
 // благодаря ему мелодия завершения звучит и на беззвучном режиме, и с погашенным
@@ -4096,8 +4098,11 @@ function bufferToWav(buf) {
 }
 
 function prepareChime() {
-  // вызывается по касанию «старт»: разблокирует медиа-элемент (немедленный play
-  // беззвучного цикла — в жесте пользователя), греет Web Audio и рендерит мелодию
+  // вызывается по касанию «старт» (жест пользователя):
+  //  1) якорь — беззвучный цикл, держит аудиосессию открытой всю практику;
+  //  2) колокольчик — СВОЙ элемент: прямо в жесте проигрывает короткую тишину
+  //     (это выдаёт ему право звучать дальше без нового жеста), а как только
+  //     мелодия отрендерена — она заряжается в него заранее, задолго до финала.
   try {
     if (!chimeAudio) {
       chimeAudio = new Audio();
@@ -4105,6 +4110,23 @@ function prepareChime() {
       chimeAudio.preload = 'auto';
     }
     startChimeKeepalive();
+
+    if (!chimeBell) {
+      chimeBell = new Audio();
+      chimeBell.setAttribute('playsinline', '');
+      chimeBell.preload = 'auto';
+    }
+    if (!bellArmed) {
+      bellArmed = true;
+      chimeBell.loop = false;
+      chimeBell.src = SILENT_LOOP;      // короткая тишина: играет и сама заканчивается
+      const p0 = chimeBell.play();
+      if (p0 && p0.catch) p0.catch(() => {});
+    } else if (chimeUrl && chimeBell.src !== chimeUrl) {
+      chimeBell.src = chimeUrl;         // повторный старт таймера: мелодия уже готова
+      try { chimeBell.load(); } catch (e) {}
+    }
+
     try { ensureCtx(); } catch (e) {}
     if (chimeUrl || chimeRendering) return;
     chimeRendering = true;
@@ -4115,14 +4137,37 @@ function prepareChime() {
     scheduleChime(octx, octx.destination, 0);
     octx.startRendering().then((buf) => {
       chimeUrl = URL.createObjectURL(new Blob([bufferToWav(buf)], { type: 'audio/wav' }));
-      // src не трогаем: сейчас крутится беззвучный якорь — мелодию подставим в момент финала
+      // заряжаем колокольчик СРАЗУ — к финалу мелодия уже сидит в элементе
+      try {
+        if (chimeBell) { chimeBell.src = chimeUrl; chimeBell.load(); }
+      } catch (e) {}
     }).catch(() => { chimeRendering = false; });
   } catch (e) {}
 }
 
 function playCompletionChime() {
-  // финал: якорь останавливается, на его место встаёт мелодия — продолжение
-  // уже открытой аудиосессии, его не глушат ни беззвучный режим, ни тёмный экран
+  // финал: звучит заранее заряженный и разблокированный колокольчик.
+  // Якорь глушим ПОСЛЕ его старта — аудиосессия ни на миг не прерывается.
+  try {
+    if (chimeBell && chimeUrl) {
+      if (chimeBell.src !== chimeUrl) { chimeBell.src = chimeUrl; }
+      chimeBell.currentTime = 0;
+      chimeBell.volume = 1;
+      const p = chimeBell.play();
+      if (p && p.then) {
+        p.then(() => { setTimeout(stopChimeKeepalive, 400); })
+         .catch(() => { legacyChime(); });
+      } else {
+        setTimeout(stopChimeKeepalive, 400);
+      }
+      return;
+    }
+  } catch (e) {}
+  legacyChime();
+}
+
+function legacyChime() {
+  // запасной путь №1: подмена src у якоря; №2: живой синтез
   try {
     if (chimeAudio && chimeUrl) {
       chimeAudio.loop = false;
@@ -4915,7 +4960,7 @@ const FOUNDING = true;
 
 // Валютная оплата через Lava.top ($ / €). Ссылки на подписки:
 // стандарт: $39/мес · $329/год; основательницы: $25/мес · $259/год (период выбирается на странице Lava)
-const APP_BUILD = 76; // внутренняя метка, в интерфейсе не показывается // метка сборки: внизу Пути, детектор кэша Telegram
+const APP_BUILD = 77; // внутренняя метка, в интерфейсе не показывается // метка сборки: внизу Пути, детектор кэша Telegram
 
 // клавиатура iOS: поле email в фокусе → шторка поднимается наверх
 document.querySelectorAll('.claim-input').forEach(inp => {
