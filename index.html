@@ -165,7 +165,6 @@
       linear-gradient(155deg, rgba(36,38,64,0.82), rgba(28,30,52,0.80) 55%, rgba(33,31,58,0.82));
   }
   .droid .glass-pill { background: rgba(28,30,52,0.85); }
-  .droid .glass-pill.gold { background: linear-gradient(135deg, rgba(226,199,146,0.28), rgba(201,174,125,0.16)); }
   .droid .dock { background: rgba(18,20,38,0.94); }
   .droid .paysheet { background: rgba(8,10,20,0.84); }
   .droid .paysheet-card { background: rgba(22,24,44,0.985); }
@@ -176,7 +175,8 @@
       rgba(10, 12, 24, 0.985);
   }
   /* полосы прокрутки Android отъедали ширину — окна казались разной ширины */
-  .droid ::-webkit-scrollbar { width: 0; height: 0; display: none; }
+  .droid::-webkit-scrollbar, .droid ::-webkit-scrollbar { width: 0; height: 0; display: none; }
+  html.droid { scrollbar-width: none; }
 
   .stars {
     background-image:
@@ -343,11 +343,17 @@
   .glass-pill:active { transform: scale(0.96); }
 
   .glass-pill.gold {
-    background: linear-gradient(135deg, rgba(226,199,146,0.26), rgba(201,174,125,0.13));
-    color: #e9d6ac;
-    border-color: rgba(238,216,170,0.55);
-    text-shadow: 0 0 12px rgba(238,216,170,0.28);
-    box-shadow: 0 0 18px rgba(226,200,148,0.16), inset 0 1px 1px rgba(255,255,255,0.18);
+    border: 1px solid rgba(242,224,182,0.85);
+    background:
+      linear-gradient(115deg, rgba(255,255,255,0.16), transparent 42%),
+      linear-gradient(180deg, rgba(246,228,186,0.46), rgba(212,178,120,0.32) 55%, rgba(184,150,98,0.26));
+    color: #f6e7c2;
+    text-shadow: 0 0 14px rgba(242,224,182,0.4);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.38),
+      inset 0 0 26px rgba(242,224,182,0.18),
+      0 0 22px rgba(234,206,150,0.26),
+      0 8px 26px rgba(0,0,5,0.35);
   }
 
   .screen { display: none; }
@@ -1622,9 +1628,17 @@
     padding: 15px;
     margin-bottom: 10px;
     border-radius: 50px;
-    border: 1px solid rgba(201,174,125,0.45);
-    background: linear-gradient(135deg, rgba(201,174,125,0.3), rgba(176,146,95,0.16));
-    color: var(--gold);
+    border: 1px solid rgba(242,224,182,0.85);
+    background:
+      linear-gradient(115deg, rgba(255,255,255,0.16), transparent 42%),
+      linear-gradient(180deg, rgba(246,228,186,0.46), rgba(212,178,120,0.32) 55%, rgba(184,150,98,0.26));
+    color: #f6e7c2;
+    text-shadow: 0 0 14px rgba(242,224,182,0.4);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.38),
+      inset 0 0 26px rgba(242,224,182,0.18),
+      0 0 22px rgba(234,206,150,0.26),
+      0 8px 26px rgba(0,0,5,0.35);
     font-family: 'Manrope', sans-serif;
     font-weight: 400;
     font-size: 13px;
@@ -1856,9 +1870,17 @@
     transition: all 0.25s ease;
   }
   .cur-pill.active {
-    border-color: rgba(201,174,125,0.55);
-    background: linear-gradient(150deg, rgba(201,174,125,0.22), rgba(201,174,125,0.08));
-    color: var(--gold);
+    border: 1px solid rgba(242,224,182,0.85);
+    background:
+      linear-gradient(115deg, rgba(255,255,255,0.16), transparent 42%),
+      linear-gradient(180deg, rgba(246,228,186,0.46), rgba(212,178,120,0.32) 55%, rgba(184,150,98,0.26));
+    color: #f6e7c2;
+    text-shadow: 0 0 14px rgba(242,224,182,0.4);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.38),
+      inset 0 0 26px rgba(242,224,182,0.18),
+      0 0 22px rgba(234,206,150,0.26),
+      0 8px 26px rgba(0,0,5,0.35);
   }
 
   .ps-support {
@@ -1900,20 +1922,22 @@
     padding: 18px;
     margin-bottom: 14px;
     border-radius: 50px;
-    border: 1px solid rgba(238,216,170,0.72);
-    background: linear-gradient(135deg, rgba(226,199,146,0.30), rgba(201,174,125,0.18) 55%, rgba(176,146,95,0.12));
-    color: #f0e0ba;
-    text-shadow: 0 0 14px rgba(238,216,170,0.35);
+    border: 1px solid rgba(242,224,182,0.85);
+    background:
+      linear-gradient(115deg, rgba(255,255,255,0.16), transparent 42%),
+      linear-gradient(180deg, rgba(246,228,186,0.46), rgba(212,178,120,0.32) 55%, rgba(184,150,98,0.26));
+    color: #f6e7c2;
+    text-shadow: 0 0 14px rgba(242,224,182,0.4);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.38),
+      inset 0 0 26px rgba(242,224,182,0.18),
+      0 0 22px rgba(234,206,150,0.26),
+      0 8px 26px rgba(0,0,5,0.35);
     font-family: 'Manrope', sans-serif;
     font-weight: 400;
     font-size: 13.5px;
     letter-spacing: 0.16em;
     cursor: pointer;
-    box-shadow:
-      0 0 22px rgba(226,200,148,0.22),
-      0 10px 34px rgba(0,0,5,0.35),
-      inset 0 0 18px rgba(238,216,170,0.10),
-      inset 0 1px 0 rgba(255,255,255,0.22);
   }
 
   .unlock-cta::after {
@@ -1922,7 +1946,7 @@
     inset: -1px;
     border-radius: inherit;
     pointer-events: none;
-    box-shadow: 0 0 26px rgba(238,216,170,0.34), 0 0 70px rgba(238,216,170,0.12), inset 0 0 16px rgba(255,246,222,0.16);
+    box-shadow: 0 0 28px rgba(242,224,182,0.36), 0 0 72px rgba(242,224,182,0.13), inset 0 0 18px rgba(255,246,222,0.18);
     opacity: 0;
     animation: pearlBreath 5s ease-in-out infinite;
   }
@@ -2925,7 +2949,7 @@
 <div class="paysheet" id="lavasheet" onclick="if(event.target===this)closeLava()">
   <div class="paysheet-card">
     <div class="ps-title">Оплата картой $ / €</div>
-    <div class="ps-sub">введите email — на него придёт чек, а доступ откроется сам после оплаты</div>
+    <div class="ps-sub">введите email — на него придёт чек, а доступ откроется автоматически после оплаты</div>
     <input class="claim-input" id="lavaEmail" type="email" inputmode="email" autocomplete="email" placeholder="ваш@email.com">
     <div class="cur-row">
       <div class="cur-pill active" id="curUSD" onclick="setCur('USD')">$ —</div>
@@ -2951,7 +2975,6 @@
 <div class="paysheet" id="fbsheet" onclick="if(event.target===this)closeFeedback()">
   <div class="paysheet-card">
     <div class="ps-title">Поделитесь впечатлениями</div>
-    <div class="ps-sub" style="color: var(--gold)">Мне важно каждое слово. Это анонимно — сообщение уйдёт Анне без вашего имени</div>
     <textarea class="claim-input fb-input" id="fbText" rows="5" placeholder="Что вы почувствовали?&#10;Как меняется ваше состояние и жизнь после практик?&#10;Как вам приложение?"></textarea>
     <label class="fb-pub"><input type="checkbox" id="fbPub"><span>можно опубликовать анонимно</span></label>
     <button class="ps-btn" id="fbBtn" onclick="submitFeedback()">Отправить 🤍</button>
@@ -3910,6 +3933,7 @@ document.getElementById('doneBtn').addEventListener('click', () => {
 let timerEndAt = null;
 
 function startTimer() {
+  prepareChime(); // мелодия готовится заранее, пока идёт практика
   timerRunning = true;
   timerEndAt = Date.now() + timerRemaining * 1000;
   document.getElementById('playBtn').innerHTML = ICON_PAUSE;
@@ -3946,29 +3970,93 @@ function resetTimer() {
   document.getElementById('glassSphere').className = 'glass-sphere';
 }
 
-// колокольчик завершения: три мягкие ноты (соль → до → ми), медленный вдох каждой
-// и долгое затухание — спокойнее «Пробуждения», просто тихое «вы вернулись»
+// ===== мелодия завершения таймера =====
+// Пять нот пентатоники, нисходящая колыбельная (до → ля → соль → ми → соль):
+// медленный вдох каждой ноты, лёгкая тёплая расстройка и долгое растворение —
+// ~10 секунд тихого света, никакого «метро». Чтобы звучала и на беззвучном
+// режиме телефона, мелодия заранее рендерится в WAV и играет через
+// медиа-элемент — тем же путём, что и медитации (Web Audio беззвучный режим глушит).
+const CHIME_NOTES = [[523.25, 0.0], [440.0, 1.05], [392.0, 2.15], [329.63, 3.4], [392.0, 4.9]];
+
+function scheduleChime(ctx, dest, base) {
+  CHIME_NOTES.forEach(([f, t0], idx) => {
+    const t = base + t0;
+    const last = idx === CHIME_NOTES.length - 1;
+    // основной тон + тихая октава + едва расстроенный двойник — тёплый, «дышащий» тембр
+    [[f, 0.075], [f * 2, 0.014], [f * 1.004, 0.03]].forEach(([freq, vol]) => {
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.type = 'sine';
+      o.frequency.value = freq;
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.linearRampToValueAtTime(vol, t + 0.35);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + (last ? 5.4 : 4.4));
+      o.connect(g);
+      g.connect(dest);
+      o.start(t);
+      o.stop(t + (last ? 5.6 : 4.6));
+    });
+  });
+}
+
+let chimeAudio = null, chimeUrl = null, chimeRendering = false;
+
+function bufferToWav(buf) {
+  const n = buf.length, data = buf.getChannelData(0);
+  const out = new DataView(new ArrayBuffer(44 + n * 2));
+  function ws(o, str) { for (let i = 0; i < str.length; i++) out.setUint8(o + i, str.charCodeAt(i)); }
+  ws(0, 'RIFF'); out.setUint32(4, 36 + n * 2, true); ws(8, 'WAVEfmt '); out.setUint32(16, 16, true);
+  out.setUint16(20, 1, true); out.setUint16(22, 1, true); out.setUint32(24, buf.sampleRate, true);
+  out.setUint32(28, buf.sampleRate * 2, true); out.setUint16(32, 2, true); out.setUint16(34, 16, true);
+  ws(36, 'data'); out.setUint32(40, n * 2, true);
+  for (let i = 0; i < n; i++) {
+    const v = Math.max(-1, Math.min(1, data[i]));
+    out.setInt16(44 + i * 2, v < 0 ? v * 0x8000 : v * 0x7FFF, true);
+  }
+  return out.buffer;
+}
+
+function prepareChime() {
+  // вызывается по касанию «старт»: разблокирует медиа-элемент и рендерит мелодию заранее
+  try {
+    if (!chimeAudio) {
+      chimeAudio = new Audio();
+      chimeAudio.setAttribute('playsinline', '');
+      chimeAudio.preload = 'auto';
+    }
+    if (chimeUrl || chimeRendering) return;
+    chimeRendering = true;
+    const OAC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+    if (!OAC) { chimeRendering = false; return; }
+    const sr = 22050;
+    const octx = new OAC(1, sr * 11, sr);
+    scheduleChime(octx, octx.destination, 0);
+    octx.startRendering().then((buf) => {
+      chimeUrl = URL.createObjectURL(new Blob([bufferToWav(buf)], { type: 'audio/wav' }));
+      chimeAudio.src = chimeUrl;
+      try { chimeAudio.load(); } catch (e) {}
+    }).catch(() => { chimeRendering = false; });
+  } catch (e) {}
+}
+
 function playCompletionChime() {
+  // медиа-путь: звучит даже на беззвучном; живой синтез — запасной
+  try {
+    if (chimeAudio && chimeUrl) {
+      chimeAudio.currentTime = 0;
+      chimeAudio.volume = 1;
+      const p = chimeAudio.play();
+      if (p && p.catch) p.catch(() => { liveChime(); });
+      return;
+    }
+  } catch (e) {}
+  liveChime();
+}
+
+function liveChime() {
   try {
     ensureCtx();
-    const t0 = audioCtx.currentTime + 0.05;
-    [[392.0, 0], [523.25, 0.65], [659.25, 1.3]].forEach(([f, dt]) => {
-      const t = t0 + dt;
-      // основной тон + едва слышная октава сверху: тёплый «стеклянный» тембр
-      [[f, 0.09], [f * 2, 0.02]].forEach(([freq, vol]) => {
-        const o = audioCtx.createOscillator();
-        const g = audioCtx.createGain();
-        o.type = 'sine';
-        o.frequency.value = freq;
-        g.gain.setValueAtTime(0.0001, t);
-        g.gain.linearRampToValueAtTime(vol, t + 0.22);
-        g.gain.exponentialRampToValueAtTime(0.0001, t + 4.5);
-        o.connect(g);
-        g.connect(audioCtx.destination);
-        o.start(t);
-        o.stop(t + 4.7);
-      });
-    });
+    scheduleChime(audioCtx, audioCtx.destination, audioCtx.currentTime + 0.05);
   } catch (e) {}
 }
 
@@ -4721,7 +4809,7 @@ function choosePlan(plan) {
   haptic('light');
   currentPlan = plan;
   document.getElementById('psTitle').textContent = FOUNDING
-    ? (plan === 'year' ? 'Год · 19 900 ₽ · первые 20' : 'Месяц · 1 900 ₽ · первые 20')
+    ? (plan === 'year' ? 'Год · 19 900 ₽ · первые 20 подписчиц' : 'Месяц · 1 900 ₽ · первые 20 подписчиц')
     : (plan === 'year' ? 'Год · 24 900 ₽' : 'Месяц · 2 900 ₽');
   document.getElementById('paysheet').classList.add('show');
   syncBack();
@@ -4742,7 +4830,7 @@ const FOUNDING = true;
 
 // Валютная оплата через Lava.top ($ / €). Ссылки на подписки:
 // стандарт: $39/мес · $329/год; основательницы: $25/мес · $259/год (период выбирается на странице Lava)
-const APP_BUILD = 71; // внутренняя метка, в интерфейсе не показывается // метка сборки: внизу Пути, детектор кэша Telegram
+const APP_BUILD = 72; // внутренняя метка, в интерфейсе не показывается // метка сборки: внизу Пути, детектор кэша Telegram
 
 // клавиатура iOS: поле email в фокусе → шторка поднимается наверх
 document.querySelectorAll('.claim-input').forEach(inp => {
@@ -4819,7 +4907,7 @@ async function submitLavaPay() {
     if (data.ok && data.url) {
       haptic('success');
       closeLava();
-      showToast('После оплаты вернитесь сюда — доступ откроется сам ✨', false, 5000);
+      showToast('После оплаты вернитесь сюда — доступ откроется автоматически ✨', false, 5000);
       if (tg && tg.openLink) tg.openLink(data.url);
       else window.open(data.url, '_blank');
     } else if (data.reason === 'often') {
