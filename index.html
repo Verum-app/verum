@@ -165,6 +165,12 @@
       linear-gradient(155deg, rgba(36,38,64,0.82), rgba(28,30,52,0.80) 55%, rgba(33,31,58,0.82));
   }
   .droid .glass-pill { background: rgba(28,30,52,0.85); }
+  .droid .pc-card {
+    background:
+      linear-gradient(115deg, rgba(255,255,255,0.10), transparent 34%),
+      linear-gradient(180deg, rgba(255,255,255,0.06), transparent 26%),
+      linear-gradient(155deg, rgba(36,38,64,0.82), rgba(28,30,52,0.80) 55%, rgba(33,31,58,0.82));
+  }
   .droid .dock { background: rgba(18,20,38,0.94); }
   .droid .paysheet { background: rgba(8,10,20,0.84); }
   .droid .paysheet-card { background: rgba(22,24,44,0.985); }
@@ -174,6 +180,11 @@
       radial-gradient(ellipse 120% 70% at 50% -10%, rgba(50,45,95,0.55), transparent 60%),
       rgba(10, 12, 24, 0.985);
   }
+  /* длинные названия («Исцеление отношений с мамой», «Поток · утренняя медитация»)
+     на Android переносились: шрифты там шире. Название чуть компактнее, карточке — больше места */
+  .droid .med-card { padding-right: 24px; gap: 13px; }
+  .droid .med-name { font-size: 15px; letter-spacing: -0.01em; }
+
   /* полосы прокрутки Android отъедали ширину — окна казались разной ширины */
   .droid::-webkit-scrollbar, .droid ::-webkit-scrollbar { width: 0; height: 0; display: none; }
   html.droid { scrollbar-width: none; }
@@ -700,10 +711,13 @@
     padding: 15px 16px 13px;
     border-radius: 24px;
     background:
-      linear-gradient(115deg, rgba(255,255,255,0.125), transparent 40%),
-      linear-gradient(165deg, rgba(255,255,255,0.115), rgba(255,255,255,0.06) 55%, rgba(139,125,190,0.08));
-    border: 1px solid rgba(255,255,255,0.14);
-    box-shadow: 0 8px 24px rgba(0,0,5,0.3), inset 0 1px 0 rgba(255,255,255,0.18);
+      linear-gradient(115deg, rgba(255,255,255,0.085), transparent 34%),
+      linear-gradient(180deg, rgba(255,255,255,0.055), transparent 26%),
+      linear-gradient(155deg, rgba(255,255,255,0.075), rgba(255,255,255,0.035) 55%, rgba(139,125,190,0.045));
+    backdrop-filter: blur(28px) saturate(1.4);
+    -webkit-backdrop-filter: blur(28px) saturate(1.4);
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    box-shadow: var(--glass-shadow), inset 0 1px 0 rgba(255,255,255,0.20);
     cursor: pointer;
     flex-shrink: 0;
     transition: transform 0.25s ease;
@@ -2975,6 +2989,7 @@
 <div class="paysheet" id="fbsheet" onclick="if(event.target===this)closeFeedback()">
   <div class="paysheet-card">
     <div class="ps-title">Поделитесь впечатлениями</div>
+    <div class="ps-sub" style="color: var(--gold)">Это анонимно — сообщение уйдёт Анне без вашего имени</div>
     <textarea class="claim-input fb-input" id="fbText" rows="5" placeholder="Что вы почувствовали?&#10;Как меняется ваше состояние и жизнь после практик?&#10;Как вам приложение?"></textarea>
     <label class="fb-pub"><input type="checkbox" id="fbPub"><span>можно опубликовать анонимно</span></label>
     <button class="ps-btn" id="fbBtn" onclick="submitFeedback()">Отправить 🤍</button>
@@ -4830,7 +4845,7 @@ const FOUNDING = true;
 
 // Валютная оплата через Lava.top ($ / €). Ссылки на подписки:
 // стандарт: $39/мес · $329/год; основательницы: $25/мес · $259/год (период выбирается на странице Lava)
-const APP_BUILD = 72; // внутренняя метка, в интерфейсе не показывается // метка сборки: внизу Пути, детектор кэша Telegram
+const APP_BUILD = 73; // внутренняя метка, в интерфейсе не показывается // метка сборки: внизу Пути, детектор кэша Telegram
 
 // клавиатура iOS: поле email в фокусе → шторка поднимается наверх
 document.querySelectorAll('.claim-input').forEach(inp => {
