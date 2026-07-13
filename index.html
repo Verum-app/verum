@@ -14,7 +14,7 @@
 /* Объявления шрифтов — в конце файла (сборка 57): сплэш появляется сразу, шрифты доезжают следом */
 
   :root {
-    --abyss: #051719;
+    --abyss: #05171a;
     --ink: #f2f6f6;
     --soft-ink: #c1d2d3;
     --faint: #7c9294;
@@ -58,9 +58,9 @@
     inset: 0;
     z-index: -3;
     background:
-      radial-gradient(ellipse 130% 90% at 50% -15%, #05474c 0%, transparent 55%),
-      radial-gradient(ellipse 100% 60% at 85% 110%, #062e31 0%, transparent 60%),
-      linear-gradient(172deg, #11132400 0%, #031c1e 40%, #031a1b 100%);
+      radial-gradient(ellipse 130% 90% at 50% -15%, #05434c 0%, transparent 55%),
+      radial-gradient(ellipse 100% 60% at 85% 110%, #062c31 0%, transparent 60%),
+      linear-gradient(172deg, #11132400 0%, #031b1e 40%, #03181b 100%);
   }
 
   .backdrop::before, .backdrop::after {
@@ -73,14 +73,14 @@
   .backdrop::before {
     width: 90vw; height: 90vw;
     top: -28vw; right: -32vw;
-    background: radial-gradient(circle, rgba(86,177,183, 0.32) 0%, rgba(19,150,159, 0.12) 50%, transparent 75%);
+    background: radial-gradient(circle, rgba(86,172,183, 0.32) 0%, rgba(19,143,159, 0.12) 50%, transparent 75%);
     animation: drift1 30s ease-in-out infinite alternate;
   }
 
   .backdrop::after {
     width: 95vw; height: 95vw;
     bottom: -38vw; left: -32vw;
-    background: radial-gradient(circle, rgba(20,112,119, 0.3) 0%, rgba(160, 128, 75, 0.09) 55%, transparent 78%);
+    background: radial-gradient(circle, rgba(20,107,119, 0.3) 0%, rgba(160, 128, 75, 0.09) 55%, transparent 78%);
     animation: drift2 36s ease-in-out infinite alternate;
   }
 
@@ -99,7 +99,7 @@
     position: fixed;
     inset: 0;
     z-index: -1;
-    background: radial-gradient(ellipse 95% 85% at 50% 45%, transparent 55%, rgba(0,15,16, 0.55) 100%);
+    background: radial-gradient(ellipse 95% 85% at 50% 45%, transparent 55%, rgba(0,14,16, 0.55) 100%);
     pointer-events: none;
   }
 
@@ -128,7 +128,7 @@
   .au1 {
     width: 95vw; height: 95vw;
     left: -28vw; top: -10vh;
-    background: radial-gradient(circle closest-side, rgba(66,218,228,0.26), transparent 70%);
+    background: radial-gradient(circle closest-side, rgba(66,210,228,0.26), transparent 70%);
     animation: aur1 24s ease-in-out infinite alternate;
   }
   .au2 {
@@ -140,7 +140,7 @@
   .au3 {
     width: 110vw; height: 110vw;
     left: 0vw; bottom: -46vh;
-    background: radial-gradient(circle closest-side, rgba(109,232,241,0.12), transparent 72%);
+    background: radial-gradient(circle closest-side, rgba(109,226,241,0.12), transparent 72%);
     animation: aur3 36s ease-in-out infinite alternate;
   }
   @keyframes aur1 { to { transform: translate(26vw, 18vh) scale(1.22); } }
@@ -162,23 +162,23 @@
     background:
       linear-gradient(115deg, rgba(255,255,255,0.10), transparent 34%),
       linear-gradient(180deg, rgba(255,255,255,0.06), transparent 26%),
-      linear-gradient(155deg, rgba(13,68,72,0.82), rgba(9,56,59,0.80) 55%, rgba(10,62,66,0.82));
+      linear-gradient(155deg, rgba(13,65,72,0.82), rgba(9,53,59,0.80) 55%, rgba(10,59,66,0.82));
   }
-  .droid .glass-pill { background: rgba(9,56,59,0.85); }
+  .droid .glass-pill { background: rgba(9,53,59,0.85); }
   .droid .pc-card {
     background:
       linear-gradient(115deg, rgba(255,255,255,0.10), transparent 34%),
       linear-gradient(180deg, rgba(255,255,255,0.06), transparent 26%),
-      linear-gradient(155deg, rgba(13,68,72,0.82), rgba(9,56,59,0.80) 55%, rgba(10,62,66,0.82));
+      linear-gradient(155deg, rgba(13,65,72,0.82), rgba(9,53,59,0.80) 55%, rgba(10,59,66,0.82));
   }
-  .droid .dock { background: rgba(4,41,43,0.94); }
-  .droid .paysheet { background: rgba(1,22,23,0.84); }
-  .droid .paysheet-card { background: rgba(6,47,50,0.985); }
-  .droid .paywall { background: rgba(1,26,28,0.975); }
+  .droid .dock { background: rgba(4,39,43,0.94); }
+  .droid .paysheet { background: rgba(1,20,23,0.84); }
+  .droid .paysheet-card { background: rgba(6,45,50,0.985); }
+  .droid .paywall { background: rgba(1,25,28,0.975); }
   .droid .fullplayer {
     background:
-      radial-gradient(ellipse 120% 70% at 50% -10%, rgba(11,102,108,0.55), transparent 60%),
-      rgba(1,26,28, 0.985);
+      radial-gradient(ellipse 120% 70% at 50% -10%, rgba(11,97,108,0.55), transparent 60%),
+      rgba(1,25,28, 0.985);
   }
   /* длинные названия («Исцеление отношений с мамой», «Поток · утренняя медитация»)
      на Android переносились: шрифты там шире. Название чуть компактнее, карточке — больше места */
@@ -309,7 +309,7 @@
     background:
       linear-gradient(115deg, rgba(255,255,255,0.085), transparent 34%),
       linear-gradient(180deg, rgba(255,255,255,0.055), transparent 26%),
-      linear-gradient(155deg, rgba(255,255,255,0.075), rgba(255,255,255,0.035) 55%, rgba(118,191,197,0.045));
+      linear-gradient(155deg, rgba(255,255,255,0.075), rgba(255,255,255,0.035) 55%, rgba(118,187,197,0.045));
     backdrop-filter: blur(28px) saturate(1.4);
     -webkit-backdrop-filter: blur(28px) saturate(1.4);
     border: 1px solid rgba(255, 255, 255, 0.10);
@@ -422,10 +422,10 @@
   .play-orb {
     width: 58px; height: 58px;
     border-radius: 50%;
-    background: radial-gradient(circle at 35% 30%, rgba(220,224,224,0.22), rgba(118,191,197,0.12) 60%, rgba(201,174,125,0.08));
+    background: radial-gradient(circle at 35% 30%, rgba(220,224,224,0.22), rgba(118,187,197,0.12) 60%, rgba(201,174,125,0.08));
     backdrop-filter: blur(20px);
     border: 1px solid rgba(220,224,224,0.25);
-    box-shadow: 0 8px 28px rgba(0,4,4,0.4), 0 0 24px rgba(118,191,197,0.18), inset 0 1px 2px rgba(255,255,255,0.2);
+    box-shadow: 0 8px 28px rgba(0,4,4,0.4), 0 0 24px rgba(118,187,197,0.18), inset 0 1px 2px rgba(255,255,255,0.2);
     display: flex; align-items: center; justify-content: center;
     font-size: 18px;
     color: var(--pearl);
@@ -713,7 +713,7 @@
     background:
       linear-gradient(115deg, rgba(255,255,255,0.085), transparent 34%),
       linear-gradient(180deg, rgba(255,255,255,0.055), transparent 26%),
-      linear-gradient(155deg, rgba(255,255,255,0.075), rgba(255,255,255,0.035) 55%, rgba(118,191,197,0.045));
+      linear-gradient(155deg, rgba(255,255,255,0.075), rgba(255,255,255,0.035) 55%, rgba(118,187,197,0.045));
     backdrop-filter: blur(28px) saturate(1.4);
     -webkit-backdrop-filter: blur(28px) saturate(1.4);
     border: 1px solid rgba(255, 255, 255, 0.10);
@@ -763,7 +763,7 @@
     position: relative;
     width: 46px; height: 46px;
     border-radius: 50%;
-    background: radial-gradient(circle at 35% 30%, rgba(220,224,224,0.16), rgba(118,191,197,0.08));
+    background: radial-gradient(circle at 35% 30%, rgba(220,224,224,0.16), rgba(118,187,197,0.08));
     border: 1px solid rgba(220,224,224,0.18);
     display: flex; align-items: center; justify-content: center;
     font-size: 15px;
@@ -906,7 +906,7 @@
     right: -4px; bottom: -4px;
     width: 19px; height: 19px;
     border-radius: 50%;
-    background: rgba(4,41,43, 0.95);
+    background: rgba(4,39,43, 0.95);
     border: 1px solid rgba(201,174,125,0.45);
     display: flex; align-items: center; justify-content: center;
     color: var(--gold);
@@ -958,7 +958,7 @@
     cursor: pointer;
   }
   .hist-page.active {
-    color: #043437;
+    color: #043137;
     background: linear-gradient(180deg, #d3b98a, #b0925f);
     border-color: rgba(255,244,220,0.5);
     font-weight: 600;
@@ -1058,14 +1058,14 @@
     inset: 22px;
     border-radius: 50%;
     background:
-      radial-gradient(circle at 32% 28%, rgba(220,224,224,0.18), rgba(118,191,197,0.10) 45%, rgba(8,59,62,0.2) 80%);
+      radial-gradient(circle at 32% 28%, rgba(220,224,224,0.18), rgba(118,187,197,0.10) 45%, rgba(8,56,62,0.2) 80%);
     backdrop-filter: blur(14px);
     border: 1px solid rgba(220,224,224,0.16);
     box-shadow:
       0 20px 60px rgba(0,4,4,0.5),
-      0 0 60px rgba(118,191,197,0.15),
+      0 0 60px rgba(118,187,197,0.15),
       inset 0 2px 16px rgba(255,255,255,0.10),
-      inset 0 -12px 32px rgba(10,118,126,0.25);
+      inset 0 -12px 32px rgba(10,112,126,0.25);
     transition: transform 4s ease-in-out, box-shadow 4s ease-in-out;
   }
 
@@ -1073,9 +1073,9 @@
     transform: scale(1.06);
     box-shadow:
       0 20px 60px rgba(0,4,4,0.5),
-      0 0 90px rgba(118,191,197,0.30),
+      0 0 90px rgba(118,187,197,0.30),
       inset 0 2px 16px rgba(255,255,255,0.14),
-      inset 0 -12px 32px rgba(10,118,126,0.25);
+      inset 0 -12px 32px rgba(10,112,126,0.25);
   }
 
   .glass-sphere.exhale { transform: scale(0.96); }
@@ -1216,7 +1216,7 @@
   }
 
   .prog-card.featured {
-    background: linear-gradient(155deg, rgba(201,174,125,0.14), rgba(118,191,197,0.08) 60%, rgba(255,255,255,0.03));
+    background: linear-gradient(155deg, rgba(201,174,125,0.14), rgba(118,187,197,0.08) 60%, rgba(255,255,255,0.03));
     border-color: rgba(201,174,125,0.3);
   }
 
@@ -1348,7 +1348,7 @@
   }
   /* круги глубины: жемчуг → золото → сияние → аметист */
   .pm-c1 .pm-bar i {
-    background: linear-gradient(to right, rgba(184,210,212,0.7), rgba(229,233,233,0.9));
+    background: linear-gradient(to right, rgba(184,209,212,0.7), rgba(229,233,233,0.9));
     box-shadow: 0 0 8px rgba(220,224,224,0.35);
   }
   .pm-c1 .pm-count { color: var(--pearl); }
@@ -1364,11 +1364,11 @@
   .pm-c3 .pm-count { color: #eed9a4; }
   .pm-c3 .pm-name { color: var(--gold); }
   .pm-c4 .pm-bar i {
-    background: linear-gradient(to right, rgba(88,222,232,0.9), rgba(130,247,255,0.95));
-    box-shadow: 0 0 12px rgba(109,237,246,0.6);
+    background: linear-gradient(to right, rgba(88,215,232,0.9), rgba(130,240,255,0.95));
+    box-shadow: 0 0 12px rgba(109,230,246,0.6);
   }
   .pm-c4 .pm-count { color: #cedbdc; }
-  .pm-c4 .pm-name { color: #9febf1; }
+  .pm-c4 .pm-name { color: #9fe7f1; }
 
   .history-list { display: flex; flex-direction: column; gap: 10px; }
 
@@ -1496,7 +1496,7 @@
     position: fixed;
     inset: 0;
     z-index: 160;
-    background: rgba(1,26,28, 0.92);
+    background: rgba(1,25,28, 0.92);
     backdrop-filter: blur(30px);
     -webkit-backdrop-filter: blur(30px);
     overflow-y: auto;
@@ -1642,7 +1642,7 @@
     position: fixed;
     inset: 0;
     z-index: 170;
-    background: rgba(1,22,23, 0.7);
+    background: rgba(1,20,23, 0.7);
     backdrop-filter: blur(8px);
   }
 
@@ -1662,7 +1662,7 @@
     max-width: 440px;
     padding: 26px 24px;
     border-radius: 28px;
-    background: rgba(6,47,50, 0.92);
+    background: rgba(6,45,50, 0.92);
     backdrop-filter: blur(32px);
     border: 1px solid rgba(255,255,255,0.16);
     box-shadow: 0 20px 60px rgba(0,4,4,0.6);
@@ -1771,7 +1771,7 @@
     position: fixed;
     inset: 0;
     z-index: 950;
-    background: radial-gradient(ellipse 120% 80% at 50% 40%, #033135, #031c1e 70%);
+    background: radial-gradient(ellipse 120% 80% at 50% 40%, #032f35, #031b1e 70%);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1804,7 +1804,7 @@
     position: fixed;
     inset: 0;
     z-index: 999;
-    background: radial-gradient(ellipse 120% 80% at 50% 40%, #033135, #031c1e 70%);
+    background: radial-gradient(ellipse 120% 80% at 50% 40%, #032f35, #031b1e 70%);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -2015,8 +2015,8 @@
     inset: 0;
     z-index: 150;
     background:
-      radial-gradient(ellipse 120% 70% at 50% -10%, rgba(11,102,108,0.55), transparent 60%),
-      rgba(1,26,28, 0.96);
+      radial-gradient(ellipse 120% 70% at 50% -10%, rgba(11,97,108,0.55), transparent 60%),
+      rgba(1,25,28, 0.96);
     backdrop-filter: blur(30px);
     -webkit-backdrop-filter: blur(30px);
     flex-direction: column;
@@ -2216,7 +2216,7 @@
     max-width: 448px;
     padding: 14px 18px 12px;
     border-radius: 24px;
-    background: rgba(5,45,48, 0.78);
+    background: rgba(5,43,48, 0.78);
     backdrop-filter: blur(32px) saturate(1.4);
     -webkit-backdrop-filter: blur(32px) saturate(1.4);
     border: 1px solid rgba(255,255,255,0.15);
@@ -2308,7 +2308,7 @@
     bottom: calc(160px + env(safe-area-inset-bottom));
     padding: 12px 24px;
     border-radius: 40px;
-    background: rgba(5,45,48, 0.85);
+    background: rgba(5,43,48, 0.85);
     backdrop-filter: blur(24px);
     border: 1px solid rgba(255,255,255,0.14);
     box-shadow: 0 12px 36px rgba(0,4,4,0.5);
@@ -2331,7 +2331,7 @@
     top: 42%;
     padding: 22px 30px;
     border-radius: 24px;
-    background: linear-gradient(135deg, rgba(201,174,125,0.32), rgba(176,146,95,0.18)), rgba(3,39,41,0.9);
+    background: linear-gradient(135deg, rgba(201,174,125,0.32), rgba(176,146,95,0.18)), rgba(3,37,41,0.9);
     border: 1px solid rgba(201,174,125,0.55);
     box-shadow: 0 18px 60px rgba(0,4,4,0.65), 0 0 40px rgba(201,174,125,0.18);
     color: var(--gold);
@@ -2372,9 +2372,9 @@
     z-index: 90;
     pointer-events: none;
     background: linear-gradient(to top,
-      rgba(3,28,30,0.94) 0%,
-      rgba(3,28,30,0.62) 34%,
-      rgba(3,28,30,0.22) 62%,
+      rgba(3,27,30,0.94) 0%,
+      rgba(3,27,30,0.62) 34%,
+      rgba(3,27,30,0.22) 62%,
       transparent 100%);
   }
 
@@ -2388,7 +2388,7 @@
     display: flex;
     padding: 8px;
     border-radius: 60px;
-    background: rgba(4,41,43, 0.6);
+    background: rgba(4,39,43, 0.6);
     backdrop-filter: blur(32px) saturate(1.4);
     -webkit-backdrop-filter: blur(32px) saturate(1.4);
     border: 1px solid rgba(255,255,255,0.12);
@@ -2428,7 +2428,7 @@
     display: none;
     position: fixed;
     inset: 0;
-    background: rgba(3,28,30,0.85);
+    background: rgba(3,27,30,0.85);
     backdrop-filter: blur(28px);
     -webkit-backdrop-filter: blur(28px);
     z-index: 200;
@@ -2466,9 +2466,9 @@
   .completion-orb {
     width: 88px; height: 88px;
     border-radius: 50%;
-    background: radial-gradient(circle at 35% 30%, rgba(220,224,224,0.25), rgba(118,191,197,0.12) 60%);
+    background: radial-gradient(circle at 35% 30%, rgba(220,224,224,0.25), rgba(118,187,197,0.12) 60%);
     border: 1px solid rgba(220,224,224,0.25);
-    box-shadow: 0 20px 60px rgba(0,4,4,0.5), 0 0 60px rgba(118,191,197,0.25), inset 0 2px 8px rgba(255,255,255,0.15);
+    box-shadow: 0 20px 60px rgba(0,4,4,0.5), 0 0 60px rgba(118,187,197,0.25), inset 0 2px 8px rgba(255,255,255,0.15);
     margin-bottom: 28px;
     display: flex; align-items: center; justify-content: center;
     font-size: 26px;
@@ -2568,7 +2568,7 @@
             <stop offset="100%" stop-color="#f4d696" stop-opacity="0"/>
           </linearGradient>
           <linearGradient id="pkStep" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%" stop-color="#76bfc5" stop-opacity="0.34"/>
+            <stop offset="0%" stop-color="#76bbc5" stop-opacity="0.34"/>
             <stop offset="100%" stop-color="#c9ae7d" stop-opacity="0.4"/>
           </linearGradient>
         </defs>
@@ -2747,7 +2747,7 @@
           <defs>
             <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
               <stop offset="0%" stop-color="#d9c298"/>
-              <stop offset="100%" stop-color="#76bfc5"/>
+              <stop offset="100%" stop-color="#76bbc5"/>
             </linearGradient>
           </defs>
           <circle class="ring-bg" cx="125" cy="125" r="115"/>
@@ -2876,7 +2876,7 @@
             <linearGradient id="fbHeartG" x1="0" y1="0" x2="1" y2="1">
               <stop offset="0%" stop-color="#f4f7f7"/>
               <stop offset="55%" stop-color="#dce0e0"/>
-              <stop offset="100%" stop-color="#afd5d7"/>
+              <stop offset="100%" stop-color="#afd3d7"/>
             </linearGradient>
           </defs>
           <path d="M12 20.2 C7 15.8 2.4 12.2 2.4 7.6 C2.4 4.6 4.7 2.4 7.5 2.4 C9.3 2.4 11 3.4 12 5 C13 3.4 14.7 2.4 16.5 2.4 C19.3 2.4 21.6 4.6 21.6 7.6 C21.6 12.2 17 15.8 12 20.2 Z" fill="url(#fbHeartG)" opacity="0.92"/>
@@ -3152,8 +3152,8 @@ if (tg) {
     }
   });
   try { tg.onEvent('activated', function () { if (window.__reapplySafe) window.__reapplySafe(); }); } catch (e) {}
-  tg.setHeaderColor('#031c1e');
-  tg.setBackgroundColor('#031c1e');
+  tg.setHeaderColor('#031b1e');
+  tg.setBackgroundColor('#031b1e');
   // Запрет свайпа-закрытия — только на iOS: на Android эта команда ломает прокрутку
   if (tg.disableVerticalSwipes) tg.disableVerticalSwipes(); // свайп внутри приложения — прокрутка, а не сворачивание
   cloudAvailable = !!(tg.CloudStorage && tg.isVersionAtLeast && tg.isVersionAtLeast('6.9'));
@@ -4893,8 +4893,8 @@ function startEq() {
     // среднее фиолетово-жемчужное
     let g2 = ctx2.createRadialGradient(cx - 14, cy - 18, 8, cx, cy, 100 * breathe);
     g2.addColorStop(0, 'rgba(232,237,238,0.30)');
-    g2.addColorStop(0.5, 'rgba(128,201,206,0.14)');
-    g2.addColorStop(1, 'rgba(118,191,197,0)');
+    g2.addColorStop(0.5, 'rgba(128,197,206,0.14)');
+    g2.addColorStop(1, 'rgba(118,187,197,0)');
     ctx2.fillStyle = g2;
     ctx2.beginPath(); ctx2.arc(cx, cy, 100 * breathe, 0, Math.PI * 2); ctx2.fill();
 
@@ -5058,7 +5058,7 @@ const FOUNDING = true;
 
 // Валютная оплата через Lava.top ($ / €). Ссылки на подписки:
 // стандарт: $39/мес · $329/год; основательницы: $25/мес · $259/год (период выбирается на странице Lava)
-const APP_BUILD = 88; // внутренняя метка, в интерфейсе не показывается // метка сборки: внизу Пути, детектор кэша Telegram
+const APP_BUILD = 89; // внутренняя метка, в интерфейсе не показывается // метка сборки: внизу Пути, детектор кэша Telegram
 
 // клавиатура iOS: поле email в фокусе → шторка поднимается наверх
 document.querySelectorAll('.claim-input').forEach(inp => {
@@ -5647,16 +5647,17 @@ loadSessions(() => {
 @font-face { font-family:'Manrope'; font-style:normal; font-weight:400; font-display:swap; src:url('fonts/manrope-400.woff2') format('woff2'); }
 @font-face { font-family:'Manrope'; font-style:normal; font-weight:500; font-display:swap; src:url('fonts/manrope-500.woff2') format('woff2'); }
 
-  /* === VERUM v88 · Полночный Deep Teal: глубина индиго, тон воды === */
+  /* === VERUM v89 · Полночь 187: прозрачное стекло на глубокой воде === */
   .aurora, .stars, .stars2, .vignette { display: none !important; }
-  .backdrop { background: linear-gradient(180deg, #082527 0%, #051719 45%, #030e10 100%) !important; }
+  .backdrop { background: linear-gradient(180deg, #08252a 0%, #05171a 45%, #030e11 100%) !important; }
   .backdrop::before, .backdrop::after { display: none !important; }
-  html, body { background: #051719 !important; }
+  html, body { background: #05171a !important; }
   .glass-card {
-    background: linear-gradient(180deg, rgba(22,76,80,0.42), rgba(8,36,39,0.42)) !important;
-    border-color: rgba(208,232,232,0.13) !important;
+    background: linear-gradient(180deg, rgba(38,104,114,0.24), rgba(12,44,50,0.20)) !important;
+    border-color: rgba(214,238,240,0.16) !important;
+    box-shadow: 0 14px 44px rgba(0,4,6,0.5), inset 0 1px 0 rgba(255,255,255,0.22) !important;
   }
-  .dock { background: rgba(5,26,28,0.94) !important; border-color: rgba(208,232,232,0.10) !important; }
+  .dock { background: rgba(4,22,26,0.90) !important; border-color: rgba(214,238,240,0.11) !important; }
 </style>
 </body>
 </html>
