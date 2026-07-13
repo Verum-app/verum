@@ -14,12 +14,12 @@
 /* Объявления шрифтов — в конце файла (сборка 57): сплэш появляется сразу, шрифты доезжают следом */
 
   :root {
-    --abyss: #051113;
-    --ink: #f5f4f0;
-    --soft-ink: #c6c9c4;
-    --faint: #81887f;
-    --pearl: #ecebe5;
-    --gold: #d4c3a3;
+    --abyss: #05171a;
+    --ink: #f2f6f6;
+    --soft-ink: #c1d2d3;
+    --faint: #7c9294;
+    --pearl: #e6eeee;
+    --gold: #c9ae7d;
     --deep-gold: #b0925f;
     --glass: rgba(255, 255, 255, 0.055);
     --glass-strong: rgba(255, 255, 255, 0.09);
@@ -1090,7 +1090,7 @@
     stroke-dasharray: 723;
     stroke-dashoffset: 723;
     transition: stroke-dashoffset 1s linear;
-    filter: drop-shadow(0 0 6px rgba(212,195,163,0.5));
+    filter: drop-shadow(0 0 6px rgba(201,174,125,0.5));
   }
 
   .ring-center {
@@ -1301,12 +1301,12 @@
     outline: none;
   }
   .ph-input::placeholder { color: var(--faint); }
-  .ph-input:focus { border-color: rgba(212,195,163,0.5); }
+  .ph-input:focus { border-color: rgba(201,174,125,0.5); }
   .ph-save {
     flex-shrink: 0;
     width: 38px; height: 38px;
     border-radius: 50%;
-    border: 1px solid rgba(212,195,163,0.5);
+    border: 1px solid rgba(201,174,125,0.5);
     background: linear-gradient(135deg, rgba(201,174,125,0.35), rgba(176,146,95,0.2));
     color: var(--gold);
     display: flex; align-items: center; justify-content: center;
@@ -1459,7 +1459,7 @@
 
   .potok-day.done .pd-status {
     background: rgba(201,174,125,0.18);
-    border-color: rgba(212,195,163,0.5);
+    border-color: rgba(201,174,125,0.5);
     color: var(--gold);
   }
 
@@ -1732,7 +1732,7 @@
     outline: none;
   }
   .claim-input::placeholder { color: var(--faint); }
-  .claim-input:focus { border-color: rgba(212,195,163,0.5); }
+  .claim-input:focus { border-color: rgba(201,174,125,0.5); }
   /* при открытой клавиатуре шторка прижимается к верху, чтобы поле было видно */
   .paysheet.kb { align-items: flex-start !important; }
   .paysheet.kb .paysheet-card { margin-top: calc(30px + env(safe-area-inset-top)); }
@@ -1748,7 +1748,7 @@
     width: 46px; height: 46px;
     border-radius: 50%;
     object-fit: cover;
-    border: 1px solid rgba(212,195,163,0.5);
+    border: 1px solid rgba(201,174,125,0.5);
     box-shadow: 0 4px 18px rgba(0,4,4,0.4);
   }
   .pw-author-t { text-align: left; line-height: 1.4; }
@@ -2418,7 +2418,7 @@
   }
 
   .dock-item.active {
-    background: linear-gradient(150deg, rgba(212,195,163,0.26), rgba(201,174,125,0.09));
+    background: linear-gradient(150deg, rgba(201,174,125,0.26), rgba(201,174,125,0.09));
     color: var(--gold);
     box-shadow: 0 4px 16px rgba(0,4,4,0.35), inset 0 1px 0 rgba(255,255,255,0.18), 0 0 22px rgba(201,174,125,0.14);
   }
@@ -2531,9 +2531,9 @@
         </linearGradient>
       </defs>
       <g fill="none" stroke-linecap="round">
-        <circle cx="52" cy="31" r="11" stroke="rgba(224,212,188,0.85)" stroke-width="1.1"/>
-        <circle cx="52" cy="31" r="19.5" stroke="rgba(212,195,163,0.5)" stroke-width="1"/>
-        <circle cx="52" cy="31" r="28" stroke="rgba(212,195,163,0.26)" stroke-width="1"/>
+        <circle cx="52" cy="31" r="11" stroke="rgba(224,203,160,0.85)" stroke-width="1.1"/>
+        <circle cx="52" cy="31" r="19.5" stroke="rgba(201,174,125,0.5)" stroke-width="1"/>
+        <circle cx="52" cy="31" r="28" stroke="rgba(201,174,125,0.26)" stroke-width="1"/>
       </g>
       <circle cx="52" cy="31" r="9" fill="url(#bnCore)"/>
       <rect x="51.45" y="14" width="1.1" height="34" fill="url(#bnRayV)"/>
@@ -2682,9 +2682,9 @@
                 </linearGradient>
               </defs>
               <g fill="none" stroke-linecap="round">
-                <circle cx="52" cy="31" r="11" stroke="rgba(224,212,188,0.85)" stroke-width="1.1"/>
-                <circle cx="52" cy="31" r="19.5" stroke="rgba(212,195,163,0.5)" stroke-width="1"/>
-                <circle cx="52" cy="31" r="28" stroke="rgba(212,195,163,0.26)" stroke-width="1"/>
+                <circle cx="52" cy="31" r="11" stroke="rgba(224,203,160,0.85)" stroke-width="1.1"/>
+                <circle cx="52" cy="31" r="19.5" stroke="rgba(201,174,125,0.5)" stroke-width="1"/>
+                <circle cx="52" cy="31" r="28" stroke="rgba(201,174,125,0.26)" stroke-width="1"/>
               </g>
               <circle cx="52" cy="31" r="9" fill="url(#msCore)"/>
               <rect x="51.45" y="14" width="1.1" height="34" fill="url(#msRayV)"/>
@@ -5058,7 +5058,7 @@ const FOUNDING = true;
 
 // Валютная оплата через Lava.top ($ / €). Ссылки на подписки:
 // стандарт: $39/мес · $329/год; основательницы: $25/мес · $259/год (период выбирается на странице Lava)
-const APP_BUILD = 92; // внутренняя метка, в интерфейсе не показывается // метка сборки: внизу Пути, детектор кэша Telegram
+const APP_BUILD = 93; // внутренняя метка, в интерфейсе не показывается // метка сборки: внизу Пути, детектор кэша Telegram
 
 // клавиатура iOS: поле email в фокусе → шторка поднимается наверх
 document.querySelectorAll('.claim-input').forEach(inp => {
@@ -5647,32 +5647,31 @@ loadSessions(() => {
 @font-face { font-family:'Manrope'; font-style:normal; font-weight:400; font-display:swap; src:url('fonts/manrope-400.woff2') format('woff2'); }
 @font-face { font-family:'Manrope'; font-style:normal; font-weight:500; font-display:swap; src:url('fonts/manrope-500.woff2') format('woff2'); }
 
-  /* === VERUM v92 · Глубокий бархат #051113 + слоновая кость + шампань === */
+  /* === VERUM v93 = канон 91-й · Полночь Deep Teal 187, холодный белый, звонкое золото === */
   .aurora { display: none !important; }
   .backdrop { background:
-      radial-gradient(ellipse 92% 46% at 50% -10%, rgba(224,238,240,0.08), transparent 62%),
-      linear-gradient(180deg, #082023 0%, #051113 45%, #02090b 100%) !important; }
+      radial-gradient(ellipse 92% 46% at 50% -10%, rgba(224,238,240,0.09), transparent 62%),
+      linear-gradient(180deg, #08252a 0%, #05171a 45%, #030e11 100%) !important; }
   .backdrop::before, .backdrop::after { display: none !important; }
-  html, body { background: #051113 !important; }
+  html, body { background: #05171a !important; }
   body::after { content:''; position: fixed; inset: 0; z-index: -1; pointer-events: none;
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E"); opacity: 0.05; mix-blend-mode: overlay; }
   .droid body::after { background-image: none; }
   .glass-card, .pc-card {
-    background: linear-gradient(180deg, rgba(34,96,106,0.22), rgba(10,40,46,0.18)) !important;
-    border-color: rgba(212,228,230,0.15) !important;
-    box-shadow: 0 14px 44px rgba(0,3,5,0.52), inset 0 1px 0 rgba(255,255,255,0.20) !important;
+    background: linear-gradient(180deg, rgba(38,104,114,0.24), rgba(12,44,50,0.20)) !important;
+    border-color: rgba(214,238,240,0.16) !important;
+    box-shadow: 0 14px 44px rgba(0,4,6,0.5), inset 0 1px 0 rgba(255,255,255,0.22) !important;
   }
-  .dock { background: rgba(4,17,20,0.90) !important; border-color: rgba(212,228,230,0.10) !important; }
+  .dock { background: rgba(4,22,26,0.90) !important; border-color: rgba(214,238,240,0.11) !important; }
   .paysheet-card {
-    border: 1px solid rgba(212,195,163,0.60) !important;
-    box-shadow: 0 20px 60px rgba(0,3,5,0.6), 0 0 30px rgba(212,195,163,0.10), inset 0 1px 0 rgba(255,255,255,0.18) !important;
+    border: 1px solid rgba(201,174,125,0.65) !important;
+    box-shadow: 0 20px 60px rgba(0,3,5,0.6), 0 0 30px rgba(201,174,125,0.12), inset 0 1px 0 rgba(255,255,255,0.18) !important;
   }
-  /* шампань-волосок активных: сдержанное выцветшее золото */
-  .cat-chip.active { border: 1px solid rgba(212,195,163,0.85) !important; box-shadow: 0 0 10px rgba(212,195,163,0.15) !important; }
+  .cat-chip.active { border: 1px solid rgba(201,174,125,0.85) !important; box-shadow: 0 0 10px rgba(201,174,125,0.18) !important; }
   .dock-item.active { position: relative; }
   .dock-item.active::after { content:''; position:absolute; left:50%; transform:translateX(-50%);
-      bottom: 4px; width: 22px; height: 1px; background: linear-gradient(90deg, transparent, #d4c3a3, transparent); }
-  .cur-pill.active { border: 1px solid rgba(212,195,163,0.9) !important; }
+      bottom: 4px; width: 22px; height: 1px; background: linear-gradient(90deg, transparent, #c9ae7d, transparent); }
+  .cur-pill.active { border: 1px solid rgba(201,174,125,0.9) !important; }
 </style>
 </body>
 </html>
