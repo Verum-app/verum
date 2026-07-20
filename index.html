@@ -2569,8 +2569,8 @@
             <stop offset="100%" stop-color="#f4d696" stop-opacity="0"/>
           </linearGradient>
           <linearGradient id="pkStep" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%" stop-color="#76bbbe" stop-opacity="0.34"/>
-            <stop offset="100%" stop-color="#c9ae7d" stop-opacity="0.4"/>
+            <stop offset="0%" stop-color="#6fb9c2" stop-opacity="0.30"/>
+            <stop offset="100%" stop-color="#9fd8dc" stop-opacity="0.34"/>
           </linearGradient>
         </defs>
         <!-- бинду-Источник: искра и кольца -->
@@ -5902,6 +5902,85 @@ loadSessions(() => {
   .practice-meta .p-desc { font-size: 11px !important; line-height: 1.5 !important;
     color: rgba(147,167,172,0.92) !important; margin: 6px 0 7px !important; }
   .practice-meta .p-dur { color: rgba(147,167,172,0.75) !important; }
+
+  /* === VERUM v103 · «О практике» в тил + иерархия списка практик ===
+     Раскрывающийся блок «О практике» был белым стеклом rgba(255,255,255,0.05) — на новом
+     фоне читался серо-синим. Теперь то же тил-стекло, что у карточек. Названия в списке
+     практик чуть крупнее — воздух между именем и описанием. */
+  .fp-desc-wrap {
+    background: linear-gradient(180deg, rgba(16,68,76,0.38), rgba(5,22,26,0.56)) !important;
+    border: 1px solid rgba(218,244,246,0.14) !important;
+  }
+  .med-name { font-size: 17px !important; line-height: 1.3 !important; }
+  .med-desc { margin-top: 2px !important; }
+
+  /* === VERUM v104 · свет, каскад, золото сердец, волоски, карусель, лечение болотной латуни ===
+     1) «Свет луны» выровнен: 0.13 на всех слоях (фон / плеер / paywall).
+     2) Каскад карточек при смене вкладки: 40мс на карточку, только opacity+transform.
+     3) Сердечки-лайки — светлое золото вместо белого.
+     4) Волосок между записями истории.
+     5) Карусель «Продолжить путь» едет от края до края экрана (поля убраны).
+     6) Болотно-коричневые заливки вылечены: тёплое золото поверх тила давало оливу —
+        заливки стали тил-стеклом, золото осталось только в контуре и знаке (закон №2).
+     7) Слой дыхания фона ушёл ПОД контент (z-index -1) — экран больше не светлеет. */
+  .backdrop { background:
+      radial-gradient(ellipse 110% 38% at 50% -10%, rgba(222,238,244,0.13), transparent 62%),
+      radial-gradient(ellipse 130% 64% at 50% 122%, rgba(0,2,4,0.92), transparent 58%),
+      radial-gradient(circle 300px at -6% 30%, rgba(26,118,128,0.30), transparent 66%),
+      radial-gradient(circle 340px at 106% 52%, rgba(208,232,238,0.08), transparent 66%),
+      radial-gradient(circle 280px at 10% 88%, rgba(16,92,102,0.26), transparent 66%),
+      linear-gradient(180deg, #092630 0%, #04161c 46%, #01070a 100%) !important; }
+  .fullplayer { background:
+      radial-gradient(ellipse 110% 38% at 50% -10%, rgba(222,238,244,0.13), transparent 62%),
+      linear-gradient(180deg, rgba(9,38,48,0.97) 0%, rgba(4,22,28,0.97) 46%, rgba(1,7,10,0.98) 100%) !important; }
+  .paywall { background:
+      radial-gradient(ellipse 110% 38% at 50% -10%, rgba(222,238,244,0.13), transparent 62%),
+      linear-gradient(180deg, rgba(7,30,38,0.96) 0%, rgba(3,17,22,0.97) 46%, rgba(1,6,9,0.98) 100%) !important; }
+  body::before { z-index: -1 !important; }
+  .grain { z-index: -1 !important; }
+  /* каскад */
+  .screen.active > * { animation: cardCascade 0.5s cubic-bezier(0.25, 0.8, 0.3, 1) both; }
+  .screen.active > *:nth-child(1) { animation-delay: 0ms; }
+  .screen.active > *:nth-child(2) { animation-delay: 40ms; }
+  .screen.active > *:nth-child(3) { animation-delay: 80ms; }
+  .screen.active > *:nth-child(4) { animation-delay: 120ms; }
+  .screen.active > *:nth-child(5) { animation-delay: 160ms; }
+  .screen.active > *:nth-child(6) { animation-delay: 200ms; }
+  .screen.active > *:nth-child(n+7) { animation-delay: 240ms; }
+  @keyframes cardCascade {
+    from { opacity: 0; transform: translateY(14px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  /* сердечки: светлое золото */
+  .fav-heart.on { fill: #f6e7c2 !important; filter: drop-shadow(0 0 6px rgba(246,231,194,0.35)); }
+  .fb-heart { filter: drop-shadow(0 0 5px rgba(246,231,194,0.5)) !important; }
+  .comp-fav.done { border-color: rgba(246,231,194,0.4) !important; color: #f6e7c2 !important; }
+  /* волосок между записями истории */
+  .history-list { gap: 14px !important; }
+  .history-item + .history-item { position: relative; }
+  .history-item + .history-item::before { content: ''; position: absolute; top: -8px; left: 16%; right: 16%;
+      height: 1px; background: linear-gradient(90deg, transparent, rgba(201,174,125,0.20), transparent); }
+  /* карусель от края до края */
+  .path-carousel { margin-left: -18px !important; margin-right: -18px !important;
+      padding-left: 18px !important; padding-right: 18px !important; }
+  /* лечение оливы: тил-стекло + золотой контур */
+  .cal-day.practiced {
+    background: linear-gradient(180deg, rgba(16,68,76,0.55), rgba(5,22,26,0.70)) !important;
+    border-color: rgba(201,174,125,0.42) !important;
+  }
+  .potok-day.avail .pd-status {
+    background: linear-gradient(180deg, rgba(16,68,76,0.6), rgba(5,22,26,0.75)) !important;
+    border-color: rgba(201,174,125,0.5) !important;
+  }
+  .potok-day.done .pd-status {
+    background: linear-gradient(180deg, rgba(16,68,76,0.4), rgba(5,22,26,0.6)) !important;
+    border-color: rgba(201,174,125,0.45) !important;
+  }
+  .player-btn {
+    background: linear-gradient(180deg, rgba(16,68,76,0.6), rgba(5,22,26,0.78)) !important;
+    border: 1px solid rgba(201,174,125,0.5) !important;
+    color: #f6e7c2 !important;
+  }
 </style>
 </body>
 </html>
