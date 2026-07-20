@@ -3153,8 +3153,8 @@ if (tg) {
     }
   });
   try { tg.onEvent('activated', function () { if (window.__reapplySafe) window.__reapplySafe(); }); } catch (e) {}
-  tg.setHeaderColor('#0c1b1e');
-  tg.setBackgroundColor('#0c1b1e');
+  tg.setHeaderColor('#092630');
+  tg.setBackgroundColor('#04161c');
   // Запрет свайпа-закрытия — только на iOS: на Android эта команда ломает прокрутку
   if (tg.disableVerticalSwipes) tg.disableVerticalSwipes(); // свайп внутри приложения — прокрутка, а не сворачивание
   cloudAvailable = !!(tg.CloudStorage && tg.isVersionAtLeast && tg.isVersionAtLeast('6.9'));
@@ -5822,6 +5822,57 @@ loadSessions(() => {
   }
   .paywall { background: rgba(2,10,14,0.95) !important; }
   .droid .paywall { background: rgba(2,10,14,0.975) !important; }
+
+  /* === VERUM v99 · тиснение, воздух, строгость, экраны в тон === */
+  /* 1) золотой волосок-подчерк — как тиснение на переплёте */
+  .thought-eyebrow, .section-eyebrow { position: relative; padding-bottom: 10px; }
+  .thought-eyebrow::after, .section-eyebrow::after {
+    content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(201,174,125,0.55), transparent);
+  }
+  .section-eyebrow::after { left: 1px; right: auto; width: 44px;
+    background: linear-gradient(90deg, rgba(201,174,125,0.55), transparent); }
+  .thought-eyebrow::after { left: 50%; transform: translateX(-50%); width: 72px; }
+  /* 2) воздух в hero: +10% */
+  .today-hero { padding: 38px 31px !important; }
+  /* 3) мелкие карточки строже: скругление меньше */
+  .pc-card { border-radius: 20px !important; }
+  .glass-card.history-item { border-radius: 20px !important; }
+  /* 4) сплэш со звездой — в тон новой толщи воды */
+  #splash { background:
+      radial-gradient(ellipse 120% 80% at 50% 40%, #0b2b34, #04161c 72%) !important; }
+  /* 5) окно оплаты и лист валют — в тон, без старой серо-зелени */
+  .paysheet { background: rgba(2,10,14,0.6) !important; }
+  .droid .paysheet { background: rgba(2,10,14,0.84) !important; }
+  .paysheet-card { background: rgba(6,26,32,0.95) !important; }
+  .droid .paysheet-card { background: rgba(6,26,32,0.985) !important; }
+  .droid .paywall { background: rgba(2,10,14,0.975) !important; }
+  .droid .pc-card { background:
+      linear-gradient(115deg, rgba(255,255,255,0.08), transparent 42%),
+      linear-gradient(180deg, rgba(16,68,76,0.72), rgba(5,22,26,0.90)) !important; }
+  .droid .dock { background: rgba(2,11,14,0.94) !important; }
+  .droid .glass-pill { background: rgba(6,24,29,0.90) !important; }
+
+  /* === VERUM v100 · глубина живёт ===
+     Дыхание свечений (только opacity — дёшево), серифные длительности, faint без пыли,
+     hero-заголовок крупнее и плотнее, dock без капсулы — только золотая нить. */
+  :root { --faint: #78969b; }
+  /* дыхание воды: отдельный фикс-слой с двумя тиловыми свечениями */
+  body::before { content: ''; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background:
+      radial-gradient(circle 300px at -6% 30%, rgba(26,118,128,0.22), transparent 66%),
+      radial-gradient(circle 280px at 108% 74%, rgba(16,92,102,0.20), transparent 66%);
+    animation: waterBreath 9s ease-in-out infinite; }
+  @keyframes waterBreath { 0%, 100% { opacity: 0.35; } 50% { opacity: 1; } }
+  /* серифные цифры длительности */
+  .practice-meta .p-dur { font-family: 'Cormorant Garamond', serif !important;
+    font-size: 15px !important; letter-spacing: 0.06em !important; text-transform: none !important; }
+  .dur-btn { font-family: 'Cormorant Garamond', serif !important; font-size: 16px !important; }
+  /* hero: серифный заголовок на ступень крупнее, межстрочник плотнее */
+  .today-title { font-size: 34px !important; line-height: 1.18 !important; letter-spacing: 0.005em; }
+  /* dock: строгость — капсулу-заливку убрать, остаётся золотая нить */
+  .dock-item.active { background: none !important; box-shadow: none !important; }
+  .dock-item.active::after { width: 26px !important; }
 </style>
 </body>
 </html>
