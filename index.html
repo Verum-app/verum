@@ -10,6 +10,8 @@
      сервис-воркер держит их на телефоне. Два главных подгружаем заранее, без мигания. -->
 <link rel="preload" href="fonts/cormorant-400.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="fonts/manrope-400.woff2" as="font" type="font/woff2" crossorigin>
+<!-- Italiana — шрифт буквы V в фирменном знаке (печать манифеста) -->
+<link href="https://fonts.googleapis.com/css2?family=Italiana&display=swap" rel="stylesheet">
 <style>
 /* Объявления шрифтов — в конце файла (сборка 57): сплэш появляется сразу, шрифты доезжают следом */
 
@@ -298,7 +300,7 @@
   .tagline .tg-gap { flex: 0 0 0.7em; }
 
   .lotus {
-    width: 68px;
+    width: 54px;
     height: auto;
     opacity: 0.9;
     filter: drop-shadow(0 0 16px rgba(201,174,125,0.4));
@@ -640,7 +642,7 @@
 
   /* печать-бинду: финальная виньетка манифеста, как оттиск под письмом */
   .m-seal { display: flex; justify-content: center; margin: 24px 0 14px; }
-  .m-seal svg { width: 76px; height: 45px; filter: drop-shadow(0 0 9px rgba(201,174,125,0.3)); }
+  .m-seal svg { width: 72px; height: 72px; filter: drop-shadow(0 0 9px rgba(201,174,125,0.3)); }
   .manifesto .m-sign {
     text-align: right;
     font-style: italic;
@@ -1292,8 +1294,8 @@
     min-width: 0;
     padding: 11px 18px;
     border-radius: 50px;
-    background: rgba(255,255,255,0.06);
-    border: 1px solid rgba(255,255,255,0.14);
+    background: linear-gradient(160deg, rgba(16,68,76,0.55), rgba(5,22,26,0.78));
+    border: 1px solid rgba(220,244,246,0.19);
     color: var(--ink);
     font-family: 'Manrope', sans-serif;
     font-size: 13px;
@@ -2525,33 +2527,23 @@
 <div class="app">
   <header>
     <div class="wordmark"><div class="wm-text">VERUM</div><div class="tagline"><span>и</span><span>с</span><span>т</span><span>и</span><span>н</span><span>а</span><span class="tg-gap"></span><span>в</span><span>н</span><span>у</span><span>т</span><span>р</span><span>и</span></div></div>
-    <svg class="lotus" viewBox="0 0 104 62" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <!-- сокращённый фирменный знак: кольцо + бинду, без V — буква не дублирует слово VERUM рядом -->
+    <svg class="lotus" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
       <defs>
         <radialGradient id="bnCore" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stop-color="#fff8e4" stop-opacity="1"/>
-          <stop offset="35%" stop-color="#f4d696" stop-opacity="0.85"/>
+          <stop offset="0%" stop-color="#fff8e4" stop-opacity="0.9"/>
+          <stop offset="35%" stop-color="#f4d696" stop-opacity="0.35"/>
           <stop offset="100%" stop-color="#c9ae7d" stop-opacity="0"/>
         </radialGradient>
-        <linearGradient id="bnRayV" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="#f4d696" stop-opacity="0"/>
-          <stop offset="50%" stop-color="#fff4d8" stop-opacity="0.95"/>
-          <stop offset="100%" stop-color="#f4d696" stop-opacity="0"/>
-        </linearGradient>
-        <linearGradient id="bnRayH" x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0%" stop-color="#f4d696" stop-opacity="0"/>
-          <stop offset="50%" stop-color="#fff4d8" stop-opacity="0.8"/>
-          <stop offset="100%" stop-color="#f4d696" stop-opacity="0"/>
+        <linearGradient id="bnRing" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#f2ddb0"/>
+          <stop offset="55%" stop-color="#dcbe8a"/>
+          <stop offset="100%" stop-color="#a5824f"/>
         </linearGradient>
       </defs>
-      <g fill="none" stroke-linecap="round">
-        <circle cx="52" cy="31" r="11" stroke="rgba(224,203,160,0.85)" stroke-width="1.1"/>
-        <circle cx="52" cy="31" r="19.5" stroke="rgba(201,174,125,0.5)" stroke-width="1"/>
-        <circle cx="52" cy="31" r="28" stroke="rgba(201,174,125,0.26)" stroke-width="1"/>
-      </g>
-      <circle cx="52" cy="31" r="9" fill="url(#bnCore)"/>
-      <rect x="51.45" y="14" width="1.1" height="34" fill="url(#bnRayV)"/>
-      <rect x="40" y="30.5" width="24" height="1" fill="url(#bnRayH)"/>
-      <circle cx="52" cy="31" r="1.7" fill="#fff8e4"/>
+      <circle cx="100" cy="100" r="62" fill="none" stroke="url(#bnRing)" stroke-width="2.4" stroke-linecap="round" pathLength="360" stroke-dasharray="312 48" transform="rotate(-32 100 100)" opacity="0.9"/>
+      <circle cx="134.67" cy="48.6" r="16" fill="url(#bnCore)"/>
+      <circle cx="134.67" cy="48.6" r="4" fill="#fff8e4"/>
     </svg>
   </header>
 
@@ -2675,34 +2667,24 @@
           <p>Отсюда начинается главное: ты — <em>Творец!</em> Реальность больше не происходит с тобой. Она рождается из тебя. Мир вокруг — это лишь чуткое, мгновенное эхо того состояния, в котором ты пребываешь.</p>
           <p>Истина внутри. Всегда была.</p>
           <div class="m-seal">
-            <!-- та же бинду, что в шапке приложения: искра, лучи и три кольца -->
-            <svg viewBox="0 0 104 62" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <!-- фирменный знак VERUM: разомкнутое кольцо, бинду справа вверху, V Italiana -->
+            <svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
               <defs>
                 <radialGradient id="msCore" cx="50%" cy="50%" r="50%">
-                  <stop offset="0%" stop-color="#fff8e4" stop-opacity="1"/>
-                  <stop offset="35%" stop-color="#f4d696" stop-opacity="0.85"/>
+                  <stop offset="0%" stop-color="#fff8e4" stop-opacity="0.9"/>
+                  <stop offset="35%" stop-color="#f4d696" stop-opacity="0.35"/>
                   <stop offset="100%" stop-color="#c9ae7d" stop-opacity="0"/>
                 </radialGradient>
-                <linearGradient id="msRayV" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stop-color="#f4d696" stop-opacity="0"/>
-                  <stop offset="50%" stop-color="#fff4d8" stop-opacity="0.95"/>
-                  <stop offset="100%" stop-color="#f4d696" stop-opacity="0"/>
-                </linearGradient>
-                <linearGradient id="msRayH" x1="0" y1="0" x2="1" y2="0">
-                  <stop offset="0%" stop-color="#f4d696" stop-opacity="0"/>
-                  <stop offset="50%" stop-color="#fff4d8" stop-opacity="0.8"/>
-                  <stop offset="100%" stop-color="#f4d696" stop-opacity="0"/>
+                <linearGradient id="msRing" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stop-color="#f2ddb0"/>
+                  <stop offset="55%" stop-color="#dcbe8a"/>
+                  <stop offset="100%" stop-color="#a5824f"/>
                 </linearGradient>
               </defs>
-              <g fill="none" stroke-linecap="round">
-                <circle cx="52" cy="31" r="11" stroke="rgba(224,203,160,0.85)" stroke-width="1.1"/>
-                <circle cx="52" cy="31" r="19.5" stroke="rgba(201,174,125,0.5)" stroke-width="1"/>
-                <circle cx="52" cy="31" r="28" stroke="rgba(201,174,125,0.26)" stroke-width="1"/>
-              </g>
-              <circle cx="52" cy="31" r="9" fill="url(#msCore)"/>
-              <rect x="51.45" y="14" width="1.1" height="34" fill="url(#msRayV)"/>
-              <rect x="40" y="30.5" width="24" height="1" fill="url(#msRayH)"/>
-              <circle cx="52" cy="31" r="1.7" fill="#fff8e4"/>
+              <circle cx="100" cy="100" r="62" fill="none" stroke="url(#msRing)" stroke-width="2" stroke-linecap="round" pathLength="360" stroke-dasharray="312 48" transform="rotate(-32 100 100)" opacity="0.9"/>
+              <circle cx="134.67" cy="48.6" r="13" fill="url(#msCore)"/>
+              <circle cx="134.67" cy="48.6" r="3.2" fill="#fff8e4"/>
+              <text x="100" y="130" text-anchor="middle" font-family="'Italiana', serif" font-size="88" fill="#e9cf9e">V</text>
             </svg>
           </div>
           <p class="m-sign">— Анна VERUM</p>
