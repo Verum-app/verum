@@ -4542,11 +4542,15 @@ function renderPath() {
     return;
   }
   list.innerHTML = '';
-  // Хроника: по умолчанию 5 последних записей, остальное — по «Показать всю историю».
-  // История вторична (архив), поэтому не занимает всю вкладку — рядом живут календарь и дневники.
-  const COLLAPSED = 5;
-  const shown = histExpanded ? sessions : sessions.slice(0, COLLAPSED);
-  shown.forEach(s => {
+  // Хроника постранично (по 5): при 100–500 практиках лист не растёт бесконечно —
+  // листается тонкими стрелками ‹ ›. Страница 0 — самые свежие записи.
+  const PER = 5;
+  const total = sessions.length;
+  const pages = Math.ceil(total / PER);
+  if (histPage >= pages) histPage = pages - 1;
+  if (histPage < 0) histPage = 0;
+  const start = histPage * PER;
+  sessions.slice(start, start + PER).forEach(s => {
     const d = new Date(s.date);
     const item = document.createElement('div');
     item.className = 'history-item';
@@ -4559,12 +4563,18 @@ function renderPath() {
       <div class="history-dur">${s.minutes} мин</div>`;
     list.appendChild(item);
   });
-  if (sessions.length > COLLAPSED) {
-    const t = document.createElement('div');
-    t.className = 'hist-toggle';
-    t.textContent = histExpanded ? 'Свернуть ↑' : 'Показать всю историю (' + sessions.length + ') →';
-    t.onclick = () => { haptic('light'); histExpanded = !histExpanded; renderPath(); };
-    list.appendChild(t);
+  if (pages > 1) {
+    const CH_L = '<svg viewBox="0 0 12 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2.5L3 8l5 5.5"/></svg>';
+    const CH_R = '<svg viewBox="0 0 12 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2.5L9 8l-5 5.5"/></svg>';
+    const pager = document.createElement('div');
+    pager.className = 'hist-pager';
+    pager.innerHTML =
+      '<button class="hp-arrow"' + (histPage === 0 ? ' disabled' : '') + ' aria-label="Новее">' + CH_L + '</button>' +
+      '<span class="hp-count">' + (start + 1) + '–' + Math.min(start + PER, total) + ' из ' + total + '</span>' +
+      '<button class="hp-arrow"' + (histPage >= pages - 1 ? ' disabled' : '') + ' aria-label="Старее">' + CH_R + '</button>';
+    pager.children[0].onclick = () => { if (histPage > 0) { haptic('light'); histPage--; renderPath(); } };
+    pager.children[2].onclick = () => { if (histPage < pages - 1) { haptic('light'); histPage++; renderPath(); } };
+    list.appendChild(pager);
   }
 }
 
@@ -6275,15 +6285,23 @@ loadSessions(() => {
   .history-type { font-size: 15.5px !important; color: var(--soft-ink) !important; }
   .history-step { color: var(--faint) !important; }
   .history-dur { font-size: 16px !important; color: var(--faint) !important; white-space: nowrap; flex-shrink: 0; margin-left: 14px; }
-  .hist-toggle {
-    text-align: center;
-    font-size: 10.5px;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--soft-ink);
-    padding: 18px 0 4px;
+  /* пейджер истории — тонкие золотые стрелки ‹ › + приглушённый счётчик диапазона */
+  .hist-pager { display: flex; align-items: center; justify-content: center; gap: 20px; padding: 20px 0 4px; }
+  .hp-arrow {
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    border: 1px solid rgba(201,174,125,0.35);
+    background: none;
+    color: var(--gold);
+    display: flex; align-items: center; justify-content: center;
     cursor: pointer;
+    transition: transform 0.2s ease, border-color 0.25s ease, opacity 0.25s ease;
+    padding: 0;
   }
+  .hp-arrow svg { width: 11px; height: 15px; display: block; }
+  .hp-arrow:active:not(:disabled) { transform: scale(0.9); }
+  .hp-arrow:disabled { opacity: 0.3; cursor: default; border-color: rgba(220,244,246,0.12); color: var(--faint); }
+  .hp-count { font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--faint); min-width: 96px; text-align: center; }
 </style>
 </body>
 </html>
