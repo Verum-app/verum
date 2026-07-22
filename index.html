@@ -908,8 +908,8 @@
     right: -4px; bottom: -4px;
     width: 19px; height: 19px;
     border-radius: 50%;
-    background: rgba(18, 39, 42, 0.95);
-    border: 1px solid rgba(201,174,125,0.45);
+    background: linear-gradient(180deg, rgba(16,68,76,0.92), rgba(5,22,26,0.96));
+    border: 1px solid rgba(201,174,125,0.5);
     display: flex; align-items: center; justify-content: center;
     color: var(--gold);
   }
@@ -1006,7 +1006,7 @@
   }
 
   .mode-btn.active {
-    background: var(--glass-strong);
+    background: linear-gradient(180deg, rgba(16,68,76,0.6), rgba(5,22,26,0.72));
     color: var(--gold);
     box-shadow: 0 4px 16px rgba(0,4,4,0.3);
   }
@@ -1308,8 +1308,8 @@
     flex-shrink: 0;
     width: 38px; height: 38px;
     border-radius: 50%;
-    border: 1px solid rgba(201,174,125,0.5);
-    background: linear-gradient(135deg, rgba(201,174,125,0.35), rgba(176,146,95,0.2));
+    border: 1px solid rgba(201,174,125,0.55);
+    background: linear-gradient(180deg, rgba(16,68,76,0.6), rgba(5,22,26,0.78));
     color: var(--gold);
     display: flex; align-items: center; justify-content: center;
     cursor: pointer;
@@ -2347,16 +2347,9 @@
   .path-lock { display: none; padding: 40px 26px; text-align: center; }
   .sub-locked .path-lock { display: block; }
 
-  #screen-path.sub-locked.active {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    min-height: calc(100vh - 300px);
-  }
-  .sub-locked .stats-row, .sub-locked .section-eyebrow,
-  .sub-locked .cal-card, .sub-locked .history-list,
-  .sub-locked .pathmap-card,
-  .sub-locked .fb-card { display: none; }
+  /* блокировка: контент Пути теперь показывается «под стеклом» (см. блок v110);
+     прячем только карту-схему (если есть) — стили превью/вуали в v110 */
+  .sub-locked .pathmap-card { display: none; }
   .path-lock .pl-icon { margin-bottom: 14px; display: flex; justify-content: center; }
   .path-lock .pl-icon svg { width: 34px; height: 34px; filter: drop-shadow(0 0 10px rgba(201,174,125,0.35)); }
   .path-lock .pl-title {
@@ -2834,6 +2827,7 @@
       <div class="pl-sub">Серия дней, календарь практик и история — часть пространства VERUM. Начни путь — и становись архитектором своего главного проекта под названием ЖИЗНЬ.</div>
       <button class="glass-pill gold" onclick="openPaywall()">Открыть пространство</button>
     </div>
+    <div class="path-preview">
     <div class="stats-row">
       <div class="glass-card streak-chip">
         <div class="streak-num" id="statStreak">0</div>
@@ -2861,6 +2855,13 @@
 
     <div class="section-eyebrow">История практик</div>
     <div class="history-list" id="historyList"></div>
+
+    <div class="section-eyebrow">Дневники</div>
+    <div class="glass-card journal-teaser">
+      <div class="jt-title">Дневник состояния, целей<br>и материализаций</div>
+      <div class="jt-sub">✦ Скоро в вашем пространстве</div>
+    </div>
+    </div><!-- /.path-preview -->
 
     <div class="glass-card fb-card">
       <div class="fb-title">Поделитесь впечатлениями<br>о приложении и любимых практиках</div>
@@ -2894,16 +2895,16 @@
 
 <nav class="dock">
   <div class="dock-item active" data-screen="today" onclick="nav('today')">
-    <div class="d-icon">☼</div><div class="d-label">Сегодня</div>
+    <div class="d-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2.6v2.4M12 19v2.4M2.6 12h2.4M19 12h2.4M5.3 5.3l1.7 1.7M17 17l1.7 1.7M18.7 5.3L17 7M7 17l-1.7 1.7"/></svg></div><div class="d-label">Сегодня</div>
   </div>
   <div class="dock-item" data-screen="library" onclick="nav('library')">
-    <div class="d-icon">✦</div><div class="d-label">Практики</div>
+    <div class="d-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"><path d="M12 3C12.5 8.6 15.4 11.5 21 12C15.4 12.5 12.5 15.4 12 21C11.5 15.4 8.6 12.5 3 12C8.6 11.5 11.5 8.6 12 3Z"/></svg></div><div class="d-label">Практики</div>
   </div>
   <div class="dock-item" data-screen="timer" onclick="nav('timer')">
-    <div class="d-icon">◌</div><div class="d-label">Таймер</div>
+    <div class="d-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.2"/><path d="M12 7.4V12l3 2"/></svg></div><div class="d-label">Таймер</div>
   </div>
   <div class="dock-item" data-screen="path" onclick="nav('path')">
-    <div class="d-icon">✧</div><div class="d-label">Путь</div>
+    <div class="d-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 20C6 13 18 12 18 5"/><circle cx="6" cy="20" r="1.7"/><circle cx="18" cy="5" r="1.7"/></svg></div><div class="d-label">Путь</div>
   </div>
 </nav>
 
@@ -2974,6 +2975,7 @@
     </div>
 
     <div class="glass-card plan-card best" onclick="choosePlan('year')">
+      <span class="plan-badge">Лучшая цена</span>
       <div>
         <div class="plan-name">Подписка — год</div>
         <div class="plan-note" id="planNoteY"><span class="plan-gift"><svg class="gift-ic" width="13" height="13" viewBox="0 0 24 24" fill="none" style="vertical-align:-1px"><path d="M19.5 11.5v9H4.5v-9M3 7.5h18v4H3zM12 7.5v13" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M12 7.5S10.9 3.2 8.5 3.2a2.15 2.15 0 0 0 0 4.3H12zM12 7.5s1.1-4.3 3.5-4.3a2.15 2.15 0 0 1 0 4.3H12z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg> 3,5 месяца в подарок</span></div>
@@ -4489,7 +4491,8 @@ let histPage = 0;
 
 function renderPath() {
   document.getElementById('screen-path').classList.toggle('sub-locked', !subActive);
-  if (!subActive) return;
+  // рисуем содержимое всегда — под замком оно показывается «под стеклом» (превью),
+  // используя реальный локальный прогресс (бесплатная игра ПОТОК уже даёт историю)
   document.getElementById('statStreak').textContent = calcStreak();
   document.getElementById('statTotal').textContent = sessions.length;
   document.getElementById('statMinutes').textContent = sessions.reduce((a,s) => a + (s.minutes||0), 0);
@@ -6085,7 +6088,9 @@ loadSessions(() => {
     border-color: rgba(220,244,246,0.16) !important;
   }
   .toast.gold {
-    background: linear-gradient(135deg, rgba(201,174,125,0.30), rgba(176,146,95,0.16)), rgba(4,18,24,0.94) !important;
+    background: linear-gradient(180deg, rgba(16,68,76,0.72), rgba(5,22,26,0.88)) !important;
+    border-color: rgba(201,174,125,0.6) !important;
+    box-shadow: 0 18px 60px rgba(0,4,4,0.65), 0 0 34px rgba(201,174,125,0.14) !important;
   }
   .completion {
     background:
@@ -6206,13 +6211,55 @@ loadSessions(() => {
     color: var(--gold) !important;
     text-shadow: none !important;
   }
-  /* кружки плея в практиках — тот же тил-стеклянный фон + мягкий золотой контур */
+  /* кружки плея в практиках — тил-стеклянный фон + НЕЙТРАЛЬНЫЙ контур (без золота):
+     золото на экране практик держим только на угловых значках шага */
   .med-icon {
-    background: linear-gradient(180deg, rgba(16,68,76,0.55), rgba(5,22,26,0.70)) !important;
-    border: 1px solid rgba(201,174,125,0.3) !important;
+    background: linear-gradient(180deg, rgba(16,68,76,0.5), rgba(5,22,26,0.68)) !important;
+    border: 1px solid rgba(220,244,246,0.16) !important;
   }
   /* цена в шапке шторки оплаты — золотом и плотнее (как карточки стартового paywall) */
   .ps-price { color: var(--gold); font-weight: 500; }
+
+  /* === VERUM v110 · ярлычок «лучшая цена», единый вес иконок дока, превью Пути ===
+     Ярлычок — тонкий золотой капс-тег на верхней кромке годовой карточки. */
+  .plan-card { position: relative; overflow: visible !important; }
+  .plan-badge {
+    position: absolute;
+    top: -9px; right: 18px;
+    padding: 2.5px 11px;
+    border-radius: 50px;
+    background: linear-gradient(180deg, rgba(16,68,76,0.95), rgba(5,22,26,0.98));
+    border: 1px solid rgba(201,174,125,0.6);
+    color: var(--gold);
+    font-family: 'Manrope', sans-serif;
+    font-size: 9px;
+    font-weight: 400;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    box-shadow: 0 2px 10px rgba(0,4,4,0.4);
+  }
+  /* док: 4 тонкие иконки одного веса (stroke 1.4, currentColor → активная золотится) */
+  .dock-item .d-icon { font-size: 0; }
+  .dock-item .d-icon svg { width: 20px; height: 20px; display: block; }
+
+  /* превью Пути под замком: содержимое видно «под стеклом» — бледно, размыто,
+     плавно растворяется книзу; клики отключены. Красиво показывает, что внутри. */
+  #screen-path.sub-locked.active { display: block; }
+  .sub-locked .path-preview {
+    filter: blur(3px);
+    opacity: 0.42;
+    pointer-events: none;
+    user-select: none;
+    margin-top: 8px;
+    -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 60%, transparent 100%);
+            mask-image: linear-gradient(180deg, #000 0%, #000 60%, transparent 100%);
+  }
+  .sub-locked .fb-card, .sub-locked .path-links { display: none; }
+  /* тизер дневников — знак того, что появится в пространстве */
+  .journal-teaser { padding: 20px 22px; }
+  .jt-title { font-family: 'Cormorant Garamond', serif; font-size: 18px; color: var(--ink); line-height: 1.3; }
+  .jt-sub { font-size: 10.5px; letter-spacing: 0.08em; color: var(--gold); margin-top: 8px; text-transform: uppercase; }
 </style>
 </body>
 </html>
