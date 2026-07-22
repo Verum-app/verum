@@ -5055,9 +5055,11 @@ let currentPlan = 'month';
 function choosePlan(plan) {
   haptic('light');
   currentPlan = plan;
-  document.getElementById('psTitle').textContent = FOUNDING
-    ? (plan === 'year' ? 'Год · 16 900 ₽' : 'Месяц · 1 900 ₽')
-    : (plan === 'year' ? 'Год · 24 900 ₽' : 'Месяц · 2 900 ₽');
+  const psLabel = plan === 'year' ? 'Год' : 'Месяц';
+  const psRub = FOUNDING
+    ? (plan === 'year' ? '16 900 ₽' : '1 900 ₽')
+    : (plan === 'year' ? '24 900 ₽' : '2 900 ₽');
+  document.getElementById('psTitle').innerHTML = psLabel + ' · <span class="ps-price">' + psRub + '</span>';
   document.getElementById('paysheet').classList.add('show');
   syncBack();
 }
@@ -5460,7 +5462,7 @@ function saveCustomName() {
   try { if (cloudAvailable) tg.CloudStorage.setItem('verum_name', v, () => {}); } catch (e) {}
   paintPathName();
   document.getElementById('pathHello').classList.remove('editing');
-  showToast(v ? '✨ Имя сохранено' : 'Вернулось имя из Telegram', true);
+  showToast(v ? '✦ Имя сохранено' : 'Вернулось имя из Telegram', true);
 }
 
 // ворота: без подписи Telegram (открыто как сайт) приложение не работает —
@@ -6185,7 +6187,7 @@ loadSessions(() => {
     text-shadow: none !important;
   }
   /* согласие с офертой/политикой — обязательная галочка перед оплатой */
-  .ps-consent { display: flex; align-items: flex-start; gap: 9px; text-align: left; margin: 14px 2px 4px; padding: 0 4px; }
+  .ps-consent { display: flex; align-items: flex-start; gap: 9px; text-align: left; margin: 14px 2px 18px; padding: 0 4px; }
   .consent-chk { width: 18px; height: 18px; flex-shrink: 0; margin-top: 1px; accent-color: #C9AE7D; cursor: pointer; }
   .consent-text { font-size: 11.5px; line-height: 1.5; color: var(--soft-ink); }
   .ps-consent.shake { animation: psShake 0.5s ease; }
