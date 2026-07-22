@@ -2970,18 +2970,18 @@
         <div class="plan-name">Подписка — месяц</div>
         <div class="plan-note" id="planNoteM">автопродление · отмена в любой момент</div>
       </div>
-      <div><span class="plan-price" id="planPriceM">2 900 ₽</span><div class="plan-per">в месяц</div></div>
+      <div class="plan-price-cell"><span class="plan-price" id="planPriceM">2 900 ₽ / 39 $</span><span class="plan-old" id="planOldM"></span><div class="plan-per">в месяц</div></div>
     </div>
 
     <div class="glass-card plan-card best" onclick="choosePlan('year')">
       <div>
         <div class="plan-name">Подписка — год</div>
-        <div class="plan-note" id="planNoteY">два месяца в подарок</div>
+        <div class="plan-note" id="planNoteY">3,5 месяца в подарок</div>
       </div>
-      <div><span class="plan-price" id="planPriceY">24 900 ₽</span><div class="plan-per">в год</div></div>
+      <div class="plan-price-cell"><span class="plan-price" id="planPriceY">24 900 ₽ / 329 $</span><span class="plan-old" id="planOldY"></span><div class="plan-per">в год</div></div>
     </div>
 
-    <div class="pw-founders" id="pwFounders">🌙 Для <b>первых 20 подписчиц</b> — цена основательниц: <b>1 900 ₽/мес</b> или <b>19 900 ₽/год</b>. Остаётся с вами навсегда, пока подписка активна.</div>
+    <div class="pw-founders" id="pwFounders">✦ Для <b>первых 43 основательниц</b> пространства VERUM. Цена остаётся вашей навсегда, пока подписка активна.</div>
 
     <div class="pw-fine">Оплата защищена · чек на почту · подписка продлевается автоматически, отключается в один клик, доступ сохраняется до конца оплаченного периода. Продукт 18+, не является медицинской услугой. Оформляя подписку, вы принимаете условия оферты.</div>
   </div>
@@ -3007,6 +3007,7 @@
       <div class="cur-pill active" id="curUSD" onclick="setCur('USD')">$ —</div>
       <div class="cur-pill" id="curEUR" onclick="setCur('EUR')">€ —</div>
     </div>
+    <div class="lava-gift" id="lavaGift"></div>
     <button class="ps-btn" id="lavaBtn" onclick="submitLavaPay()">Перейти к оплате</button>
     <div class="ps-support" onclick="openSupport()">🤍 Служба заботы →</div>
     <div class="ps-cancel" onclick="closeLava()">← назад</div>
@@ -5049,7 +5050,7 @@ function choosePlan(plan) {
   haptic('light');
   currentPlan = plan;
   document.getElementById('psTitle').textContent = FOUNDING
-    ? (plan === 'year' ? 'Год · 19 900 ₽ · первые 20 подписчиц' : 'Месяц · 1 900 ₽ · первые 20 подписчиц')
+    ? (plan === 'year' ? 'Год · 16 900 ₽ · первые ' + FOUNDING_SEATS : 'Месяц · 1 900 ₽ · первые ' + FOUNDING_SEATS)
     : (plan === 'year' ? 'Год · 24 900 ₽' : 'Месяц · 2 900 ₽');
   document.getElementById('paysheet').classList.add('show');
   syncBack();
@@ -5067,6 +5068,9 @@ const DIRECT_PAY = true;
 // FOUNDING = true → режим первых 20 подписчиц: на экране и в оплате цены основательниц (1900/19900)
 // Когда 20 мест заняты: поменять на false — вернутся стандартные 2900/24900
 const FOUNDING = true;
+// Сколько мест по цене основательниц — используется во всех текстах paywall.
+// Меняется в одном месте; когда места кончатся — FOUNDING = false (вернутся обычные цены).
+const FOUNDING_SEATS = 43;
 
 // Валютная оплата через Lava.top ($ / €). Ссылки на подписки:
 // стандарт: $39/мес · $329/год; основательницы: $25/мес · $259/год (период выбирается на странице Lava)
@@ -5087,7 +5091,7 @@ const LAVA_PRICES = {
   month:  { USD: 39, EUR: 34, label: 'месяц' },
   year:   { USD: 329, EUR: 285, label: 'год' },
   fmonth: { USD: 25, EUR: 22, label: 'месяц' },
-  fyear:  { USD: 259, EUR: 225, label: 'год' },
+  fyear:  { USD: 219, EUR: 199, label: 'год' },
 };
 
 function lavaPlanKey() {
@@ -5100,6 +5104,19 @@ function updateLavaUI() {
   document.getElementById('curEUR').textContent = '€ ' + p.EUR + ' · ' + p.label;
   const amount = lavaCurrency === 'EUR' ? '€ ' + p.EUR : '$ ' + p.USD;
   document.getElementById('lavaBtn').textContent = 'Перейти к оплате · ' + amount;
+  // строка выгоды: у основательниц — подарок-месяцы (на год) + зачёркнутая обычная цена
+  const gift = document.getElementById('lavaGift');
+  if (gift) {
+    const sym = lavaCurrency === 'EUR' ? '€' : '$';
+    if (FOUNDING) {
+      const std = currentPlan === 'year' ? LAVA_PRICES.year : LAVA_PRICES.month;
+      const stdAmt = lavaCurrency === 'EUR' ? std.EUR : std.USD;
+      const giftMonths = currentPlan === 'year' ? '3,5 месяца в подарок · ' : '';
+      gift.innerHTML = '✦ цена основательниц · ' + giftMonths + 'вместо <s>' + sym + ' ' + stdAmt + '</s>';
+    } else {
+      gift.textContent = currentPlan === 'year' ? '3,5 месяца в подарок' : '';
+    }
+  }
 }
 
 function setCur(c) {
@@ -5275,11 +5292,13 @@ async function submitClaim() {
 }
 
 if (FOUNDING) {
-  document.getElementById('planPriceM').textContent = '1 900 ₽';
-  document.getElementById('planPriceY').textContent = '19 900 ₽';
-  document.getElementById('planNoteM').textContent = 'цена первых 20 · остаётся с вами навсегда';
-  document.getElementById('planNoteY').textContent = 'цена первых 20 · остаётся с вами навсегда';
-  document.getElementById('pwFounders').innerHTML = '🌙 Вы входите по цене <b>основательниц</b> — она остаётся вашей навсегда, пока подписка активна. Мест по этой цене: <b>20</b>.' +
+  document.getElementById('planPriceM').textContent = '1 900 ₽ / 25 $';
+  document.getElementById('planPriceY').textContent = '16 900 ₽ / 219 $';
+  document.getElementById('planOldM').textContent = '2 900 ₽ / 39 $';
+  document.getElementById('planOldY').textContent = '24 900 ₽ / 329 $';
+  document.getElementById('planNoteM').textContent = 'цена основательниц · навсегда';
+  document.getElementById('planNoteY').textContent = '3,5 месяца в подарок · цена основательниц';
+  document.getElementById('pwFounders').innerHTML = '✦ Для <b>первых ' + FOUNDING_SEATS + ' основательниц</b> пространства VERUM. Цена остаётся вашей навсегда, пока подписка активна.' +
     '<span class="pw-fine">При отмене подписки условия основательниц завершаются — вернуться можно будет уже по обычной цене.</span>';
 }
 
@@ -6059,6 +6078,45 @@ loadSessions(() => {
   }
   /* зона касания прогресса: нить 2px, палец 32px */
   .fp-progress { height: 2px; padding: 15px 0 !important; background-clip: content-box !important; box-sizing: content-box !important; }
+
+  /* === VERUM v108 · цена: основная по центру строки, зачёркнутая — ПОД ней ===
+     Правая колонка тарифа — столбик по правому краю, вертикально по центру
+     против названия. Обе валюты ₽/$ в одну строку без переноса (₽ не съезжает).
+     Старая цена — тонкий «туман» с диагональю под золотой ценой. ✦ вместо луны. */
+  .plan-card > div:first-child { min-width: 0; }
+  .plan-price-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: center;
+    flex-shrink: 0;
+    text-align: right;
+  }
+  .plan-price { font-size: 20px !important; white-space: nowrap !important; line-height: 1.05 !important; }
+  .plan-old {
+    display: block;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 13.5px;
+    color: var(--faint);
+    text-decoration: line-through;
+    text-decoration-color: rgba(201,174,125,0.5);
+    opacity: 0.72;
+    margin-top: 3px;
+    line-height: 1;
+    white-space: nowrap;
+  }
+  .plan-old:empty { display: none; }
+  .plan-per { margin-top: 4px; }
+  .lava-gift {
+    text-align: center;
+    font-size: 11.5px;
+    letter-spacing: 0.04em;
+    color: var(--soft-ink);
+    margin: 2px 0 12px;
+    line-height: 1.5;
+  }
+  .lava-gift:empty { display: none; }
+  .lava-gift s { color: var(--faint); text-decoration-color: rgba(201,174,125,0.5); }
 </style>
 </body>
 </html>
