@@ -2843,23 +2843,40 @@
       </div>
     </div>
 
-    <div class="section-eyebrow">Календарь практик</div>
+    <div class="section-eyebrow">Календарь</div>
     <div class="glass-card cal-card">
+      <div class="cal-mode">
+        <button class="cal-mode-btn active" id="calModePractice" onclick="setCalMode('practice')">Практики</button>
+        <button class="cal-mode-btn" id="calModeState" onclick="setCalMode('state')">Состояние</button>
+      </div>
       <div class="cal-nav">
         <div class="cal-arrow" onclick="calShift(-1)">‹</div>
         <div class="cal-title" id="calTitle"></div>
         <div class="cal-arrow" id="calFwd" onclick="calShift(1)">›</div>
       </div>
       <div class="cal-grid" id="calGrid"></div>
+      <div class="cal-state-hint" id="calStateHint" style="display:none">коснитесь дня — как вы себя чувствовали</div>
     </div>
 
     <div class="section-eyebrow">История практик</div>
     <div class="history-list" id="historyList"></div>
 
     <div class="section-eyebrow">Дневники</div>
-    <div class="glass-card journal-teaser">
-      <div class="jt-title">Дневник состояния, целей<br>и материализаций</div>
-      <div class="jt-sub">✦ Скоро в вашем пространстве</div>
+    <div class="glass-card journal-card" onclick="openJournal('goals')">
+      <div class="jc-info">
+        <div class="jc-eyebrow">Дневник</div>
+        <div class="jc-title">Намерения</div>
+        <div class="jc-sub">видение · год · месяц · неделя · рефлексия</div>
+      </div>
+      <div class="jc-chev">›</div>
+    </div>
+    <div class="glass-card journal-card" onclick="openJournal('mani')">
+      <div class="jc-info">
+        <div class="jc-eyebrow">Дневник</div>
+        <div class="jc-title">Материализации</div>
+        <div class="jc-sub" id="maniSummary">сбывшееся · синхронии · знаки</div>
+      </div>
+      <div class="jc-chev">›</div>
     </div>
     </div><!-- /.path-preview -->
 
@@ -3041,6 +3058,87 @@
     <div class="ps-cancel" onclick="closeFeedback()">← назад</div>
   </div>
 </div>
+
+<!-- ===== ДНЕВНИК СОСТОЯНИЯ: чек-ин дня ===== -->
+<div class="paysheet" id="checkinSheet" onclick="if(event.target===this)closeCheckin()">
+  <div class="paysheet-card ci-card">
+    <div class="ps-title" id="ciTitle">Как ты сегодня?</div>
+    <div class="ps-sub">отметь своё состояние луной — утром и вечером</div>
+    <div class="ci-slot-label">Утро</div>
+    <div class="ci-moons" id="ciMoonsM"></div>
+    <div class="ci-slot-label">Вечер</div>
+    <div class="ci-moons" id="ciMoonsE"></div>
+    <div class="ci-moon-caption" id="ciCaption">&nbsp;</div>
+    <textarea class="claim-input fb-input" id="ciNote" rows="4" placeholder="Что происходит в теле? Какие эмоции живут в тебе сегодня — выплесни сюда всё…"></textarea>
+    <button class="ps-btn" id="ciSave" onclick="saveCheckin()">Сохранить</button>
+    <div class="ps-cancel" onclick="closeCheckin()">← назад</div>
+  </div>
+</div>
+
+<!-- ===== ДНЕВНИК «НАМЕРЕНИЯ» ===== -->
+<div class="journal-overlay" id="journalGoals">
+  <div class="jo-head">
+    <div class="jo-close" onclick="closeJournal('goals')">‹ Путь</div>
+    <div class="jo-title">Намерения</div>
+    <div class="jo-space"></div>
+  </div>
+  <div class="jo-scroll">
+    <div class="jo-tabs" id="goalTabs">
+      <button class="jo-tab" data-h="vision" onclick="setGoalTab('vision')">Видение</button>
+      <button class="jo-tab" data-h="year" onclick="setGoalTab('year')">Год</button>
+      <button class="jo-tab" data-h="month" onclick="setGoalTab('month')">Месяц</button>
+      <button class="jo-tab active" data-h="week" onclick="setGoalTab('week')">Неделя</button>
+    </div>
+    <div class="jo-period" id="goalPeriod"></div>
+    <div class="jo-list" id="goalList"></div>
+    <div class="jo-add">
+      <textarea class="claim-input jo-input" id="goalInput" rows="2" placeholder="Новое намерение…"></textarea>
+      <div class="jo-add-row">
+        <button class="jo-photo-btn" id="goalPhotoBtn" onclick="attachGoalPhoto()">✦ фото</button>
+        <button class="ps-btn jo-save" onclick="addGoal()">Записать</button>
+      </div>
+    </div>
+    <div class="jo-reflect" id="weekReflect" style="display:none">
+      <div class="section-eyebrow">Рефлексия недели</div>
+      <div class="jo-moons-week" id="weekMoons"></div>
+      <div class="jr-label">Что получилось</div>
+      <textarea class="claim-input jo-input" id="rWell" rows="2"></textarea>
+      <div class="jr-label">Что улучшить</div>
+      <textarea class="claim-input jo-input" id="rImprove" rows="2"></textarea>
+      <div class="jr-label">Чему научилась</div>
+      <textarea class="claim-input jo-input" id="rLearned" rows="2"></textarea>
+      <button class="ps-btn jo-save" onclick="saveReflection()">Сохранить рефлексию</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== ДНЕВНИК «МАТЕРИАЛИЗАЦИИ» ===== -->
+<div class="journal-overlay" id="journalMani">
+  <div class="jo-head">
+    <div class="jo-close" onclick="closeJournal('mani')">‹ Путь</div>
+    <div class="jo-title">Материализации</div>
+    <div class="jo-space"></div>
+  </div>
+  <div class="jo-scroll">
+    <div class="mani-totals" id="maniTotals"></div>
+    <div class="jo-add">
+      <div class="mani-kinds" id="maniKinds">
+        <button class="mani-kind active" data-k="fulfilled" onclick="setManiKind('fulfilled')">Сбылось</button>
+        <button class="mani-kind" data-k="synchro" onclick="setManiKind('synchro')">Синхрония</button>
+        <button class="mani-kind" data-k="sign" onclick="setManiKind('sign')">Знак</button>
+      </div>
+      <textarea class="claim-input jo-input" id="maniInput" rows="2" placeholder="Что материализовалось, какая синхрония случилась…"></textarea>
+      <input class="claim-input jo-amount" id="maniAmount" type="number" inputmode="decimal" placeholder="Сумма, ₽ (если про деньги)">
+      <div class="jo-add-row">
+        <button class="jo-photo-btn" id="maniPhotoBtn" onclick="attachManiPhoto()">✦ фото</button>
+        <button class="ps-btn jo-save" onclick="addManifest()">Записать</button>
+      </div>
+    </div>
+    <div class="jo-list" id="maniList"></div>
+  </div>
+</div>
+
+<input type="file" id="photoFile" accept="image/*" style="display:none">
 
 <div class="completion" id="potokBridge">
   <div class="completion-inner glass-card">
@@ -4323,6 +4421,7 @@ function completeTimer() {
   const mins = Math.max(1, Math.round((timerDuration - timerRemaining) / 60));
   sessions.unshift({ date: new Date().toISOString(), type: 'Медитация тишины', minutes: mins });
   saveSessions();
+  syncSessionToServer(sessions[0]);
   document.getElementById('completionMsg').innerHTML =
     `Вы провели ${mins} мин в тишине.<br>Практика становится частью вас.`;
   document.getElementById('compFav').classList.remove('show');
@@ -4376,6 +4475,7 @@ function stopBreath(save) {
     const mins = Math.max(1, Math.round(breathCycles * cycleSec / 60));
     sessions.unshift({ date: new Date().toISOString(), type: 'Дыхательная практика', minutes: mins });
     saveSessions();
+    syncSessionToServer(sessions[0]);
     hapticFinale();
     document.getElementById('completionMsg').innerHTML =
       `${breathCycles} циклов дыхания.<br>Нервная система благодарит.`;
@@ -4500,12 +4600,497 @@ function renderCalendar() {
     const day = new Date(base.getFullYear(), base.getMonth(), d);
     const el = document.createElement('div');
     el.className = 'cal-day';
-    el.textContent = d;
-    if (day.toDateString() === today.toDateString()) el.classList.add('today');
-    if (practiced.has(day.toDateString())) el.classList.add('practiced');
-    if (day > today) el.style.opacity = '0.25';
+    if (calMode === 'state') {
+      // режим «Состояние»: луны настроения; любой прошлый день открывается на чек-ин
+      const key = dateKey(day);
+      const ci = journal.checkins[key];
+      const mood = ci ? (ci.evening || ci.morning) : null;
+      if (mood) {
+        el.innerHTML = moonSvg(mood, 16);
+        el.classList.add('mooned');
+      } else {
+        el.textContent = d;
+      }
+      if (day.toDateString() === today.toDateString()) el.classList.add('today');
+      if (day > today) { el.style.opacity = '0.25'; }
+      else {
+        el.classList.add('tappable');
+        el.onclick = () => { haptic('light'); openCheckin(key); };
+      }
+    } else {
+      el.textContent = d;
+      if (day.toDateString() === today.toDateString()) el.classList.add('today');
+      if (practiced.has(day.toDateString())) el.classList.add('practiced');
+      if (day > today) el.style.opacity = '0.25';
+    }
     grid.appendChild(el);
   }
+}
+
+// ===== ДНЕВНИКИ (v113): состояние · намерения · материализации =====
+// Хранение: сервер D1 через /me/* (по подписке) + локальный кеш verum_journal
+// (мгновенный рендер и офлайн). Записи при офлайне копятся в очереди verum_queue.
+
+let calMode = 'practice';
+let journal = { checkins: {}, goals: [], reflections: [], manifests: [], totals: [] };
+try { journal = Object.assign(journal, JSON.parse(localStorage.getItem('verum_journal') || '{}')); } catch (e) {}
+
+function saveJournalCache() {
+  try { localStorage.setItem('verum_journal', JSON.stringify(journal)); } catch (e) {}
+}
+function dateKey(d) {
+  const p = (n) => String(n).padStart(2, '0');
+  return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
+}
+function weekKeyOf(d) {
+  // ISO-неделя: YYYY-Wnn
+  const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  const dow = t.getUTCDay() || 7;
+  t.setUTCDate(t.getUTCDate() + 4 - dow);
+  const y0 = new Date(Date.UTC(t.getUTCFullYear(), 0, 1));
+  const wn = Math.ceil(((t - y0) / 86400000 + 1) / 7);
+  return t.getUTCFullYear() + '-W' + String(wn).padStart(2, '0');
+}
+
+// Луны: 5 фаз, тонкая золотая линия — старая гравюра, не эмодзи
+const MOON_LABELS = ['пустота и апатия', 'тонкий свет', 'половина пути', 'свет прибывает', 'наполнена светом'];
+function moonSvg(phase, size) {
+  const s = size || 20;
+  const stroke = 'rgba(201,174,125,0.85)';
+  const fill = 'rgba(246,231,194,0.92)';
+  let inner = '';
+  if (phase <= 1) {
+    inner = '<circle cx="12" cy="12" r="8.6" stroke="' + stroke + '" stroke-width="1.1" fill="none"/>';
+  } else if (phase === 2) {
+    inner = '<circle cx="12" cy="12" r="8.6" stroke="' + stroke + '" stroke-width="1.1" fill="none"/>' +
+      '<path d="M15.2 3.9 A8.6 8.6 0 0 1 15.2 20.1 A11.6 11.6 0 0 0 15.2 3.9 Z" fill="' + fill + '" opacity="0.85"/>';
+  } else if (phase === 3) {
+    inner = '<circle cx="12" cy="12" r="8.6" stroke="' + stroke + '" stroke-width="1.1" fill="none"/>' +
+      '<path d="M12 3.4 A8.6 8.6 0 0 1 12 20.6 Z" fill="' + fill + '" opacity="0.88"/>';
+  } else if (phase === 4) {
+    inner = '<circle cx="12" cy="12" r="8.6" stroke="' + stroke + '" stroke-width="1.1" fill="none"/>' +
+      '<path d="M9.4 3.8 A8.6 8.6 0 1 1 9.4 20.2 A11 11 0 0 0 9.4 3.8 Z" fill="' + fill + '" opacity="0.9"/>';
+  } else {
+    inner = '<circle cx="12" cy="12" r="8.6" fill="' + fill + '"/>' +
+      '<circle cx="12" cy="12" r="8.6" stroke="' + stroke + '" stroke-width="1.1" fill="none"/>';
+  }
+  return '<svg width="' + s + '" height="' + s + '" viewBox="0 0 24 24" fill="none">' + inner + '</svg>';
+}
+
+function setCalMode(mode) {
+  haptic('light');
+  calMode = mode;
+  document.getElementById('calModePractice').classList.toggle('active', mode === 'practice');
+  document.getElementById('calModeState').classList.toggle('active', mode === 'state');
+  const hint = document.getElementById('calStateHint');
+  if (hint) hint.style.display = mode === 'state' ? 'block' : 'none';
+  renderCalendar();
+}
+
+// ---- API с офлайн-очередью ----
+function meApi(path, body, cb) {
+  const payload = Object.assign({ init: (tg && tg.initData) || '' }, body || {});
+  fetch(WORKER_URL + path, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  }).then((r) => r.json()).then((d) => {
+    if (d && d.ok) { flushQueue(); cb && cb(d); }
+    else if (cb) cb(d || { ok: false });
+  }).catch(() => {
+    // офлайн: кладём в очередь, дошлём при сети
+    try {
+      const q = JSON.parse(localStorage.getItem('verum_queue') || '[]');
+      q.push({ path, body });
+      localStorage.setItem('verum_queue', JSON.stringify(q.slice(-80)));
+    } catch (e) {}
+    cb && cb({ ok: true, queued: true });
+  });
+}
+function flushQueue() {
+  let q = [];
+  try { q = JSON.parse(localStorage.getItem('verum_queue') || '[]'); } catch (e) {}
+  if (!q.length) return;
+  localStorage.setItem('verum_queue', '[]');
+  q.forEach((item) => meApi(item.path, item.body));
+}
+window.addEventListener('online', flushQueue);
+
+function loadJournal() {
+  if (!subActive || !tg || !tg.initData) return;
+  const init = encodeURIComponent(tg.initData);
+  fetch(WORKER_URL + '/me/journal?init=' + init)
+    .then((r) => r.json())
+    .then((d) => {
+      if (!d || !d.ok) return;
+      const map = {};
+      (d.checkins || []).forEach((c) => { map[c.date] = c; });
+      journal.checkins = map;
+      journal.goals = d.goals || [];
+      journal.reflections = d.reflections || [];
+      journal.manifests = d.manifests || [];
+      journal.totals = d.totals || [];
+      saveJournalCache();
+      if (calMode === 'state') renderCalendar();
+      renderManiSummary();
+    })
+    .catch(() => {});
+}
+
+// ---- Чек-ин дня ----
+let ciDate = null, ciMorning = null, ciEvening = null;
+function openCheckin(key) {
+  if (!subActive) { openPaywall(); return; }
+  ciDate = key;
+  const ci = journal.checkins[key] || {};
+  ciMorning = ci.morning || null;
+  ciEvening = ci.evening || null;
+  const d = new Date(key + 'T12:00:00');
+  document.getElementById('ciTitle').textContent =
+    d.toLocaleDateString('ru', { weekday: 'short', day: 'numeric', month: 'long' });
+  document.getElementById('ciNote').value = ci.note || '';
+  renderCiMoons();
+  document.getElementById('checkinSheet').classList.add('show');
+  syncBack();
+}
+function closeCheckin() {
+  document.getElementById('checkinSheet').classList.remove('show');
+  syncBack();
+}
+function renderCiMoons() {
+  const mk = (slot, val) => {
+    const box = document.getElementById(slot === 'm' ? 'ciMoonsM' : 'ciMoonsE');
+    box.innerHTML = '';
+    for (let p = 1; p <= 5; p++) {
+      const b = document.createElement('button');
+      b.className = 'ci-moon' + (val === p ? ' sel' : '');
+      b.innerHTML = moonSvg(p, 26);
+      b.onclick = () => {
+        haptic('light');
+        if (slot === 'm') ciMorning = (ciMorning === p ? null : p);
+        else ciEvening = (ciEvening === p ? null : p);
+        document.getElementById('ciCaption').textContent = MOON_LABELS[p - 1];
+        renderCiMoons();
+      };
+      box.appendChild(b);
+    }
+  };
+  mk('m', ciMorning);
+  mk('e', ciEvening);
+}
+function saveCheckin() {
+  if (!ciDate) return;
+  const note = document.getElementById('ciNote').value.slice(0, 4000);
+  const ci = journal.checkins[ciDate] || { date: ciDate };
+  ci.morning = ciMorning; ci.evening = ciEvening; ci.note = note;
+  journal.checkins[ciDate] = ci;
+  saveJournalCache();
+  meApi('/me/checkin', { date: ciDate, morning: ciMorning, evening: ciEvening, note });
+  haptic('success');
+  closeCheckin();
+  if (calMode === 'state') renderCalendar();
+  showToast('✦ Записано в дневник состояния', true, 2200);
+}
+
+// ---- Оверлеи дневников ----
+function openJournal(which) {
+  if (!subActive) { openPaywall(); return; }
+  haptic('light');
+  const el = document.getElementById(which === 'goals' ? 'journalGoals' : 'journalMani');
+  el.classList.add('show');
+  if (which === 'goals') renderGoals();
+  else renderMani();
+  syncBack();
+}
+function closeJournal(which) {
+  haptic('light');
+  document.getElementById(which === 'goals' ? 'journalGoals' : 'journalMani').classList.remove('show');
+  syncBack();
+}
+
+// ---- Намерения ----
+let goalTab = 'week';
+let goalPhotoKey = null;
+function periodKeyFor(h) {
+  const now = new Date();
+  if (h === 'year') return String(now.getFullYear());
+  if (h === 'month') return now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+  if (h === 'week') return weekKeyOf(now);
+  return '';
+}
+function periodLabel(h) {
+  const now = new Date();
+  if (h === 'vision') return 'полотно жизни — кем я становлюсь';
+  if (h === 'year') return 'намерения ' + now.getFullYear() + ' года';
+  if (h === 'month') return now.toLocaleDateString('ru', { month: 'long' }) + ' · фокус месяца';
+  const wk = periodKeyFor('week');
+  return 'неделя ' + wk.slice(6) + ' · шаги и рефлексия';
+}
+function setGoalTab(h) {
+  haptic('light');
+  goalTab = h;
+  document.querySelectorAll('#goalTabs .jo-tab').forEach((t) =>
+    t.classList.toggle('active', t.dataset.h === h));
+  renderGoals();
+}
+function renderGoals() {
+  document.getElementById('goalPeriod').textContent = periodLabel(goalTab);
+  const pk = periodKeyFor(goalTab);
+  const list = document.getElementById('goalList');
+  list.innerHTML = '';
+  const items = journal.goals.filter((g) =>
+    g.horizon === goalTab && (goalTab === 'vision' || g.period_key === pk));
+  if (!items.length) {
+    const empty = document.createElement('div');
+    empty.className = 'jo-empty';
+    empty.textContent = goalTab === 'vision'
+      ? 'Опиши жизнь, которую ты создаёшь, — без сроков и рамок. Это полотно можно дополнять всегда.'
+      : 'Пока пусто. Запиши первое намерение — одно, но от сердца.';
+    list.appendChild(empty);
+  }
+  items.forEach((g) => {
+    const row = document.createElement('div');
+    row.className = 'jo-item' + (g.status === 'done' ? ' done' : '');
+    row.innerHTML =
+      '<button class="jo-check" aria-label="Сбылось">' +
+        (g.status === 'done'
+          ? '<svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M4 12.5L9.5 18L20 6.5" stroke="rgba(201,174,125,0.9)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+          : '<span class="jo-circle"></span>') +
+      '</button>' +
+      '<div class="jo-item-body"><div class="jo-item-text"></div>' +
+        (g.photo_key ? '<img class="jo-item-photo" loading="lazy" src="' + photoURL(g.photo_key) + '">' : '') +
+        (g.amount ? '<div class="jo-item-amount">' + Number(g.amount).toLocaleString('ru-RU') + ' ₽</div>' : '') +
+      '</div>' +
+      '<button class="jo-del" aria-label="Удалить">✕</button>';
+    row.querySelector('.jo-item-text').textContent = g.text || '';
+    row.querySelector('.jo-check').onclick = () => toggleGoalDone(g);
+    row.querySelector('.jo-del').onclick = () => deleteGoal(g);
+    list.appendChild(row);
+  });
+  // Рефлексия — только на вкладке «Неделя»
+  const refl = document.getElementById('weekReflect');
+  refl.style.display = goalTab === 'week' ? 'block' : 'none';
+  if (goalTab === 'week') {
+    const wk = periodKeyFor('week');
+    const r = journal.reflections.find((x) => x.week_key === wk) || {};
+    document.getElementById('rWell').value = r.went_well || '';
+    document.getElementById('rImprove').value = r.improve || '';
+    document.getElementById('rLearned').value = r.learned || '';
+    // луны этой недели — состояние и намерения встречаются
+    const moonsBox = document.getElementById('weekMoons');
+    moonsBox.innerHTML = '';
+    const now = new Date();
+    const monday = new Date(now);
+    monday.setDate(now.getDate() - ((now.getDay() + 6) % 7));
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(monday); d.setDate(monday.getDate() + i);
+      const ci = journal.checkins[dateKey(d)];
+      const mood = ci ? (ci.evening || ci.morning) : null;
+      const cell = document.createElement('span');
+      cell.className = 'wm-cell';
+      cell.innerHTML = mood ? moonSvg(mood, 17) : '<span class="wm-dot"></span>';
+      moonsBox.appendChild(cell);
+    }
+  }
+}
+function addGoal() {
+  const inp = document.getElementById('goalInput');
+  const text = inp.value.trim().slice(0, 4000);
+  if (!text) { showToast('Запишите намерение — хотя бы пару слов'); return; }
+  const g = {
+    id: 'tmp' + Date.now(), horizon: goalTab, period_key: periodKeyFor(goalTab),
+    text, status: 'active', photo_key: goalPhotoKey, amount: null,
+  };
+  journal.goals.unshift(g);
+  saveJournalCache();
+  inp.value = '';
+  goalPhotoKey = null;
+  document.getElementById('goalPhotoBtn').classList.remove('has');
+  meApi('/me/goal', { horizon: g.horizon, period_key: g.period_key, text: g.text, photo_key: g.photo_key },
+    (d) => { if (d && d.id) { g.id = d.id; saveJournalCache(); } });
+  haptic('success');
+  renderGoals();
+}
+function toggleGoalDone(g) {
+  haptic('light');
+  g.status = g.status === 'done' ? 'active' : 'done';
+  saveJournalCache();
+  if (typeof g.id === 'number') meApi('/me/goal', { id: g.id, text: g.text, status: g.status });
+  renderGoals();
+  if (g.status === 'done') showToast('✦ Сбылось — отметьте в Материализациях, если хотите', true, 3200);
+}
+function deleteGoal(g) {
+  haptic('light');
+  journal.goals = journal.goals.filter((x) => x !== g);
+  saveJournalCache();
+  if (typeof g.id === 'number') meApi('/me/goal', { id: g.id, delete: true });
+  renderGoals();
+}
+function saveReflection() {
+  const wk = periodKeyFor('week');
+  const r = {
+    week_key: wk,
+    went_well: document.getElementById('rWell').value.slice(0, 2000),
+    improve: document.getElementById('rImprove').value.slice(0, 2000),
+    learned: document.getElementById('rLearned').value.slice(0, 2000),
+  };
+  journal.reflections = journal.reflections.filter((x) => x.week_key !== wk);
+  journal.reflections.unshift(r);
+  saveJournalCache();
+  meApi('/me/reflection', r);
+  haptic('success');
+  showToast('✦ Рефлексия недели сохранена', true, 2200);
+}
+
+// ---- Материализации ----
+let maniKind = 'fulfilled';
+let maniPhotoKey = null;
+const MANI_KIND_RU = { fulfilled: 'сбылось', synchro: 'синхрония', sign: 'знак' };
+function setManiKind(k) {
+  haptic('light');
+  maniKind = k;
+  document.querySelectorAll('#maniKinds .mani-kind').forEach((b) =>
+    b.classList.toggle('active', b.dataset.k === k));
+}
+function maniTotalsData() {
+  let done = 0, syn = 0, money = 0;
+  journal.manifests.forEach((m) => {
+    if (m.kind === 'fulfilled') done++;
+    else syn++;
+    money += Number(m.amount) || 0;
+  });
+  return { done, syn, money };
+}
+function renderManiSummary() {
+  const el = document.getElementById('maniSummary');
+  if (!el) return;
+  const t = maniTotalsData();
+  if (!journal.manifests.length) { el.textContent = 'сбывшееся · синхронии · знаки'; return; }
+  el.textContent = t.done + ' сбылось · ' + t.syn + ' синхроний' +
+    (t.money ? ' · ' + t.money.toLocaleString('ru-RU') + ' ₽' : '');
+}
+function renderMani() {
+  const t = maniTotalsData();
+  document.getElementById('maniTotals').innerHTML =
+    '<div class="mt-cell"><div class="mt-num">' + t.done + '</div><div class="mt-label">сбылось</div></div>' +
+    '<div class="mt-cell"><div class="mt-num">' + t.syn + '</div><div class="mt-label">синхроний и знаков</div></div>' +
+    '<div class="mt-cell"><div class="mt-num">' + (t.money ? t.money.toLocaleString('ru-RU') : '—') + '</div><div class="mt-label">₽ материализовано</div></div>';
+  const list = document.getElementById('maniList');
+  list.innerHTML = '';
+  if (!journal.manifests.length) {
+    const empty = document.createElement('div');
+    empty.className = 'jo-empty';
+    empty.textContent = 'Здесь будет летопись откликов реальности: сбывшееся, синхронии, знаки. Начните с первого — даже маленького.';
+    list.appendChild(empty);
+  }
+  journal.manifests.forEach((m) => {
+    const row = document.createElement('div');
+    row.className = 'mani-item';
+    const d = m.date ? new Date(m.date + 'T12:00:00') : null;
+    row.innerHTML =
+      '<div class="mani-item-head"><span class="mani-tag k-' + m.kind + '">' + (MANI_KIND_RU[m.kind] || '') + '</span>' +
+      '<span class="mani-date">' + (d ? d.toLocaleDateString('ru', { day: 'numeric', month: 'long' }) : '') + '</span>' +
+      '<button class="jo-del" aria-label="Удалить">✕</button></div>' +
+      '<div class="mani-text"></div>' +
+      (m.photo_key ? '<img class="jo-item-photo" loading="lazy" src="' + photoURL(m.photo_key) + '">' : '') +
+      (m.amount ? '<div class="jo-item-amount">' + Number(m.amount).toLocaleString('ru-RU') + ' ₽</div>' : '');
+    row.querySelector('.mani-text').textContent = m.text || '';
+    row.querySelector('.jo-del').onclick = () => {
+      haptic('light');
+      journal.manifests = journal.manifests.filter((x) => x !== m);
+      saveJournalCache();
+      if (typeof m.id === 'number') meApi('/me/manifest', { id: m.id, delete: true });
+      renderMani(); renderManiSummary();
+    };
+    list.appendChild(row);
+  });
+}
+function addManifest() {
+  const inp = document.getElementById('maniInput');
+  const text = inp.value.trim().slice(0, 2000);
+  if (!text) { showToast('Опишите, что произошло, — хотя бы строчку'); return; }
+  const amountRaw = document.getElementById('maniAmount').value;
+  const m = {
+    id: 'tmp' + Date.now(), date: dateKey(new Date()), kind: maniKind, text,
+    amount: amountRaw ? Number(amountRaw) : null, photo_key: maniPhotoKey,
+  };
+  journal.manifests.unshift(m);
+  saveJournalCache();
+  inp.value = '';
+  document.getElementById('maniAmount').value = '';
+  maniPhotoKey = null;
+  document.getElementById('maniPhotoBtn').classList.remove('has');
+  meApi('/me/manifest', { date: m.date, kind: m.kind, text: m.text, amount: m.amount, photo_key: m.photo_key },
+    (d) => { if (d && d.id) { m.id = d.id; saveJournalCache(); } });
+  haptic('success');
+  renderMani(); renderManiSummary();
+}
+
+// ---- Фото: сжатие на клиенте → R2 через воркер ----
+function photoURL(key) {
+  return WORKER_URL + '/photo?key=' + encodeURIComponent(key) +
+    '&init=' + encodeURIComponent((tg && tg.initData) || '');
+}
+function pickPhoto(cb) {
+  const input = document.getElementById('photoFile');
+  input.onchange = () => {
+    const file = input.files && input.files[0];
+    input.value = '';
+    if (!file) return;
+    const img = new Image();
+    img.onload = () => {
+      const maxSide = 1280;
+      const k = Math.min(1, maxSide / Math.max(img.width, img.height));
+      const cv = document.createElement('canvas');
+      cv.width = Math.round(img.width * k);
+      cv.height = Math.round(img.height * k);
+      cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
+      cv.toBlob((blob) => {
+        if (!blob) { showToast('Не получилось обработать фото'); return; }
+        showToast('Загружаю фото…');
+        fetch(WORKER_URL + '/me/photo?init=' + encodeURIComponent((tg && tg.initData) || ''), {
+          method: 'POST', body: blob,
+        }).then((r) => r.json()).then((d) => {
+          if (d && d.ok && d.key) cb(d.key);
+          else showToast(d && d.reason === 'quota'
+            ? 'Хранилище фото заполнено' : 'Фото не загрузилось — попробуйте ещё раз');
+        }).catch(() => showToast('Нет связи — фото можно добавить позже'));
+      }, 'image/jpeg', 0.82);
+      URL.revokeObjectURL(img.src);
+    };
+    img.src = URL.createObjectURL(file);
+  };
+  input.click();
+}
+function attachGoalPhoto() {
+  pickPhoto((key) => {
+    goalPhotoKey = key;
+    document.getElementById('goalPhotoBtn').classList.add('has');
+    showToast('✦ Фото прикрепится к записи', true, 2000);
+  });
+}
+function attachManiPhoto() {
+  pickPhoto((key) => {
+    maniPhotoKey = key;
+    document.getElementById('maniPhotoBtn').classList.add('has');
+    showToast('✦ Фото прикрепится к записи', true, 2000);
+  });
+}
+
+// ---- Синк истории практик в D1 (дозапись новых + разовая миграция) ----
+function syncSessionToServer(s) {
+  if (!subActive) return;
+  meApi('/me/sessions', { list: [{ date: s.date, type: s.type, minutes: s.minutes, step: s.step || '' }] });
+}
+function migrateSessionsOnce() {
+  if (!subActive) return;
+  if (localStorage.getItem('verum_migrated')) return;
+  localStorage.setItem('verum_migrated', '1');
+  if (!sessions.length) return;
+  meApi('/me/sessions', {
+    migrate: true,
+    list: sessions.map((s) => ({ date: s.date, type: s.type, minutes: s.minutes, step: s.step || '' })),
+  });
 }
 
 // История практик: 7 на странице, дальше — страницы 1 2 3 →
@@ -4515,6 +5100,7 @@ function renderPath() {
   document.getElementById('screen-path').classList.toggle('sub-locked', !subActive);
   // рисуем содержимое всегда — под замком оно показывается «под стеклом» (превью),
   // используя реальный локальный прогресс (бесплатная игра ПОТОК уже даёт историю)
+  renderManiSummary();
   setStat('statStreak', calcStreak(), 'день подряд', 'дня подряд', 'дней подряд');
   setStat('statTotal', sessions.length, 'сессия', 'сессии', 'сессий');
   setStat('statMinutes', sessions.reduce((a, s) => a + (s.minutes || 0), 0), 'минута', 'минуты', 'минут');
@@ -4786,6 +5372,7 @@ function saveMedSession(full) {
     medSaved = true;
     sessions.unshift({ date: new Date().toISOString(), type: currentMed.name, minutes: mins, step: currentMed.step || (currentMed.potokDay ? 'Игра ПОТОК' : '') });
     saveSessions();
+    syncSessionToServer(sessions[0]);
     renderTodayStats();
     haptic('success');
   }
@@ -5412,6 +5999,8 @@ async function checkSubscription() {
       placeUnlock();
       renderPath();
     }
+    // дневники: подтверждённая подписка → подтянуть с сервера + разовая миграция истории
+    if (subActive) { loadJournal(); migrateSessionsOnce(); flushQueue(); }
   } catch (e) {}
 }
 checkSubscription();
@@ -5561,6 +6150,9 @@ function syncBack() {
     document.getElementById('claimsheet').classList.contains('show') ||
     document.getElementById('paysheet').classList.contains('show') ||
     document.getElementById('paywall').classList.contains('show') ||
+    document.getElementById('checkinSheet').classList.contains('show') ||
+    document.getElementById('journalGoals').classList.contains('show') ||
+    document.getElementById('journalMani').classList.contains('show') ||
     document.getElementById('fullplayer').classList.contains('show');
   if (need) tg.BackButton.show(); else tg.BackButton.hide();
 }
@@ -5573,6 +6165,9 @@ if (tg && tg.BackButton) {
     else if (document.getElementById('claimsheet').classList.contains('show')) closeClaim();
     else if (document.getElementById('paysheet').classList.contains('show')) closePaysheet();
     else if (document.getElementById('paywall').classList.contains('show')) closePaywall();
+    else if (document.getElementById('checkinSheet').classList.contains('show')) closeCheckin();
+    else if (document.getElementById('journalGoals').classList.contains('show')) closeJournal('goals');
+    else if (document.getElementById('journalMani').classList.contains('show')) closeJournal('mani');
     else if (document.getElementById('fullplayer').classList.contains('show')) minimizeFull();
     syncBack();
   });
@@ -6336,6 +6931,189 @@ loadSessions(() => {
 
   /* === VERUM v112 · тонкий шеврон манифеста === */
   .chev svg { display: block; }
+
+  /* === VERUM v113 · ДНЕВНИКИ: состояние (луны) · намерения · материализации ===
+     Канон: тил-стекло + золотой контур на активном; текст холодный; золото — предметы.
+     Оверлеи — паттерн fullplayer; чек-ин — паттерн paysheet. */
+
+  /* -- переключатель календаря -- */
+  .cal-mode {
+    display: flex; gap: 4px; padding: 4px; margin-bottom: 14px;
+    border-radius: 50px;
+    background: rgba(255,255,255,0.035);
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+  .cal-mode-btn {
+    flex: 1; padding: 8px 0; border: none; border-radius: 50px;
+    background: transparent; color: var(--faint);
+    font-family: 'Manrope', sans-serif; font-size: 10px; letter-spacing: 0.14em;
+    text-transform: uppercase; cursor: pointer; transition: all 0.3s ease;
+  }
+  .cal-mode-btn.active {
+    background: linear-gradient(180deg, rgba(16,68,76,0.6), rgba(5,22,26,0.72));
+    color: var(--gold);
+    border: 1px solid rgba(201,174,125,0.4);
+  }
+  .cal-state-hint {
+    text-align: center; font-size: 10px; letter-spacing: 0.08em;
+    color: var(--faint); margin-top: 12px;
+  }
+  .cal-day.mooned { background: rgba(255,255,255,0.02); }
+  .cal-day.mooned svg { display: block; }
+  .cal-day.tappable { cursor: pointer; }
+
+  /* -- чек-ин дня -- */
+  .ci-card { text-align: center; }
+  .ci-slot-label {
+    font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--faint); margin: 12px 0 6px;
+  }
+  .ci-moons { display: flex; justify-content: center; gap: 10px; }
+  .ci-moon {
+    width: 44px; height: 44px; border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.03);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: all 0.25s ease; padding: 0;
+  }
+  .ci-moon.sel {
+    background: linear-gradient(180deg, rgba(16,68,76,0.6), rgba(5,22,26,0.75));
+    border-color: rgba(201,174,125,0.65);
+    box-shadow: 0 0 14px rgba(201,174,125,0.18);
+  }
+  .ci-moon-caption {
+    font-family: 'Cormorant Garamond', serif; font-style: italic;
+    font-size: 14px; color: var(--gold); margin: 10px 0 6px; min-height: 18px;
+  }
+  #ciNote { margin-top: 6px; }
+
+  /* -- карточки-входы дневников на Пути -- */
+  .journal-card {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 18px 20px; margin-bottom: 12px; cursor: pointer;
+  }
+  .journal-card:active { transform: scale(0.985); }
+  .jc-eyebrow { font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--faint); }
+  .jc-title { font-family: 'Cormorant Garamond', serif; font-size: 19px; color: var(--ink); margin-top: 3px; }
+  .jc-sub { font-size: 10.5px; letter-spacing: 0.05em; color: var(--faint); margin-top: 4px; }
+  .jc-chev { font-size: 20px; color: rgba(201,174,125,0.7); flex-shrink: 0; margin-left: 12px; }
+
+  /* -- оверлеи дневников -- */
+  .journal-overlay {
+    display: none; position: fixed; inset: 0; z-index: 140;
+    background:
+      radial-gradient(ellipse 110% 42% at 50% -10%, rgba(222,238,244,0.10), transparent 60%),
+      linear-gradient(172deg, #092630 0%, #04161C 46%, #01070A 100%);
+    flex-direction: column;
+  }
+  .journal-overlay.show { display: flex; }
+  .jo-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: calc(var(--tg-content-safe-area-inset-top, 12px) + 8px) 18px 12px;
+    flex-shrink: 0;
+  }
+  .jo-close { font-size: 13px; letter-spacing: 0.04em; color: var(--soft-ink); cursor: pointer; min-width: 64px; }
+  .jo-title { font-family: 'Cormorant Garamond', serif; font-size: 21px; color: var(--ink); }
+  .jo-space { min-width: 64px; }
+  .jo-scroll {
+    flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch;
+    padding: 6px 18px calc(40px + env(safe-area-inset-bottom));
+    overscroll-behavior: contain;
+  }
+
+  /* -- табы горизонтов -- */
+  .jo-tabs { display: flex; gap: 8px; margin-bottom: 14px; }
+  .jo-tab {
+    flex: 1; padding: 9px 0; border-radius: 50px;
+    background: rgba(255,255,255,0.035); border: 1px solid rgba(255,255,255,0.09);
+    color: var(--faint); font-family: 'Manrope', sans-serif;
+    font-size: 10.5px; letter-spacing: 0.08em; cursor: pointer; transition: all 0.3s ease;
+  }
+  .jo-tab.active {
+    background: linear-gradient(180deg, rgba(16,68,76,0.55), rgba(5,22,26,0.7));
+    border-color: rgba(201,174,125,0.5); color: var(--gold);
+  }
+  .jo-period {
+    text-align: center; font-family: 'Cormorant Garamond', serif; font-style: italic;
+    font-size: 14px; color: var(--soft-ink); margin-bottom: 14px;
+  }
+
+  /* -- записи (хроника на волосках) -- */
+  .jo-list { margin-bottom: 6px; }
+  .jo-item { display: flex; align-items: flex-start; gap: 12px; padding: 13px 4px; }
+  .jo-item + .jo-item { border-top: 1px solid transparent; position: relative; }
+  .jo-item + .jo-item::before {
+    content: ''; position: absolute; top: 0; left: 14%; right: 14%; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(201,174,125,0.20), transparent);
+  }
+  .jo-check { background: none; border: none; padding: 2px 0 0; cursor: pointer; flex-shrink: 0; }
+  .jo-circle {
+    display: block; width: 15px; height: 15px; border-radius: 50%;
+    border: 1px solid rgba(201,174,125,0.45);
+  }
+  .jo-item-body { flex: 1; min-width: 0; }
+  .jo-item-text { font-size: 14px; line-height: 1.55; color: var(--soft-ink); white-space: pre-wrap; }
+  .jo-item.done .jo-item-text { color: var(--faint); text-decoration: line-through; text-decoration-color: rgba(201,174,125,0.4); }
+  .jo-item-photo { max-width: 132px; border-radius: 12px; margin-top: 8px; display: block; border: 1px solid rgba(220,244,246,0.14); }
+  .jo-item-amount { font-family: 'Cormorant Garamond', serif; font-size: 15px; color: var(--gold); margin-top: 5px; }
+  .jo-del { background: none; border: none; color: var(--faint); font-size: 12px; cursor: pointer; padding: 2px 4px; flex-shrink: 0; opacity: 0.6; }
+  .jo-empty { text-align: center; font-size: 12.5px; line-height: 1.7; color: var(--faint); padding: 22px 14px; }
+
+  /* -- добавление записи -- */
+  .jo-add { margin: 10px 0 22px; }
+  .jo-input { width: 100%; resize: none; }
+  .jo-amount { width: 100%; margin-top: 10px; }
+  .jo-add-row { display: flex; gap: 10px; margin-top: 10px; align-items: center; }
+  .jo-photo-btn {
+    flex-shrink: 0; padding: 12px 16px; border-radius: 50px;
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.12);
+    color: var(--soft-ink); font-family: 'Manrope', sans-serif; font-size: 11px;
+    letter-spacing: 0.06em; cursor: pointer; transition: all 0.25s ease;
+  }
+  .jo-photo-btn.has { border-color: rgba(201,174,125,0.6); color: var(--gold); }
+  .jo-save { flex: 1; margin: 0 !important; }
+
+  /* -- рефлексия недели -- */
+  .jo-reflect { margin-top: 8px; padding-top: 4px; }
+  .jr-label { font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--faint); margin: 12px 0 6px; }
+  .jo-moons-week { display: flex; justify-content: center; gap: 9px; margin: 8px 0 4px; }
+  .wm-cell { display: flex; align-items: center; justify-content: center; width: 22px; height: 22px; }
+  .wm-dot { width: 4px; height: 4px; border-radius: 50%; background: rgba(220,244,246,0.18); }
+
+  /* -- материализации -- */
+  .mani-totals { display: flex; gap: 10px; margin-bottom: 16px; }
+  .mt-cell {
+    flex: 1; text-align: center; padding: 14px 6px; border-radius: 18px;
+    background: linear-gradient(180deg, rgba(16,68,76,0.4), rgba(5,22,26,0.6));
+    border: 1px solid rgba(220,244,246,0.13);
+  }
+  .mt-num { font-family: 'Cormorant Garamond', serif; font-size: 21px; color: var(--gold); }
+  .mt-label { font-size: 8.5px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--faint); margin-top: 4px; }
+  .mani-kinds { display: flex; gap: 8px; margin-bottom: 10px; }
+  .mani-kind {
+    flex: 1; padding: 9px 0; border-radius: 50px;
+    background: rgba(255,255,255,0.035); border: 1px solid rgba(255,255,255,0.09);
+    color: var(--faint); font-family: 'Manrope', sans-serif; font-size: 10.5px;
+    letter-spacing: 0.06em; cursor: pointer; transition: all 0.3s ease;
+  }
+  .mani-kind.active {
+    background: linear-gradient(180deg, rgba(16,68,76,0.55), rgba(5,22,26,0.7));
+    border-color: rgba(201,174,125,0.5); color: var(--gold);
+  }
+  .mani-item { padding: 14px 4px; }
+  .mani-item + .mani-item { position: relative; }
+  .mani-item + .mani-item::before {
+    content: ''; position: absolute; top: 0; left: 14%; right: 14%; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(201,174,125,0.20), transparent);
+  }
+  .mani-item-head { display: flex; align-items: center; gap: 10px; margin-bottom: 5px; }
+  .mani-tag {
+    font-size: 8.5px; letter-spacing: 0.14em; text-transform: uppercase;
+    padding: 3px 10px; border-radius: 50px; border: 1px solid rgba(201,174,125,0.4);
+    color: var(--gold);
+  }
+  .mani-date { font-size: 10px; letter-spacing: 0.08em; color: var(--faint); flex: 1; }
+  .mani-text { font-size: 14px; line-height: 1.55; color: var(--soft-ink); white-space: pre-wrap; }
 </style>
 </body>
 </html>
