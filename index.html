@@ -4487,7 +4487,7 @@ function renderCalendar() {
 }
 
 // История практик: 7 на странице, дальше — страницы 1 2 3 →
-let histPage = 0;
+let histExpanded = false;
 
 function renderPath() {
   document.getElementById('screen-path').classList.toggle('sub-locked', !subActive);
@@ -4542,15 +4542,16 @@ function renderPath() {
     return;
   }
   list.innerHTML = '';
-  const PER = 7;
-  const pages = Math.ceil(sessions.length / PER);
-  if (histPage >= pages) histPage = pages - 1;
-  sessions.slice(histPage * PER, histPage * PER + PER).forEach(s => {
+  // Хроника: по умолчанию 5 последних записей, остальное — по «Показать всю историю».
+  // История вторична (архив), поэтому не занимает всю вкладку — рядом живут календарь и дневники.
+  const COLLAPSED = 5;
+  const shown = histExpanded ? sessions : sessions.slice(0, COLLAPSED);
+  shown.forEach(s => {
     const d = new Date(s.date);
     const item = document.createElement('div');
-    item.className = 'glass-card history-item';
+    item.className = 'history-item';
     item.innerHTML = `
-      <div>
+      <div class="hi-main">
         <div class="history-date">${d.toLocaleDateString('ru', {day:'numeric', month:'long', weekday:'short'})}</div>
         <div class="history-type">${s.type}</div>
         ${(function(){ let st = s.step || (meditations.find(m => m.name === s.type) || {}).step || ''; if (!st && /^День \d/.test(s.type)) st = 'Игра ПОТОК'; if (!st) st = 'Таймер'; const g = (st === 'Игра ПОТОК' || st === 'Таймер') ? STEP_GLYPHS[0] : stepGlyph({ level: st }); return '<div class="history-step"><span class="step-glyph sg-s">' + g + '</span>' + st + '</div>'; })()}
@@ -4558,17 +4559,12 @@ function renderPath() {
       <div class="history-dur">${s.minutes} мин</div>`;
     list.appendChild(item);
   });
-  if (pages > 1) {
-    const nav = document.createElement('div');
-    nav.className = 'hist-pages';
-    for (let p = 0; p < pages; p++) {
-      const b = document.createElement('div');
-      b.className = 'hist-page' + (p === histPage ? ' active' : '');
-      b.textContent = p + 1;
-      b.onclick = () => { haptic('light'); histPage = p; renderPath(); };
-      nav.appendChild(b);
-    }
-    list.appendChild(nav);
+  if (sessions.length > COLLAPSED) {
+    const t = document.createElement('div');
+    t.className = 'hist-toggle';
+    t.textContent = histExpanded ? 'Свернуть ↑' : 'Показать всю историю (' + sessions.length + ') →';
+    t.onclick = () => { haptic('light'); histExpanded = !histExpanded; renderPath(); };
+    list.appendChild(t);
   }
 }
 
@@ -6260,6 +6256,34 @@ loadSessions(() => {
   .journal-teaser { padding: 20px 22px; }
   .jt-title { font-family: 'Cormorant Garamond', serif; font-size: 18px; color: var(--ink); line-height: 1.3; }
   .jt-sub { font-size: 10.5px; letter-spacing: 0.08em; color: var(--gold); margin-top: 8px; text-transform: uppercase; }
+
+  /* === VERUM v111 · история = «хроника на волосках» ===
+     Архив вторичен: плоские строки без стекла, приглушённый холодный текст,
+     тонкие золотые разделители (волосок задан в v104). Время — в одну строку. */
+  .history-item {
+    background: none !important;
+    border: none !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    border-radius: 0 !important;
+    padding: 14px 8px !important;
+    align-items: center !important;
+  }
+  .history-item .hi-main { min-width: 0; }
+  .history-date { color: var(--faint) !important; letter-spacing: 0.1em !important; text-transform: uppercase; }
+  .history-type { font-size: 15.5px !important; color: var(--soft-ink) !important; }
+  .history-step { color: var(--faint) !important; }
+  .history-dur { font-size: 16px !important; color: var(--faint) !important; white-space: nowrap; flex-shrink: 0; margin-left: 14px; }
+  .hist-toggle {
+    text-align: center;
+    font-size: 10.5px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--soft-ink);
+    padding: 18px 0 4px;
+    cursor: pointer;
+  }
 </style>
 </body>
 </html>
