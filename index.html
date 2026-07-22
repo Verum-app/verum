@@ -2976,21 +2976,25 @@
     <div class="glass-card plan-card best" onclick="choosePlan('year')">
       <div>
         <div class="plan-name">Подписка — год</div>
-        <div class="plan-note" id="planNoteY">3,5 месяца в подарок</div>
+        <div class="plan-note" id="planNoteY"><span class="plan-gift"><svg class="gift-ic" width="13" height="13" viewBox="0 0 24 24" fill="none" style="vertical-align:-1px"><path d="M19.5 11.5v9H4.5v-9M3 7.5h18v4H3zM12 7.5v13" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M12 7.5S10.9 3.2 8.5 3.2a2.15 2.15 0 0 0 0 4.3H12zM12 7.5s1.1-4.3 3.5-4.3a2.15 2.15 0 0 1 0 4.3H12z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg> 3,5 месяца в подарок</span></div>
       </div>
       <div class="plan-price-cell"><span class="plan-price" id="planPriceY">24 900 ₽ / 329 $</span><span class="plan-old" id="planOldY"></span><div class="plan-per">в год</div></div>
     </div>
 
     <div class="pw-founders" id="pwFounders">✦ Для <b>первых 43 основательниц</b> пространства VERUM. Цена остаётся вашей навсегда, пока подписка активна.</div>
 
-    <div class="pw-fine">Оплата защищена · чек на почту · подписка продлевается автоматически, отключается в один клик, доступ сохраняется до конца оплаченного периода. Продукт 18+, не является медицинской услугой. Оформляя подписку, вы принимаете условия оферты.</div>
+    <div class="pw-fine">Оплата защищена · чек на почту · подписка продлевается автоматически, отключается в один клик, доступ сохраняется до конца оплаченного периода. Продукт 18+, не является медицинской услугой. Оформляя подписку, вы принимаете <span class="legal-link" onclick="openLegal(OFERTA_LINK)">условия оферты</span> и <span class="legal-link" onclick="openLegal(PRIVACY_LINK)">политику конфиденциальности</span>.</div>
   </div>
 </div>
 
 <div class="paysheet" id="paysheet" onclick="if(event.target===this)closePaysheet()">
   <div class="paysheet-card">
     <div class="ps-title" id="psTitle">Оплата подписки</div>
-    <div class="ps-sub">выбери способ оплаты</div>
+    <div class="ps-sub">выберите способ оплаты</div>
+    <div class="ps-consent">
+      <input type="checkbox" id="consentChk" class="consent-chk">
+      <div class="consent-text">Я принимаю <span class="legal-link" onclick="openLegal(OFERTA_LINK)">условия оферты</span> и <span class="legal-link" onclick="openLegal(PRIVACY_LINK)">политику конфиденциальности</span></div>
+    </div>
     <button class="ps-btn" onclick="payRub()">Картой РФ · в рублях</button>
     <button class="ps-btn" onclick="payValuta()">Зарубежной картой · $ / €</button>
     <div class="ps-claim" onclick="openClaim()">Уже оплатили зарубежной картой? Активировать →</div>
@@ -3158,6 +3162,8 @@ if (tg) {
 
 const ICON_PLAY = '<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" style="margin-left:3px"><path d="M7.5 5.2c0-.9 1-1.5 1.8-1L19 11a1.2 1.2 0 0 1 0 2L9.3 19.8c-.8.5-1.8-.1-1.8-1V5.2Z"/></svg>';
 const ICON_PAUSE = '<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><rect x="6.4" y="4.8" width="3.8" height="14.4" rx="1.4"/><rect x="13.8" y="4.8" width="3.8" height="14.4" rx="1.4"/></svg>';
+// подарок — тонкая золотая линия в стиле знака-замка: наследует цвет через currentColor
+const ICON_GIFT = '<svg class="gift-ic" width="13" height="13" viewBox="0 0 24 24" fill="none" style="vertical-align:-1px"><path d="M19.5 11.5v9H4.5v-9M3 7.5h18v4H3zM12 7.5v13" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M12 7.5S10.9 3.2 8.5 3.2a2.15 2.15 0 0 0 0 4.3H12zM12 7.5s1.1-4.3 3.5-4.3a2.15 2.15 0 0 1 0 4.3H12z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>';
 
 function haptic(type) {
   if (tg?.HapticFeedback) {
@@ -5050,7 +5056,7 @@ function choosePlan(plan) {
   haptic('light');
   currentPlan = plan;
   document.getElementById('psTitle').textContent = FOUNDING
-    ? (plan === 'year' ? 'Год · 16 900 ₽ · первые ' + FOUNDING_SEATS : 'Месяц · 1 900 ₽ · первые ' + FOUNDING_SEATS)
+    ? (plan === 'year' ? 'Год · 16 900 ₽' : 'Месяц · 1 900 ₽')
     : (plan === 'year' ? 'Год · 24 900 ₽' : 'Месяц · 2 900 ₽');
   document.getElementById('paysheet').classList.add('show');
   syncBack();
@@ -5111,8 +5117,11 @@ function updateLavaUI() {
     if (FOUNDING) {
       const std = currentPlan === 'year' ? LAVA_PRICES.year : LAVA_PRICES.month;
       const stdAmt = lavaCurrency === 'EUR' ? std.EUR : std.USD;
-      const giftMonths = currentPlan === 'year' ? '3,5 месяца в подарок · ' : '';
-      gift.innerHTML = '✦ цена основательниц · ' + giftMonths + 'вместо <s>' + sym + ' ' + stdAmt + '</s>';
+      if (currentPlan === 'year') {
+        gift.innerHTML = ICON_GIFT + ' цена основательниц · 3,5 месяца в подарок<br><span class="lava-instead">вместо <s>' + sym + ' ' + stdAmt + '</s></span>';
+      } else {
+        gift.innerHTML = '✦ цена основательниц · вместо <s>' + sym + ' ' + stdAmt + '</s>';
+      }
     } else {
       gift.textContent = currentPlan === 'year' ? '3,5 месяца в подарок' : '';
     }
@@ -5127,7 +5136,20 @@ function setCur(c) {
   updateLavaUI();
 }
 
+// согласие с офертой и политикой обязательно перед оплатой (152-ФЗ: активное согласие)
+function requireConsent() {
+  const c = document.getElementById('consentChk');
+  if (c && !c.checked) {
+    showToast('Отметьте согласие с офертой и политикой 🤍');
+    const box = document.querySelector('.ps-consent');
+    if (box) { box.classList.add('shake'); setTimeout(() => box.classList.remove('shake'), 600); }
+    return false;
+  }
+  return true;
+}
+
 function payValuta() {
+  if (!requireConsent()) return;
   haptic('light');
   closePaysheet();
   document.getElementById('lavasheet').classList.add('show');
@@ -5176,6 +5198,15 @@ async function submitLavaPay() {
     showToast('Нет связи — проверьте интернет и попробуйте снова');
   }
   btn.textContent = 'Перейти к оплате';
+}
+
+// Юридические документы (оферта и политика конфиденциальности)
+const OFERTA_LINK = 'https://annaverum.ru/ofertaapp';
+const PRIVACY_LINK = 'https://annaverum.ru/privacy';
+function openLegal(url) {
+  haptic('light');
+  if (tg && tg.openLink) tg.openLink(url);
+  else window.open(url, '_blank');
 }
 
 // Отзывы и канал
@@ -5297,12 +5328,13 @@ if (FOUNDING) {
   document.getElementById('planOldM').textContent = '2 900 ₽ / 39 $';
   document.getElementById('planOldY').textContent = '24 900 ₽ / 329 $';
   document.getElementById('planNoteM').textContent = 'цена основательниц · навсегда';
-  document.getElementById('planNoteY').textContent = '3,5 месяца в подарок · цена основательниц';
+  document.getElementById('planNoteY').innerHTML = 'цена основательниц · навсегда<span class="plan-gift">' + ICON_GIFT + ' 3,5 месяца в подарок</span>';
   document.getElementById('pwFounders').innerHTML = '✦ Для <b>первых ' + FOUNDING_SEATS + ' основательниц</b> пространства VERUM. Цена остаётся вашей навсегда, пока подписка активна.' +
     '<span class="pw-fine">При отмене подписки условия основательниц завершаются — вернуться можно будет уже по обычной цене.</span>';
 }
 
 function payRub() {
+  if (!requireConsent()) return;
   haptic('success');
   if (DIRECT_PAY) {
     closePaysheet();
@@ -6079,44 +6111,75 @@ loadSessions(() => {
   /* зона касания прогресса: нить 2px, палец 32px */
   .fp-progress { height: 2px; padding: 15px 0 !important; background-clip: content-box !important; box-sizing: content-box !important; }
 
-  /* === VERUM v108 · цена: основная по центру строки, зачёркнутая — ПОД ней ===
-     Правая колонка тарифа — столбик по правому краю, вертикально по центру
-     против названия. Обе валюты ₽/$ в одну строку без переноса (₽ не съезжает).
-     Старая цена — тонкий «туман» с диагональю под золотой ценой. ✦ вместо луны. */
+  /* === VERUM v108 · цена: обе валюты ₽/$ крупно; основная цена на линии названия;
+     зачёркнутая — под ней; год — кромка ярче золотом; подарок-месяцы золотом со знаком дара === */
+  /* название и цена — по верхней линии (цена больше не «уплывает» вверх) */
+  .plan-card { align-items: flex-start !important; }
   .plan-card > div:first-child { min-width: 0; }
+  .plan-name { font-size: 20px !important; line-height: 1.15 !important; }
   .plan-price-cell {
     display: flex;
     flex-direction: column;
     align-items: flex-end;
-    justify-content: center;
     flex-shrink: 0;
     text-align: right;
   }
-  .plan-price { font-size: 20px !important; white-space: nowrap !important; line-height: 1.05 !important; }
+  /* основная цена крупнее; в одну строку, ₽ не съезжает */
+  .plan-price { font-size: 22px !important; white-space: nowrap !important; line-height: 1.15 !important; }
   .plan-old {
     display: block;
     font-family: 'Cormorant Garamond', serif;
-    font-size: 13.5px;
+    font-size: 15px;
     color: var(--faint);
     text-decoration: line-through;
-    text-decoration-color: rgba(201,174,125,0.5);
-    opacity: 0.72;
+    text-decoration-color: rgba(201,174,125,0.55);
+    opacity: 0.78;
     margin-top: 3px;
     line-height: 1;
     white-space: nowrap;
   }
   .plan-old:empty { display: none; }
-  .plan-per { margin-top: 4px; }
+  .plan-per { margin-top: 5px; }
+  /* подарок-месяцы под названием года: крупнее подписи, тёплое золото, знак дара */
+  .plan-gift {
+    display: block;
+    margin-top: 6px;
+    font-size: 13.5px;
+    letter-spacing: 0.02em;
+    color: var(--gold);
+    line-height: 1.25;
+  }
+  .plan-gift .gift-ic { color: var(--gold); margin-right: 3px; }
+  /* год — золотая кромка чуть ярче (не кричаще) + мягкое тёплое свечение */
+  .plan-card.best {
+    border-color: rgba(246,231,194,0.9) !important;
+    box-shadow:
+      var(--glass-shadow),
+      inset 0 1px 0 rgba(255,255,255,0.24),
+      inset 0 0 30px rgba(242,224,182,0.16),
+      0 0 26px rgba(234,206,150,0.30) !important;
+  }
+  /* ссылки на оферту/политику в мелком тексте */
+  .legal-link { color: var(--soft-ink); text-decoration: underline; text-decoration-color: rgba(201,174,125,0.55); text-underline-offset: 2px; cursor: pointer; }
+  /* строка выгоды в Lava-шторке — тёплое золото фирменное */
   .lava-gift {
     text-align: center;
-    font-size: 11.5px;
-    letter-spacing: 0.04em;
-    color: var(--soft-ink);
-    margin: 2px 0 12px;
-    line-height: 1.5;
+    font-size: 12px;
+    letter-spacing: 0.03em;
+    color: var(--gold);
+    margin: 4px 0 14px;
+    line-height: 1.6;
   }
   .lava-gift:empty { display: none; }
+  .lava-gift .gift-ic { color: var(--gold); margin-right: 2px; vertical-align: -1px; }
+  .lava-gift .lava-instead { display: inline-block; margin-top: 2px; }
   .lava-gift s { color: var(--faint); text-decoration-color: rgba(201,174,125,0.5); }
+  /* согласие с офертой/политикой — обязательная галочка перед оплатой */
+  .ps-consent { display: flex; align-items: flex-start; gap: 9px; text-align: left; margin: 4px 2px 16px; padding: 0 4px; }
+  .consent-chk { width: 18px; height: 18px; flex-shrink: 0; margin-top: 1px; accent-color: #C9AE7D; cursor: pointer; }
+  .consent-text { font-size: 11.5px; line-height: 1.5; color: var(--soft-ink); }
+  .ps-consent.shake { animation: psShake 0.5s ease; }
+  @keyframes psShake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-5px)} 75%{transform:translateX(5px)} }
 </style>
 </body>
 </html>
