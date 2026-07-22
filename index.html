@@ -5704,6 +5704,13 @@ function placeUnlock() {
   else if (card) card.insertAdjacentElement('afterend', cta);
 }
 
+// Синхронная предрасстановка из localStorage — карточка ПОТОК сразу оказывается на
+// финальном месте (вверху у новеньких / внизу после дня 5 или подписки), ещё до первого
+// кадра. Это убирает «скачок»: раньше карточка стартовала вверху и прыгала вниз, когда
+// асинхронно доезжали облако и статус подписки.
+try { potok = JSON.parse(localStorage.getItem('verum_potok') || '{}'); } catch (e) { potok = {}; }
+renderPotok(); placePotok(); placeUnlock();
+// Затем сверяемся с облаком; при совпадении позиция та же — визуально ничего не двигается.
 loadPotok(() => { renderPotok(); placePotok(); placeUnlock(); });
 
 
