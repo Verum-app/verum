@@ -3085,10 +3085,10 @@
   </div>
   <div class="jo-scroll">
     <div class="jo-tabs" id="goalTabs">
-      <button class="jo-tab" data-h="vision" onclick="setGoalTab('vision')">Видение</button>
-      <button class="jo-tab" data-h="year" onclick="setGoalTab('year')">Год</button>
-      <button class="jo-tab" data-h="month" onclick="setGoalTab('month')">Месяц</button>
       <button class="jo-tab active" data-h="week" onclick="setGoalTab('week')">Неделя</button>
+      <button class="jo-tab" data-h="month" onclick="setGoalTab('month')">Месяц</button>
+      <button class="jo-tab" data-h="year" onclick="setGoalTab('year')">Год</button>
+      <button class="jo-tab" data-h="vision" onclick="setGoalTab('vision')">Видение</button>
     </div>
     <div class="jo-period" id="goalPeriod"></div>
     <div class="jo-list" id="goalList"></div>
@@ -4606,10 +4606,12 @@ function renderCalendar() {
       // (утро — сверху-слева, вечер — снизу-справа); любой прошлый день открывает чек-ин
       const key = dateKey(day);
       const ci = journal.checkins[key];
-      let corners = '<span class="cd-num">' + d + '</span>';
-      if (ci && ci.morning) corners += '<span class="cd-moon cd-m">' + moonSvg(ci.morning, 12) + '</span>';
-      if (ci && ci.evening) corners += '<span class="cd-moon cd-e">' + moonSvg(ci.evening, 12) + '</span>';
-      el.innerHTML = corners;
+      // одна звезда на день (состояние дня = вечер, иначе утро); дата по центру.
+      // утро+вечер по отдельности — в чек-ине и карточке дня.
+      const dayLevel = ci ? (ci.evening || ci.morning) : null;
+      let cell = '<span class="cd-num">' + d + '</span>';
+      if (dayLevel) cell += '<span class="cd-star">' + moonSvg(dayLevel, 13) + '</span>';
+      el.innerHTML = cell;
       if (ci && (ci.morning || ci.evening || ci.note)) el.classList.add('has-state');
       if (day.toDateString() === today.toDateString()) el.classList.add('today');
       if (day > today) { el.style.opacity = '0.25'; }
@@ -4654,27 +4656,23 @@ function weekKeyOf(d) {
 
 // Луны: 5 фаз, тонкая золотая линия — старая гравюра, не эмодзи
 const MOON_LABELS = ['совсем нет сил', 'еле теплится', 'спокойно, ровно', 'легко и светло', 'полна сил'];
-function moonSvg(phase, size) {
+// Бинду-звезда: 5 состояний — пустой тонкий контур → яркая золотая искра.
+// Тема VERUM — точка света (бинду), поэтому знак состояния = ✦, не луна.
+function moonSvg(level, size) {
   const s = size || 20;
-  const stroke = 'rgba(201,174,125,0.65)';
-  const fill = 'rgba(226,222,205,0.62)';
-  let inner = '';
-  if (phase <= 1) {
-    inner = '<circle cx="12" cy="12" r="8.6" stroke="' + stroke + '" stroke-width="1.1" fill="none"/>';
-  } else if (phase === 2) {
-    inner = '<circle cx="12" cy="12" r="8.6" stroke="' + stroke + '" stroke-width="1.1" fill="none"/>' +
-      '<path d="M15.2 3.9 A8.6 8.6 0 0 1 15.2 20.1 A11.6 11.6 0 0 0 15.2 3.9 Z" fill="' + fill + '" opacity="0.85"/>';
-  } else if (phase === 3) {
-    inner = '<circle cx="12" cy="12" r="8.6" stroke="' + stroke + '" stroke-width="1.1" fill="none"/>' +
-      '<path d="M12 3.4 A8.6 8.6 0 0 1 12 20.6 Z" fill="' + fill + '" opacity="0.88"/>';
-  } else if (phase === 4) {
-    inner = '<circle cx="12" cy="12" r="8.6" stroke="' + stroke + '" stroke-width="1.1" fill="none"/>' +
-      '<path d="M9.4 3.8 A8.6 8.6 0 1 1 9.4 20.2 A11 11 0 0 0 9.4 3.8 Z" fill="' + fill + '" opacity="0.9"/>';
-  } else {
-    inner = '<circle cx="12" cy="12" r="8.6" fill="' + fill + '"/>' +
-      '<circle cx="12" cy="12" r="8.6" stroke="' + stroke + '" stroke-width="1.1" fill="none"/>';
-  }
-  return '<svg width="' + s + '" height="' + s + '" viewBox="0 0 24 24" fill="none">' + inner + '</svg>';
+  const path = 'M12 2.6C12.6 8.8 15.2 11.4 21.4 12C15.2 12.6 12.6 15.2 12 21.4C11.4 15.2 8.8 12.6 2.6 12C8.8 11.4 11.4 8.8 12 2.6Z';
+  const conf = [
+    { fill: 0,    stroke: 0.4,  op: 0.42 },
+    { fill: 0.14, stroke: 0.55, op: 0.62 },
+    { fill: 0.42, stroke: 0.7,  op: 0.8 },
+    { fill: 0.72, stroke: 0.85, op: 0.92 },
+    { fill: 1,    stroke: 1,    op: 1, glow: true },
+  ][Math.max(1, Math.min(5, level)) - 1];
+  const fillAttr = conf.fill ? 'rgba(246,231,194,' + conf.fill + ')' : 'none';
+  const glow = conf.glow ? ' style="filter:drop-shadow(0 0 3px rgba(246,231,194,0.55))"' : '';
+  return '<svg width="' + s + '" height="' + s + '" viewBox="0 0 24 24" fill="none"' + glow + '>' +
+    '<path d="' + path + '" fill="' + fillAttr + '" stroke="rgba(201,174,125,' + conf.stroke + ')" ' +
+    'stroke-width="1.1" stroke-linejoin="round" opacity="' + conf.op + '"/></svg>';
 }
 
 function setCalMode(mode) {
@@ -7153,10 +7151,14 @@ loadSessions(() => {
   .cal-day { position: relative; }
   .cd-num { font-size: 10px; color: var(--faint); }
   .cal-day.has-state .cd-num { color: var(--soft-ink); }
-  .cd-moon { position: absolute; line-height: 0; }
-  .cd-moon svg { width: 10px; height: 10px; display: block; }
-  .cd-m { top: 4px; left: 5px; }
-  .cd-e { bottom: 4px; right: 5px; }
+  .cd-star { position: absolute; top: 3px; right: 4px; line-height: 0; }
+  .cd-star svg { width: 11px; height: 11px; display: block; }
+  /* особая отметка дня со сбывшейся материализацией (заполним в Варианте A) */
+  .cal-day.manifested::after {
+    content: ''; position: absolute; inset: 0; border-radius: 10px;
+    box-shadow: inset 0 0 0 1px rgba(246,231,194,0.5), 0 0 12px rgba(201,174,125,0.25);
+    pointer-events: none;
+  }
 
   /* чек-ин: невыбранные луны приглушены, выбранная — ясно подсвечена */
   .ci-moon { opacity: 0.4; transition: opacity 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease; }
