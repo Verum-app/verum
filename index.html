@@ -3574,7 +3574,11 @@ document.getElementById('thoughtText').textContent = '«' + thoughts[dayIndex] +
 
 // ===== STORAGE =====
 let sessions = [];
-let subActive = false; // статус подписки — объявлен до первого использования
+// Статус подписки. Инициализируем из localStorage-кеша, чтобы условие funnelDone
+// (subActive) было известно синхронно ещё до ответа /status — иначе у подписчицы
+// без дня 5 и младше 14 дней карточка ПОТОК прыгала вниз, когда доезжал статус.
+let subActive = false;
+try { subActive = localStorage.getItem('verum_sub') === '1'; } catch (e) {}
 
 function loadSessions(cb) {
   if (cloudAvailable) {
@@ -5394,10 +5398,15 @@ async function checkSubscription() {
     const r = await fetch(WORKER_URL + '/status?init=' + init);
     if (!r.ok) return;
     const data = await r.json();
+    const was = subActive;
     subActive = !!data.active;
-    if (subActive) {
+    try { localStorage.setItem('verum_sub', subActive ? '1' : '0'); } catch (e) {}
+    // Перерисовываем при смене статуса в любую сторону: подтвердилась активная (снять замки)
+    // ИЛИ кешированная «активна» на деле истекла (вернуть замки). Если статус совпал с
+    // синхронной догадкой — ничего не двигаем (без скачка).
+    if (subActive !== was) {
       const cta = document.getElementById('unlockCta');
-      if (cta) cta.style.display = 'none';
+      if (cta && subActive) cta.style.display = 'none';
       renderMeds();
       placePotok();
       placeUnlock();
