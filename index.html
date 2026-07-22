@@ -2858,7 +2858,7 @@
       <div class="cal-state-hint" id="calStateHint" style="display:none">коснитесь дня — как вы себя чувствовали</div>
     </div>
 
-    <div class="section-eyebrow">История практик</div>
+    <div class="section-eyebrow" id="historyEyebrow">История практик</div>
     <div class="history-list" id="historyList"></div>
 
     <div class="section-eyebrow">Дневники</div>
@@ -3063,14 +3063,15 @@
 <div class="paysheet" id="checkinSheet" onclick="if(event.target===this)closeCheckin()">
   <div class="paysheet-card ci-card">
     <div class="ps-title" id="ciTitle">Как ты сегодня?</div>
-    <div class="ps-sub">отметь своё состояние луной — утром и вечером</div>
+    <div class="ps-sub" id="ciSub">отметь своё состояние луной — утром и вечером</div>
     <div class="ci-slot-label">Утро</div>
     <div class="ci-moons" id="ciMoonsM"></div>
     <div class="ci-slot-label">Вечер</div>
     <div class="ci-moons" id="ciMoonsE"></div>
     <div class="ci-moon-caption" id="ciCaption">&nbsp;</div>
     <textarea class="claim-input fb-input" id="ciNote" rows="4" placeholder="Что происходит в теле? Какие эмоции живут в тебе сегодня — выплесни сюда всё…"></textarea>
-    <button class="ps-btn" id="ciSave" onclick="saveCheckin()">Сохранить</button>
+    <button class="ps-btn jo-save" id="ciSave" onclick="saveCheckin()">Сохранить</button>
+    <div class="ci-edit-link" id="ciEditLink" onclick="ciEnableEdit()" style="display:none">внести изменения</div>
     <div class="ps-cancel" onclick="closeCheckin()">← назад</div>
   </div>
 </div>
@@ -4601,16 +4602,15 @@ function renderCalendar() {
     const el = document.createElement('div');
     el.className = 'cal-day';
     if (calMode === 'state') {
-      // режим «Состояние»: луны настроения; любой прошлый день открывается на чек-ин
+      // режим «Состояние»: дата остаётся, а состояние — маленькими лунами в углах
+      // (утро — сверху-слева, вечер — снизу-справа); любой прошлый день открывает чек-ин
       const key = dateKey(day);
       const ci = journal.checkins[key];
-      const mood = ci ? (ci.evening || ci.morning) : null;
-      if (mood) {
-        el.innerHTML = moonSvg(mood, 16);
-        el.classList.add('mooned');
-      } else {
-        el.textContent = d;
-      }
+      let corners = '<span class="cd-num">' + d + '</span>';
+      if (ci && ci.morning) corners += '<span class="cd-moon cd-m">' + moonSvg(ci.morning, 12) + '</span>';
+      if (ci && ci.evening) corners += '<span class="cd-moon cd-e">' + moonSvg(ci.evening, 12) + '</span>';
+      el.innerHTML = corners;
+      if (ci && (ci.morning || ci.evening || ci.note)) el.classList.add('has-state');
       if (day.toDateString() === today.toDateString()) el.classList.add('today');
       if (day > today) { el.style.opacity = '0.25'; }
       else {
@@ -4653,11 +4653,11 @@ function weekKeyOf(d) {
 }
 
 // Луны: 5 фаз, тонкая золотая линия — старая гравюра, не эмодзи
-const MOON_LABELS = ['пустота и апатия', 'тонкий свет', 'половина пути', 'свет прибывает', 'наполнена светом'];
+const MOON_LABELS = ['совсем нет сил', 'еле теплится', 'спокойно, ровно', 'легко и светло', 'полна сил'];
 function moonSvg(phase, size) {
   const s = size || 20;
-  const stroke = 'rgba(201,174,125,0.85)';
-  const fill = 'rgba(246,231,194,0.92)';
+  const stroke = 'rgba(201,174,125,0.65)';
+  const fill = 'rgba(226,222,205,0.62)';
   let inner = '';
   if (phase <= 1) {
     inner = '<circle cx="12" cy="12" r="8.6" stroke="' + stroke + '" stroke-width="1.1" fill="none"/>';
@@ -4684,6 +4684,11 @@ function setCalMode(mode) {
   document.getElementById('calModeState').classList.toggle('active', mode === 'state');
   const hint = document.getElementById('calStateHint');
   if (hint) hint.style.display = mode === 'state' ? 'block' : 'none';
+  // История практик относится к режиму «Практики» — в «Состоянии» её прячем
+  const he = document.getElementById('historyEyebrow');
+  const hl = document.getElementById('historyList');
+  if (he) he.style.display = mode === 'state' ? 'none' : '';
+  if (hl) hl.style.display = mode === 'state' ? 'none' : '';
   renderCalendar();
 }
 
@@ -4739,6 +4744,7 @@ function loadJournal() {
 
 // ---- Чек-ин дня ----
 let ciDate = null, ciMorning = null, ciEvening = null;
+let ciReadonly = false;
 function openCheckin(key) {
   if (!subActive) { openPaywall(); return; }
   ciDate = key;
@@ -4749,9 +4755,28 @@ function openCheckin(key) {
   document.getElementById('ciTitle').textContent =
     d.toLocaleDateString('ru', { weekday: 'short', day: 'numeric', month: 'long' });
   document.getElementById('ciNote').value = ci.note || '';
-  renderCiMoons();
+  // уже заполненный день открываем как запись (только чтение) с ссылкой «внести изменения»
+  ciReadonly = !!(ci.morning || ci.evening || ci.note);
+  applyCiMode();
   document.getElementById('checkinSheet').classList.add('show');
   syncBack();
+}
+function applyCiMode() {
+  const note = document.getElementById('ciNote');
+  note.readOnly = ciReadonly;
+  document.getElementById('ciSub').style.display = ciReadonly ? 'none' : 'block';
+  document.getElementById('ciSave').style.display = ciReadonly ? 'none' : 'block';
+  document.getElementById('ciEditLink').style.display = ciReadonly ? 'block' : 'none';
+  note.classList.toggle('ci-note-ro', ciReadonly);
+  const cap = document.getElementById('ciCaption');
+  const shown = ciEvening || ciMorning;
+  cap.textContent = shown ? MOON_LABELS[shown - 1] : ' ';
+  renderCiMoons();
+}
+function ciEnableEdit() {
+  haptic('light');
+  ciReadonly = false;
+  applyCiMode();
 }
 function closeCheckin() {
   document.getElementById('checkinSheet').classList.remove('show');
@@ -4763,15 +4788,18 @@ function renderCiMoons() {
     box.innerHTML = '';
     for (let p = 1; p <= 5; p++) {
       const b = document.createElement('button');
-      b.className = 'ci-moon' + (val === p ? ' sel' : '');
+      // в режиме чтения показываем только выбранную луну как активную, прочие приглушены и не кликаются
+      b.className = 'ci-moon' + (val === p ? ' sel' : '') + (ciReadonly ? ' ro' : '');
       b.innerHTML = moonSvg(p, 26);
-      b.onclick = () => {
-        haptic('light');
-        if (slot === 'm') ciMorning = (ciMorning === p ? null : p);
-        else ciEvening = (ciEvening === p ? null : p);
-        document.getElementById('ciCaption').textContent = MOON_LABELS[p - 1];
-        renderCiMoons();
-      };
+      if (!ciReadonly) {
+        b.onclick = () => {
+          haptic('light');
+          if (slot === 'm') ciMorning = (ciMorning === p ? null : p);
+          else ciEvening = (ciEvening === p ? null : p);
+          document.getElementById('ciCaption').textContent = MOON_LABELS[p - 1];
+          renderCiMoons();
+        };
+      }
       box.appendChild(b);
     }
   };
@@ -4882,13 +4910,15 @@ function renderGoals() {
     const now = new Date();
     const monday = new Date(now);
     monday.setDate(now.getDate() - ((now.getDay() + 6) % 7));
+    const WD = ['пн', 'вт', 'ср', 'чт', 'пт', 'сб', 'вс'];
     for (let i = 0; i < 7; i++) {
       const d = new Date(monday); d.setDate(monday.getDate() + i);
       const ci = journal.checkins[dateKey(d)];
       const mood = ci ? (ci.evening || ci.morning) : null;
       const cell = document.createElement('span');
       cell.className = 'wm-cell';
-      cell.innerHTML = mood ? moonSvg(mood, 17) : '<span class="wm-dot"></span>';
+      cell.innerHTML = (mood ? moonSvg(mood, 17) : '<span class="wm-dot"></span>') +
+        '<span class="wm-day">' + WD[i] + '</span>';
       moonsBox.appendChild(cell);
     }
   }
@@ -7114,6 +7144,55 @@ loadSessions(() => {
   }
   .mani-date { font-size: 10px; letter-spacing: 0.08em; color: var(--faint); flex: 1; }
   .mani-text { font-size: 14px; line-height: 1.55; color: var(--soft-ink); white-space: pre-wrap; }
+
+  /* === VERUM v114 · правки дневников по фидбеку Аны ===
+     Луны приглушены, выделение очевидно; дата остаётся + луны в углах;
+     чек-ин read/edit; кнопки дневников — тил+золотой контур; воздух в оверлеях. */
+
+  /* дата + луны в углах ячейки календаря */
+  .cal-day { position: relative; }
+  .cd-num { font-size: 10px; color: var(--faint); }
+  .cal-day.has-state .cd-num { color: var(--soft-ink); }
+  .cd-moon { position: absolute; line-height: 0; }
+  .cd-moon svg { width: 10px; height: 10px; display: block; }
+  .cd-m { top: 4px; left: 5px; }
+  .cd-e { bottom: 4px; right: 5px; }
+
+  /* чек-ин: невыбранные луны приглушены, выбранная — ясно подсвечена */
+  .ci-moon { opacity: 0.4; transition: opacity 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease; }
+  .ci-moon.sel {
+    opacity: 1;
+    background: linear-gradient(180deg, rgba(16,68,76,0.72), rgba(5,22,26,0.82)) !important;
+    border: 1.5px solid rgba(201,174,125,0.9) !important;
+    box-shadow: 0 0 16px rgba(201,174,125,0.28) !important;
+  }
+  .ci-moon.ro { cursor: default; }
+  .ci-moon.ro:not(.sel) { opacity: 0.18; }
+  .ci-note-ro { opacity: 0.85; border-color: rgba(220,244,246,0.1) !important; }
+  .ci-edit-link {
+    text-align: center; font-size: 12px; letter-spacing: 0.04em;
+    color: var(--soft-ink); text-decoration: underline;
+    text-decoration-color: rgba(230,238,238,0.4); text-decoration-thickness: 0.7px;
+    text-underline-offset: 3px; cursor: pointer; margin: 4px 0 2px;
+  }
+
+  /* кнопки в дневниках и чек-ине — тил-стекло + золотой контур (не сплошное золото) */
+  .jo-save.ps-btn, #ciSave.ps-btn {
+    background: linear-gradient(180deg, rgba(16,68,76,0.62), rgba(5,22,26,0.8)) !important;
+    border: 1px solid rgba(201,174,125,0.6) !important;
+    color: var(--gold) !important;
+    box-shadow: 0 0 14px rgba(201,174,125,0.12) !important;
+    text-shadow: none !important;
+  }
+
+  /* воздух сверху в оверлеях дневников */
+  .jo-scroll { padding-top: 18px; }
+  .jo-head { padding-top: calc(var(--tg-content-safe-area-inset-top, 12px) + 14px); }
+  .jo-tabs { margin-top: 4px; }
+
+  /* подписи дней под лунами недели в рефлексии */
+  .wm-cell { flex-direction: column; gap: 3px; height: auto; }
+  .wm-day { font-size: 8px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--faint); }
 </style>
 </body>
 </html>
