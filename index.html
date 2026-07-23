@@ -3693,6 +3693,7 @@ document.getElementById('todayDate').textContent =
 
 // ===== NAV =====
 function nav(name) {
+  try { navTick(name); } catch (e) {}
   haptic('light');
   document.querySelectorAll('.dock-item').forEach(d =>
     d.classList.toggle('active', d.dataset.screen === name));
@@ -5299,6 +5300,47 @@ function showToast(msg, gold, ms) {
 
 // анонимная статистика для Анны: что слушают и дослушивают ли
 let statEndSent = false;
+
+// Пульс открытия приложения (анонимный счётчик дня + «когда была» в карточке):
+// одно событие на запуск — для метрик DAU и «кто сейчас пользуется»
+try {
+  if (tg && tg.initData) {
+    fetch(WORKER_URL + '/stat', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, keepalive: true,
+      body: JSON.stringify({ init: tg.initData, ev: 'open' }),
+    });
+  }
+} catch (e) {}
+
+// Точка прерывания: свернула приложение с играющей практикой — фиксируем,
+// на какой минуте остановилась (для карты «где бросают практику»)
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden && currentMed && audio && !audio.paused && !statEndSent) sendStat('end');
+});
+
+// Время по вкладкам: копим секунды на каждой (today/library/timer/path),
+// шлём ОДНИМ сводным событием при сворачивании — без спама сети на каждый переход
+const navTime = { today: 0, library: 0, timer: 0, path: 0 };
+let navCur = 'today', navSince = Date.now();
+function navTick(next) {
+  const sec = Math.round((Date.now() - navSince) / 1000);
+  if (sec > 0 && sec < 7200 && navTime[navCur] != null) navTime[navCur] += sec;
+  navSince = Date.now();
+  if (next) navCur = next;
+}
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) { navSince = Date.now(); return; }
+  navTick();
+  const total = navTime.today + navTime.library + navTime.timer + navTime.path;
+  if (!total || !tg || !tg.initData) return;
+  try {
+    fetch(WORKER_URL + '/stat', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, keepalive: true,
+      body: JSON.stringify({ init: tg.initData, ev: 'nav', screens: navTime }),
+    });
+    navTime.today = navTime.library = navTime.timer = navTime.path = 0;
+  } catch (e) {}
+});
 function sendStat(ev) {
   try {
     if (!currentMed || !tg || !tg.initData) return;
@@ -5729,8 +5771,20 @@ function stopEq() {
 // Диплинк сценария оплаты в BotHelp:
 const SUB_LINK = 'https://t.me/Annaverum_bot?start=dl-1783324642242';
 
+// Шаги оплаты по людям: какой шаг воронки прошла (видно в пульте /stats)
+function payStat(step) {
+  try {
+    if (!tg || !tg.initData) return;
+    fetch(WORKER_URL + '/stat', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, keepalive: true,
+      body: JSON.stringify({ init: tg.initData, ev: 'pay', step }),
+    });
+  } catch (e) {}
+}
+
 function openPaywall() {
   haptic('light');
+  payStat('paywall');
   document.getElementById('paywall').classList.add('show');
   syncBack();
   // воронка: открытие окна оплаты (анонимный счётчик месяца, свои клики Анны не считаются)
@@ -5753,6 +5807,7 @@ let currentPlan = 'month';
 
 function choosePlan(plan) {
   haptic('light');
+  payStat('plan_' + plan);
   currentPlan = plan;
   const psLabel = plan === 'year' ? 'Год' : 'Месяц';
   const psRub = FOUNDING
@@ -5831,6 +5886,7 @@ function updateLavaUI() {
 
 function setCur(c) {
   haptic('light');
+  payStat('cur_' + c.toLowerCase());
   lavaCurrency = c;
   document.getElementById('curUSD').classList.toggle('active', c === 'USD');
   document.getElementById('curEUR').classList.toggle('active', c === 'EUR');
@@ -5851,6 +5907,7 @@ function requireConsent() {
 
 function payValuta() {
   if (!requireConsent()) return;
+  payStat('valuta');
   haptic('light');
   closePaysheet();
   document.getElementById('lavasheet').classList.add('show');
@@ -5885,6 +5942,7 @@ async function submitLavaPay() {
     });
     const data = await r.json();
     if (data.ok && data.url) {
+      payStat('lava_link');
       haptic('success');
       closeLava();
       showToast('После оплаты вернитесь сюда — доступ откроется автоматически ✨', false, 5000);
@@ -6036,6 +6094,7 @@ if (FOUNDING) {
 
 function payRub() {
   if (!requireConsent()) return;
+  payStat('rub');
   haptic('success');
   if (DIRECT_PAY) {
     closePaysheet();
