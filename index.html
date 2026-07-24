@@ -2857,7 +2857,7 @@
     <div class="journal-tabs">
       <button class="jt-tab active" id="jtState" onclick="setJournalTab('state')">Состояние</button>
       <button class="jt-tab" onclick="setJournalTab('goals')">Намерения</button>
-      <button class="jt-tab" onclick="setJournalTab('mani')">Отклики</button>
+      <button class="jt-tab" onclick="setJournalTab('mani')">Творения</button>
     </div>
     <div class="glass-card cal-card">
       <div class="cal-nav">
@@ -3057,13 +3057,16 @@
 <div class="paysheet" id="checkinSheet" onclick="if(event.target===this)closeCheckin()">
   <div class="paysheet-card ci-card">
     <div class="ps-title" id="ciTitle">Как ты сегодня?</div>
-    <div class="ci-phrase" id="ciPhrase"></div>
     <div class="ci-practices" id="ciPractices"></div>
     <div class="ps-sub" id="ciSub">отметь своё состояние звездой</div>
     <div class="ci-moons" id="ciStarsRow"></div>
     <div class="ci-moon-caption" id="ciCaption">&nbsp;</div>
-    <textarea class="claim-input fb-input" id="ciNote" rows="4" placeholder="Что происходит в теле? Какие эмоции живут в тебе сегодня — выплесни сюда всё…"></textarea>
-    <button class="ps-btn jo-save" id="ciSave" onclick="saveCheckin()">Сохранить</button>
+    <img class="jo-item-photo ci-photo" id="ciPhotoView" style="display:none" alt="">
+    <textarea class="claim-input fb-input" id="ciNote" rows="4" placeholder="Что происходит в теле? Какие мысли и эмоции живут в тебе сегодня — выплесни сюда всё…"></textarea>
+    <div class="jo-add-row" id="ciEditRow">
+      <button class="jo-photo-btn" id="ciPhotoBtn" onclick="attachCiPhoto()">✦ фото</button>
+      <button class="ps-btn jo-save" id="ciSave" onclick="saveCheckin()">Сохранить</button>
+    </div>
     <div class="ci-edit-link" id="ciEditLink" onclick="ciEnableEdit()" style="display:none">внести изменения</div>
     <div class="ps-cancel" onclick="closeCheckin()">← назад</div>
   </div>
@@ -3078,32 +3081,14 @@
   </div>
   <div class="jo-scroll">
     <div class="jo-tabs" id="goalTabs">
-      <button class="jo-tab active" data-h="week" onclick="setGoalTab('week')">Неделя</button>
-      <button class="jo-tab" data-h="month" onclick="setGoalTab('month')">Месяц</button>
-      <button class="jo-tab" data-h="year" onclick="setGoalTab('year')">Год</button>
+      <button class="jo-tab active" data-h="day" onclick="setGoalTab('day')">Сегодня</button>
       <button class="jo-tab" data-h="vision" onclick="setGoalTab('vision')">Видение</button>
     </div>
     <div class="jo-period" id="goalPeriod"></div>
-    <div class="jo-list" id="goalList"></div>
-    <div class="jo-hint" id="goalListHint" style="display:none">✦ коснись звезды — сбылось · долгое нажатие — удалить</div>
-    <div class="jo-add">
-      <textarea class="claim-input jo-input" id="goalInput" rows="2" placeholder="Я … — и я чувствую …"></textarea>
-      <div class="jo-gen-hint">настоящее время · от первого лица · с чувством</div>
-      <!-- WOOP: необязательный план «если — то» (самый доказательный апгрейд намерений) -->
-      <div class="jo-plan-link" id="goalPlanLink" onclick="toggleGoalPlan()">✦ если что-то помешает — мой план…</div>
-      <textarea class="claim-input jo-input" id="goalPlan" rows="2" placeholder="Если … — то я …" style="display:none"></textarea>
-      <div class="jo-add-row">
-        <button class="jo-photo-btn" id="goalPhotoBtn" onclick="attachGoalPhoto()">✦ фото</button>
-        <button class="ps-btn jo-save" onclick="addGoal()">Записать</button>
-      </div>
-    </div>
-    <!-- прошлая страница недели: только чтение, без переноса — новую неделю переписываем заново -->
-    <div class="jo-past" id="goalPast"></div>
+    <!-- воскресный ритуал: в будни этой карточки нет вообще -->
     <div class="jo-reflect" id="weekReflect" style="display:none">
-      <div class="section-eyebrow" id="reflectTitle">Рефлексия недели</div>
-      <div class="reflect-hint" id="reflectHint"></div>
+      <div class="section-eyebrow" id="reflectTitle">Закрой неделю ✦</div>
       <div class="jo-moons-week" id="weekMoons"></div>
-      <div class="reflect-invite" id="reflectInvite" style="display:none"></div>
       <div id="reflectBody">
         <div class="jr-label">что получилось?</div>
         <textarea class="claim-input jo-input" id="rWell" rows="2"></textarea>
@@ -3114,14 +3099,27 @@
         <button class="ps-btn jo-save" onclick="saveReflection()">Сохранить рефлексию</button>
       </div>
     </div>
+    <div class="jo-moons-week" id="goalWeekDots" style="display:none"></div>
+    <div class="jo-list" id="goalList"></div>
+    <div class="jo-hint" id="goalListHint" style="display:none">✦ коснись звезды — сбылось · долгое нажатие — удалить</div>
+    <div class="jo-add">
+      <textarea class="claim-input jo-input" id="goalInput" rows="4" placeholder="Я …"></textarea>
+      <div class="jo-gen-hint" id="goalGenHint">настоящее время · от первого лица · с чувством</div>
+      <div class="jo-add-row">
+        <button class="jo-photo-btn" id="goalPhotoBtn" onclick="attachGoalPhoto()">✦ фото</button>
+        <button class="ps-btn jo-save" onclick="addGoal()">Записать</button>
+      </div>
+    </div>
+    <!-- вчерашняя страница: только чтение, без переноса — новый день пишем заново -->
+    <div class="jo-past" id="goalPast"></div>
   </div>
 </div>
 
-<!-- ===== ДНЕВНИК «ОТКЛИКИ РЕАЛЬНОСТИ» (v116: лента первой, форма — шитом) ===== -->
+<!-- ===== «ДНЕВНИК ТВОРЦА» (летопись сбывшегося; бывш. Отклики/Материализации) ===== -->
 <div class="journal-overlay" id="journalMani">
   <div class="jo-head">
     <div class="jo-close" onclick="closeJournal('mani')">‹ Путь</div>
-    <div class="jo-title">Отклики реальности</div>
+    <div class="jo-title">Дневник Творца</div>
     <div class="jo-space"></div>
   </div>
   <div class="jo-scroll">
@@ -3130,15 +3128,15 @@
     <div class="jo-hint" id="maniListHint" style="display:none">долгое нажатие по записи — удалить</div>
   </div>
   <div class="mani-foot">
-    <button class="ps-btn jo-save mani-cta" onclick="openManiForm()">✦ Записать отклик</button>
+    <button class="ps-btn jo-save mani-cta" onclick="openManiForm()">✦ Записать творение</button>
   </div>
 </div>
 
 <!-- шит записи отклика (открывается и из Намерений — при отметке «сбылось») -->
 <div class="paysheet mani-sheet" id="maniSheet" onclick="if(event.target===this)closeManiForm()">
   <div class="paysheet-card">
-    <div class="ps-title" id="maniSheetTitle">Отклик реальности</div>
-    <div class="ps-sub" id="maniSheetSub">что отозвалось — большое или самое маленькое</div>
+    <div class="ps-title" id="maniSheetTitle">Дневник Творца</div>
+    <div class="ps-sub" id="maniSheetSub">запиши, что сотворилось — большое или самое маленькое</div>
     <div class="mani-kinds" id="maniKinds">
       <button class="mani-kind active" data-k="fulfilled" onclick="setManiKind('fulfilled')">Сбылось</button>
       <button class="mani-kind" data-k="synchro" onclick="setManiKind('synchro')">Синхрония</button>
@@ -3163,8 +3161,11 @@
     <div class="jo-space"></div>
   </div>
   <div class="ws-body">
-    <textarea class="ws-input" id="wsInput" placeholder="Какие мысли и эмоции живут в тебе сегодня — …"></textarea>
-    <button class="ps-btn jo-save ws-save" onclick="saveWriteSheet()">Сохранить</button>
+    <textarea class="ws-input" id="wsInput" placeholder="Что происходит в теле? Какие мысли и эмоции живут в тебе сегодня — выплесни сюда всё…"></textarea>
+    <div class="ws-actions">
+      <button class="jo-photo-btn" id="wsPhotoBtn" onclick="attachWsPhoto()">✦ фото</button>
+      <button class="ps-btn jo-save ws-save" onclick="saveWriteSheet()">Сохранить</button>
+    </div>
   </div>
 </div>
 
@@ -4639,6 +4640,10 @@ function renderCalendar() {
     if (m.kind === 'fulfilled') manifested.add(m.date);
     if (m.photo_key) photoDays.add(m.date);
   });
+  // фото дня из дневника состояния — тоже точка на календаре
+  for (const k in journal.checkins) {
+    if (journal.checkins[k] && journal.checkins[k].photo_key) photoDays.add(k);
+  }
   const firstDow = (base.getDay() + 6) % 7;
   for (let i = 0; i < firstDow; i++) {
     const el = document.createElement('div');
@@ -4823,7 +4828,7 @@ function loadJournal() {
 }
 
 // ---- Карточка дня (состояние + практики дня + поддерживающая фраза) ----
-let ciDate = null, ciLevel = null;
+let ciDate = null, ciLevel = null, ciPhotoKey = null;
 let ciReadonly = false;
 
 // Лозунги пяти состояний (тексты Аны, 2026-07-24): показываются после выбора звезды.
@@ -4834,8 +4839,6 @@ const STATE_PHRASES = [
   'Лёгкость — знак, что ты в контакте с собой и идёшь по своему пути. Запомни это ощущение телом и продолжай!',
   'Расширенное состояние сознания и любовь — из этой точки и создаётся реальность.',
 ];
-const INVITE_PHRASE = 'Этот день — чистый лист. Отметь своё состояние.';
-function statePhrase(level) { return level ? STATE_PHRASES[level - 1] : INVITE_PHRASE; }
 
 // ---- Чек-ин на «Сегодня» (v117) ----
 // Одна шкала из 5 звёзд (утро/вечер убраны — решение Аны 2026-07-24). После выбора
@@ -4910,6 +4913,8 @@ function openWriteSheet() {
   document.getElementById('wsDate').innerHTML =
     (wsLevel ? moonSvg(wsLevel, 18) : '') + '<span>' + wsDateStr + '</span>';
   document.getElementById('wsInput').value = ci.note || '';
+  wsPhotoKey = null;
+  document.getElementById('wsPhotoBtn').classList.toggle('has', !!ci.photo_key);
   document.getElementById('writeSheet').classList.add('show');
   syncBack();
 }
@@ -4922,9 +4927,10 @@ function saveWriteSheet() {
   const note = document.getElementById('wsInput').value.slice(0, 4000);
   const ci = journal.checkins[key] || { date: key };
   ci.note = note;
+  if (wsPhotoKey) ci.photo_key = wsPhotoKey;
   journal.checkins[key] = ci;
   saveJournalCache();
-  meApi('/me/checkin', { date: key, morning: ci.morning || null, evening: ci.evening || null, note });
+  meApi('/me/checkin', { date: key, morning: ci.morning || null, evening: ci.evening || null, note, photo_key: wsPhotoKey });
   haptic('success');
   closeWriteSheet();
   renderTodayCheckin();
@@ -4936,10 +4942,19 @@ function openDayCard(key) {
   ciDate = key;
   const ci = journal.checkins[key] || {};
   ciLevel = ci.evening || ci.morning || null;
+  ciPhotoKey = null;
   const d = new Date(key + 'T12:00:00');
   document.getElementById('ciTitle').textContent =
     d.toLocaleDateString('ru', { weekday: 'short', day: 'numeric', month: 'long' });
   document.getElementById('ciNote').value = ci.note || '';
+  // фото дня: показываем сохранённое, тап раскрывает
+  const pv = document.getElementById('ciPhotoView');
+  if (ci.photo_key) {
+    pv.src = photoURL(ci.photo_key);
+    pv.style.display = 'block';
+    pv.onclick = () => pv.classList.toggle('expanded');
+  } else { pv.style.display = 'none'; }
+  document.getElementById('ciPhotoBtn').classList.toggle('has', !!ci.photo_key);
   // практики этого дня — из локальной истории
   const dayPr = sessions.filter((s) => dateKey(new Date(s.date)) === key);
   const prBox = document.getElementById('ciPractices');
@@ -4951,8 +4966,6 @@ function openDayCard(key) {
   } else {
     prBox.style.display = 'none';
   }
-  // лозунг состояния дня (или приглашение, если день не отмечен)
-  document.getElementById('ciPhrase').textContent = statePhrase(ciLevel);
   // заполненный день открываем как запись (только чтение) + ссылка «внести изменения»
   ciReadonly = !!(ci.morning || ci.evening || ci.note);
   applyCiMode();
@@ -4963,7 +4976,7 @@ function applyCiMode() {
   const note = document.getElementById('ciNote');
   note.readOnly = ciReadonly;
   document.getElementById('ciSub').style.display = ciReadonly ? 'none' : 'block';
-  document.getElementById('ciSave').style.display = ciReadonly ? 'none' : 'block';
+  document.getElementById('ciEditRow').style.display = ciReadonly ? 'none' : 'flex';
   document.getElementById('ciEditLink').style.display = ciReadonly ? 'block' : 'none';
   note.classList.toggle('ci-note-ro', ciReadonly);
   const cap = document.getElementById('ciCaption');
@@ -4998,7 +5011,6 @@ function renderCiStars() {
       haptic('light');
       ciLevel = p;
       document.getElementById('ciCaption').textContent = MOON_LABELS[p - 1];
-      document.getElementById('ciPhrase').textContent = statePhrase(p);
       renderCiStars();
     };
     box.appendChild(b);
@@ -5009,9 +5021,10 @@ function saveCheckin() {
   const note = document.getElementById('ciNote').value.slice(0, 4000);
   const ci = journal.checkins[ciDate] || { date: ciDate };
   ci.morning = ciLevel; ci.evening = ciLevel; ci.note = note;
+  if (ciPhotoKey) ci.photo_key = ciPhotoKey;
   journal.checkins[ciDate] = ci;
   saveJournalCache();
-  meApi('/me/checkin', { date: ciDate, morning: ciLevel, evening: ciLevel, note });
+  meApi('/me/checkin', { date: ciDate, morning: ciLevel, evening: ciLevel, note, photo_key: ciPhotoKey });
   haptic('success');
   closeCheckin();
   renderCalendar();
@@ -5036,32 +5049,19 @@ function closeJournal(which) {
 }
 
 // ---- Намерения ----
-let goalTab = 'week';
+// Намерения (v119, решение Аны): ежедневная практика «до 10 намерений заново»
+// (метод Трейси + эффект генерации) + «Видение» — карта желаний без сроков.
+// Горизонты неделя/месяц/год убраны из UI (старые записи остаются в базе).
+let goalTab = 'day';
 let goalPhotoKey = null;
 function periodKeyFor(h) {
-  const now = new Date();
-  if (h === 'year') return String(now.getFullYear());
-  if (h === 'month') return now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
-  if (h === 'week') return weekKeyOf(now);
+  if (h === 'day') return dateKey(new Date());
   return '';
 }
-// Даты недели по-человечески: «21–27 июля», а не технический номер ISO-недели
-function weekRangeLabel() {
-  const now = new Date();
-  const monday = new Date(now);
-  monday.setDate(now.getDate() - ((now.getDay() + 6) % 7));
-  const sunday = new Date(monday);
-  sunday.setDate(monday.getDate() + 6);
-  const dm = (d) => d.toLocaleDateString('ru', { day: 'numeric', month: 'long' });
-  if (monday.getMonth() === sunday.getMonth()) return monday.getDate() + '–' + dm(sunday);
-  return dm(monday) + ' — ' + dm(sunday);
-}
 function periodLabel(h) {
-  const now = new Date();
   if (h === 'vision') return 'полотно жизни — кем я становлюсь';
-  if (h === 'year') return 'намерения ' + now.getFullYear() + ' года';
-  if (h === 'month') return now.toLocaleDateString('ru', { month: 'long' }) + ' · фокус месяца';
-  return weekRangeLabel() + ' · шаги недели';
+  return new Date().toLocaleDateString('ru', { weekday: 'long', day: 'numeric', month: 'long' }) +
+    ' · намерения дня';
 }
 function setGoalTab(h) {
   haptic('light');
@@ -5072,127 +5072,139 @@ function setGoalTab(h) {
 }
 function renderGoals() {
   document.getElementById('goalPeriod').textContent = periodLabel(goalTab);
-  const pk = periodKeyFor(goalTab);
   const list = document.getElementById('goalList');
   list.innerHTML = '';
-  const items = journal.goals.filter((g) =>
-    g.horizon === goalTab && (goalTab === 'vision' || g.period_key === pk));
-  // прошлая страница недели (только чтение): эффект генерации — намерения
-  // переписываются заново своими словами, механики «скопировать» нет нарочно
-  let pastItems = [];
-  if (goalTab === 'week') {
-    const prevKey = weekKeyOf(new Date(Date.now() - 7 * 86400000));
-    pastItems = journal.goals.filter((g) => g.horizon === 'week' && g.period_key === prevKey);
-  }
+  list.classList.toggle('vision-grid', goalTab === 'vision');
+  const todayKey = periodKeyFor('day');
+  const items = goalTab === 'day'
+    ? journal.goals.filter((g) => g.horizon === 'day' && g.period_key === todayKey)
+    : journal.goals.filter((g) => g.horizon === 'vision');
+  const yKey = dateKey(new Date(Date.now() - 86400000));
+  const pastItems = goalTab === 'day'
+    ? journal.goals.filter((g) => g.horizon === 'day' && g.period_key === yKey) : [];
+  // подстройка ввода под таб
+  const inp = document.getElementById('goalInput');
+  inp.placeholder = goalTab === 'day'
+    ? 'Я … (до 10 намерений — каждое с новой строки)'
+    : 'Опиши жизнь, которую ты создаёшь, — и добавь образ-фото…';
+  inp.rows = goalTab === 'day' ? 4 : 2;
+  document.getElementById('goalPhotoBtn').style.display = goalTab === 'vision' ? '' : 'none';
+  document.getElementById('goalGenHint').style.display = goalTab === 'day' ? '' : 'none';
   if (!items.length) {
     const empty = document.createElement('div');
     empty.className = 'jo-empty';
-    empty.textContent = goalTab === 'vision'
-      ? 'Опиши жизнь, которую ты создаёшь, — без сроков и рамок. Это полотно можно дополнять всегда.'
-      : (goalTab === 'week' && pastItems.length
-        ? 'Новая неделя — чистый лист. Перепиши намерения заново, своими словами: так они звучат сильнее скопированных.'
-        : 'Пока пусто. Запиши первое намерение — одно, но от сердца.');
+    if (goalTab === 'vision') {
+      empty.textContent = 'Собери полотно жизни: образы и фото того, что ты создаёшь. Без сроков и рамок — полотно можно дополнять всегда.';
+    } else {
+      empty.textContent = pastItems.length
+        ? 'Новый день — чистый лист. Перепиши намерения заново, своими словами: важное само вернётся.'
+        : 'Чистый лист. Напиши до 10 намерений — в настоящем времени, от сердца.';
+    }
     list.appendChild(empty);
   }
   const hint = document.getElementById('goalListHint');
   if (hint) hint.style.display = items.length ? 'block' : 'none';
-  items.forEach((g) => {
-    const row = document.createElement('div');
-    row.className = 'jo-item' + (g.status === 'done' ? ' done' : '');
-    row.innerHTML =
-      '<button class="jo-check" aria-label="Сбылось">' + moonSvg(g.status === 'done' ? 5 : 1, 17) + '</button>' +
-      '<div class="jo-item-body"><div class="jo-item-text"></div>' +
-        (g.plan ? '<div class="jo-item-plan"></div>' : '') +
-        (g.photo_key ? '<img class="jo-item-photo" loading="lazy" src="' + photoURL(g.photo_key) + '">' : '') +
-        (g.amount ? '<div class="jo-item-amount">' + Number(g.amount).toLocaleString('ru-RU') + ' ₽</div>' : '') +
-      '</div>';
-    row.querySelector('.jo-item-text').textContent = g.text || '';
-    if (g.plan) row.querySelector('.jo-item-plan').textContent = '↳ ' + g.plan;
-    const ph = row.querySelector('.jo-item-photo');
-    if (ph) ph.onclick = () => ph.classList.toggle('expanded');
-    row.querySelector('.jo-check').onclick = () => toggleGoalDone(g);
-    bindLongPress(row, () => confirmDelete('это намерение', () => deleteGoal(g)));
-    list.appendChild(row);
-  });
+  if (goalTab === 'vision') {
+    // карта желаний: плитки с фото (первая — крупная), текстовые — строками
+    const withPhoto = items.filter((g) => g.photo_key);
+    const noPhoto = items.filter((g) => !g.photo_key);
+    withPhoto.forEach((g, i) => {
+      const tile = document.createElement('div');
+      tile.className = 'vision-tile' + (i === 0 ? ' big' : '') + (g.status === 'done' ? ' done' : '');
+      tile.innerHTML = '<img loading="lazy" alt="">' +
+        '<div class="vision-cap"><button class="jo-check" aria-label="Сбылось">' +
+        moonSvg(g.status === 'done' ? 5 : 1, 16) + '</button><span class="vision-cap-text"></span></div>';
+      tile.querySelector('img').src = photoURL(g.photo_key);
+      tile.querySelector('.vision-cap-text').textContent = g.text || '';
+      tile.querySelector('.jo-check').onclick = (e) => { e.stopPropagation(); toggleGoalDone(g); };
+      bindLongPress(tile, () => confirmDelete('это намерение', () => deleteGoal(g)));
+      list.appendChild(tile);
+    });
+    noPhoto.forEach((g) => list.appendChild(goalRow(g)));
+  } else {
+    items.forEach((g) => list.appendChild(goalRow(g)));
+  }
+  renderGoalWeekDots();
   renderGoalPast(pastItems);
-  // Рефлексия — на неделе/месяце/годе (не на «Видении»)
-  const refl = document.getElementById('weekReflect');
-  const hasRefl = goalTab !== 'vision';
-  refl.style.display = hasRefl ? 'block' : 'none';
-  if (hasRefl) {
-    const REFL_TITLE = { week: 'Рефлексия недели', month: 'Рефлексия месяца', year: 'Рефлексия года' };
-    const REFL_HINT = {
-      week: 'запиши в воскресенье, завершая неделю',
-      month: 'запиши в конце месяца, оглянувшись назад',
-      year: 'запиши в конце года — большой итог пути',
-    };
-    const REFL_INVITE = {
-      week: '✦ рефлексия откроется в воскресенье — придёшь перечитать неделю',
-      month: '✦ рефлексия откроется в последние дни месяца',
-      year: '✦ рефлексия откроется в конце декабря',
-    };
-    document.getElementById('reflectTitle').textContent = REFL_TITLE[goalTab];
-    document.getElementById('reflectHint').textContent = REFL_HINT[goalTab];
-    const rk = reflectionKeyFor(goalTab);
-    const r = journal.reflections.find((x) => x.week_key === rk) || {};
-    // три пустых поля не должны давить всю неделю: форма раскрывается, когда
-    // пришло её время (или уже начата) — до этого одна строка-приглашение
-    const hasContent = !!(r.went_well || r.improve || r.learned);
-    const open = reflectionDue(goalTab) || hasContent;
-    document.getElementById('reflectBody').style.display = open ? 'block' : 'none';
-    document.getElementById('reflectHint').style.display = open ? 'block' : 'none';
-    const invite = document.getElementById('reflectInvite');
-    invite.style.display = open ? 'none' : 'block';
-    invite.textContent = REFL_INVITE[goalTab];
-    document.getElementById('rWell').value = r.went_well || '';
-    document.getElementById('rImprove').value = r.improve || '';
-    document.getElementById('rLearned').value = r.learned || '';
-    // луны недели показываем только для недельной рефлексии
-    const moonsBox = document.getElementById('weekMoons');
-    moonsBox.style.display = goalTab === 'week' ? 'flex' : 'none';
-    if (goalTab === 'week') {
-      moonsBox.innerHTML = '';
-      const now = new Date();
-      const monday = new Date(now);
-      monday.setDate(now.getDate() - ((now.getDay() + 6) % 7));
-      const WD = ['пн', 'вт', 'ср', 'чт', 'пт', 'сб', 'вс'];
-      for (let i = 0; i < 7; i++) {
-        const d = new Date(monday); d.setDate(monday.getDate() + i);
-        const ci = journal.checkins[dateKey(d)];
-        const mood = ci ? (ci.evening || ci.morning) : null;
-        const cell = document.createElement('span');
-        cell.className = 'wm-cell';
-        cell.innerHTML = (mood ? moonSvg(mood, 17) : '<span class="wm-dot"></span>') +
-          '<span class="wm-day">' + WD[i] + '</span>';
-        moonsBox.appendChild(cell);
-      }
-    }
-  }
+  renderWeekReflect();
 }
-// Когда рефлексии пора раскрыться: неделя — в воскресенье, месяц — в последние
-// два дня, год — с 25 декабря. Начатая рефлексия открыта всегда.
-function reflectionDue(h) {
+// строка-намерение со звездой (общая для «Сегодня» и текстовых пунктов «Видения»)
+function goalRow(g) {
+  const row = document.createElement('div');
+  row.className = 'jo-item' + (g.status === 'done' ? ' done' : '');
+  row.innerHTML =
+    '<button class="jo-check" aria-label="Сбылось">' + moonSvg(g.status === 'done' ? 5 : 1, 17) + '</button>' +
+    '<div class="jo-item-body"><div class="jo-item-text"></div></div>';
+  row.querySelector('.jo-item-text').textContent = g.text || '';
+  row.querySelector('.jo-check').onclick = () => toggleGoalDone(g);
+  bindLongPress(row, () => confirmDelete('это намерение', () => deleteGoal(g)));
+  return row;
+}
+// точки недели: в какие дни намерения написаны — мягкий ритм без давления стрика
+function renderGoalWeekDots() {
+  const box = document.getElementById('goalWeekDots');
+  if (!box) return;
+  if (goalTab !== 'day') { box.style.display = 'none'; return; }
+  box.style.display = 'flex';
+  box.innerHTML = '';
   const now = new Date();
-  if (h === 'week') return now.getDay() === 0;
-  if (h === 'month') {
-    const last = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-    return now.getDate() >= last - 1;
+  const monday = new Date(now);
+  monday.setDate(now.getDate() - ((now.getDay() + 6) % 7));
+  const WD = ['пн', 'вт', 'ср', 'чт', 'пт', 'сб', 'вс'];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(monday); d.setDate(monday.getDate() + i);
+    const k = dateKey(d);
+    const has = journal.goals.some((g) => g.horizon === 'day' && g.period_key === k);
+    const cell = document.createElement('span');
+    cell.className = 'wm-cell';
+    cell.innerHTML = '<span class="wm-dot' + (has ? ' on' : '') + '"></span>' +
+      '<span class="wm-day">' + WD[i] + '</span>';
+    box.appendChild(cell);
   }
-  if (h === 'year') return now.getMonth() === 11 && now.getDate() >= 25;
-  return false;
 }
-// свёрнутая «прошлая страница» под списком недели
+// ключ воскресного ритуала — ISO-неделя (в базе исторически поле week_key)
+function reflectionKeyFor() { return weekKeyOf(new Date()); }
+// воскресный ритуал: в будни карточки нет вообще; начатая рефлексия видна всегда
+function renderWeekReflect() {
+  const refl = document.getElementById('weekReflect');
+  const rk = reflectionKeyFor('week');
+  const r = journal.reflections.find((x) => x.week_key === rk) || {};
+  const hasContent = !!(r.went_well || r.improve || r.learned);
+  const show = goalTab === 'day' && (new Date().getDay() === 0 || hasContent);
+  refl.style.display = show ? 'block' : 'none';
+  if (!show) return;
+  document.getElementById('rWell').value = r.went_well || '';
+  document.getElementById('rImprove').value = r.improve || '';
+  document.getElementById('rLearned').value = r.learned || '';
+  const moonsBox = document.getElementById('weekMoons');
+  moonsBox.innerHTML = '';
+  const now = new Date();
+  const monday = new Date(now);
+  monday.setDate(now.getDate() - ((now.getDay() + 6) % 7));
+  const WD = ['пн', 'вт', 'ср', 'чт', 'пт', 'сб', 'вс'];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(monday); d.setDate(monday.getDate() + i);
+    const ci = journal.checkins[dateKey(d)];
+    const mood = ci ? (ci.evening || ci.morning) : null;
+    const cell = document.createElement('span');
+    cell.className = 'wm-cell';
+    cell.innerHTML = (mood ? moonSvg(mood, 17) : '<span class="wm-dot"></span>') +
+      '<span class="wm-day">' + WD[i] + '</span>';
+    moonsBox.appendChild(cell);
+  }
+}
+// свёрнутая «вчерашняя страница» под листом дня: читать можно, копировать нельзя
 let pastOpen = false;
 function renderGoalPast(items) {
   const box = document.getElementById('goalPast');
   if (!box) return;
   box.innerHTML = '';
-  if (goalTab !== 'week' || !items.length) { box.style.display = 'none'; return; }
+  if (goalTab !== 'day' || !items.length) { box.style.display = 'none'; return; }
   box.style.display = 'block';
   const doneN = items.filter((g) => g.status === 'done').length;
   const head = document.createElement('div');
   head.className = 'jo-past-head';
-  head.innerHTML = '<span>прошлая страница · ' + items.length + ' ' +
+  head.innerHTML = '<span>вчерашняя страница · ' + items.length + ' ' +
     plural3(items.length, 'намерение', 'намерения', 'намерений') +
     (doneN ? ' · сбылось ' + doneN : '') + '</span><span class="jo-past-chev">' + (pastOpen ? '▴' : '▾') + '</span>';
   head.onclick = () => { haptic('light'); pastOpen = !pastOpen; renderGoals(); };
@@ -5208,42 +5220,36 @@ function renderGoalPast(items) {
   });
   const note = document.createElement('div');
   note.className = 'jo-past-note';
-  note.textContent = 'прошлое остаётся страницей — новую неделю пиши заново, своими словами';
+  note.textContent = 'вчера остаётся страницей — новый день пиши заново, своими словами';
   box.appendChild(note);
-}
-function reflectionKeyFor(h) {
-  const now = new Date();
-  if (h === 'month') return now.getFullYear() + '-M' + String(now.getMonth() + 1).padStart(2, '0');
-  if (h === 'year') return now.getFullYear() + '-Y';
-  return weekKeyOf(now);
-}
-// необязательный план «если — то» (WOOP): раскрывается по касанию
-let goalPlanOpen = false;
-function toggleGoalPlan() {
-  haptic('light');
-  goalPlanOpen = !goalPlanOpen;
-  document.getElementById('goalPlan').style.display = goalPlanOpen ? 'block' : 'none';
-  document.getElementById('goalPlanLink').classList.toggle('open', goalPlanOpen);
 }
 function addGoal() {
   const inp = document.getElementById('goalInput');
-  const text = inp.value.trim().slice(0, 4000);
-  if (!text) { showToast('Запиши намерение — хотя бы пару слов'); return; }
-  const planEl = document.getElementById('goalPlan');
-  const plan = planEl.value.trim().slice(0, 1000) || null;
-  const g = {
-    id: 'tmp' + Date.now(), horizon: goalTab, period_key: periodKeyFor(goalTab),
-    text, status: 'active', photo_key: goalPhotoKey, amount: null, plan,
-  };
-  journal.goals.unshift(g);
+  const raw = inp.value.trim();
+  if (!raw) { showToast('Запиши намерение — хотя бы пару слов'); return; }
+  if (goalTab === 'day') {
+    // практика дня: поток строк → до 10 пунктов (Трейси: заново, своими словами)
+    const lines = raw.split('\n').map((t) => t.trim()).filter(Boolean);
+    if (lines.length > 10) showToast('До 10 намерений — важное само выберется', false, 2600);
+    const pk = periodKeyFor('day');
+    lines.slice(0, 10).reverse().forEach((text, i) => {
+      const g = { id: 'tmp' + Date.now() + '_' + i, horizon: 'day', period_key: pk,
+        text: text.slice(0, 1000), status: 'active', photo_key: null, amount: null };
+      journal.goals.unshift(g);
+      meApi('/me/goal', { horizon: 'day', period_key: pk, text: g.text },
+        (d) => { if (d && d.id) { g.id = d.id; saveJournalCache(); } });
+    });
+  } else {
+    const g = { id: 'tmp' + Date.now(), horizon: 'vision', period_key: '',
+      text: raw.slice(0, 4000), status: 'active', photo_key: goalPhotoKey, amount: null };
+    journal.goals.unshift(g);
+    meApi('/me/goal', { horizon: 'vision', period_key: '', text: g.text, photo_key: g.photo_key },
+      (d) => { if (d && d.id) { g.id = d.id; saveJournalCache(); } });
+  }
   saveJournalCache();
   inp.value = '';
-  planEl.value = '';
-  if (goalPlanOpen) toggleGoalPlan();
   goalPhotoKey = null;
   document.getElementById('goalPhotoBtn').classList.remove('has');
-  meApi('/me/goal', { horizon: g.horizon, period_key: g.period_key, text: g.text, photo_key: g.photo_key, plan: g.plan },
-    (d) => { if (d && d.id) { g.id = d.id; saveJournalCache(); } });
   haptic('success');
   renderGoals();
 }
@@ -5277,12 +5283,12 @@ function saveReflection() {
   saveJournalCache();
   meApi('/me/reflection', r);
   haptic('success');
-  showToast('✦ Рефлексия сохранена', true, 2200);
+  showToast('✦ Неделя закрыта — ты молодец', true, 2200);
 }
 
-// ---- Отклики реальности (бывш. «Материализации», v116) ----
-// Летопись первой, форма — шитом по кнопке; счётчиков-нулей больше нет:
-// вместо бухгалтерии — одна живая строка-итог месяца.
+// ---- Дневник Творца (бывш. «Отклики», v119) ----
+// Летопись творений: сбывшееся, синхронии, знаки. Активная рамка «я сотворила»
+// (самоэффективность), а не «вселенная принесла». Лента первой, форма — шитом.
 let maniKind = 'fulfilled';
 let maniPhotoKey = null;
 const MANI_KIND_RU = { fulfilled: 'сбылось', synchro: 'синхрония', sign: 'знак' };
@@ -5308,12 +5314,12 @@ function renderManiSummary() {
   });
   el.style.display = 'block';
   if (n) {
-    el.textContent = 'в ' + MONTHS_PREP[new Date().getMonth()] + ' реальность откликнулась ' +
-      n + ' ' + plural3(n, 'раз', 'раза', 'раз') +
+    el.textContent = 'в ' + MONTHS_PREP[new Date().getMonth()] + ' — ' +
+      n + ' ' + plural3(n, 'творение', 'творения', 'творений') +
       (money ? ' · ' + money.toLocaleString('ru-RU') + ' ₽' : '');
   } else {
     el.textContent = 'за всё время — ' + all.length + ' ' +
-      plural3(all.length, 'отклик', 'отклика', 'откликов') +
+      plural3(all.length, 'творение', 'творения', 'творений') +
       (totalMoney ? ' · ' + totalMoney.toLocaleString('ru-RU') + ' ₽' : '');
   }
 }
@@ -5326,7 +5332,7 @@ function renderMani() {
   if (!journal.manifests.length) {
     const empty = document.createElement('div');
     empty.className = 'jo-empty';
-    empty.textContent = 'Здесь растёт летопись откликов реальности: сбывшееся, синхронии, знаки. Начни с первого — даже самого маленького.';
+    empty.textContent = 'Здесь растёт летопись Творца: сбывшееся, синхронии, знаки. Начни с первого творения — даже самого маленького.';
     list.appendChild(empty);
   }
   journal.manifests.forEach((m) => {
@@ -5358,10 +5364,10 @@ function openManiForm(opts) {
   haptic('light');
   maniFromGoal = !!(opts && opts.fromGoal);
   document.getElementById('maniSheetTitle').textContent =
-    maniFromGoal ? '✦ Сбылось!' : 'Отклик реальности';
+    maniFromGoal ? '✦ Сбылось!' : 'Дневник Творца';
   document.getElementById('maniSheetSub').textContent = maniFromGoal
     ? 'впиши в летопись — и добавь, что ты почувствовала'
-    : 'что отозвалось — большое или самое маленькое';
+    : 'запиши, что сотворилось — большое или самое маленькое';
   if (maniFromGoal) setManiKind('fulfilled');
   if (opts && opts.prefill) document.getElementById('maniInput').value = opts.prefill;
   document.getElementById('maniSheet').classList.add('show');
@@ -5403,7 +5409,7 @@ function addManifest() {
   closeManiForm();
   renderMani();
   if (document.getElementById('screen-path').classList.contains('active')) renderCalendar();
-  showToast('✦ Вписано в летопись откликов', true, 2400);
+  showToast('✦ Вписано в летопись Творца', true, 2400);
 }
 
 // ---- Фото: сжатие на клиенте → R2 через воркер ----
@@ -5447,6 +5453,24 @@ function attachGoalPhoto() {
     goalPhotoKey = key;
     document.getElementById('goalPhotoBtn').classList.add('has');
     showToast('✦ Фото прикрепится к записи', true, 2000);
+  });
+}
+function attachCiPhoto() {
+  pickPhoto((key) => {
+    ciPhotoKey = key;
+    const pv = document.getElementById('ciPhotoView');
+    pv.src = photoURL(key);
+    pv.style.display = 'block';
+    document.getElementById('ciPhotoBtn').classList.add('has');
+    showToast('✦ Фото прикрепится к этому дню', true, 2000);
+  });
+}
+let wsPhotoKey = null;
+function attachWsPhoto() {
+  pickPhoto((key) => {
+    wsPhotoKey = key;
+    document.getElementById('wsPhotoBtn').classList.add('has');
+    showToast('✦ Фото прикрепится к этому дню', true, 2000);
   });
 }
 function attachManiPhoto() {
@@ -6134,7 +6158,7 @@ const FOUNDING_SEATS = 43;
 
 // Валютная оплата через Lava.top ($ / €). Ссылки на подписки:
 // стандарт: $39/мес · $329/год; основательницы: $25/мес · $259/год (период выбирается на странице Lava)
-const APP_BUILD = 118; // внутренняя метка (= блок VERUM v118), в интерфейсе не показывается
+const APP_BUILD = 119; // внутренняя метка (= блок VERUM v119), в интерфейсе не показывается
 
 // клавиатура iOS: поле email в фокусе → шторка поднимается наверх
 document.querySelectorAll('.claim-input').forEach(inp => {
@@ -7839,6 +7863,49 @@ renderTodayCheckin();
   .cal-day.manifested::after {
     box-shadow: inset 0 0 0 1px rgba(246,231,194,0.4), 0 0 14px rgba(246,231,194,0.22);
   }
+
+  /* === VERUM v119 · Намерения = практика дня + Видение-полотно; Дневник Творца;
+     фото дня. Неделя/месяц/год убраны из UI (данные в базе сохранены). === */
+  /* точки недели: дни, когда намерения написаны */
+  #goalWeekDots { margin: 0 0 14px; }
+  .wm-dot.on {
+    background: rgba(201,174,125,0.9);
+    box-shadow: 0 0 6px rgba(201,174,125,0.45);
+  }
+  /* Видение — полотно из плиток-фото */
+  .jo-list.vision-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;
+  }
+  .jo-list.vision-grid .jo-item { grid-column: span 2; padding: 10px 4px; }
+  .jo-list.vision-grid .jo-empty { grid-column: span 2; }
+  .vision-tile {
+    position: relative; border-radius: 18px; overflow: hidden;
+    border: 1px solid rgba(220,244,246,0.18);
+    box-shadow: 0 10px 30px rgba(0,4,4,0.35);
+  }
+  .vision-tile.big { grid-column: span 2; }
+  .vision-tile img {
+    width: 100%; aspect-ratio: 4 / 5; object-fit: cover; display: block;
+  }
+  .vision-tile.big img { aspect-ratio: 16 / 10; }
+  .vision-cap {
+    position: absolute; left: 0; right: 0; bottom: 0;
+    display: flex; align-items: flex-end; gap: 8px;
+    padding: 26px 12px 10px;
+    background: linear-gradient(180deg, transparent, rgba(1,7,10,0.82));
+  }
+  .vision-cap .jo-check { padding: 0 0 1px; }
+  .vision-cap-text {
+    flex: 1; font-family: 'Cormorant Garamond', serif; font-style: italic;
+    font-size: 13.5px; line-height: 1.35; color: var(--pearl, #E6EEEE);
+  }
+  .vision-tile.done .vision-cap-text { text-decoration: line-through; text-decoration-color: rgba(201,174,125,0.5); opacity: 0.75; }
+  /* фото дня в карточке дня */
+  .ci-photo { margin: 2px auto 10px; }
+  #ciEditRow { margin-top: 10px; }
+  /* лист письма: фото + сохранить в одну строку */
+  .ws-actions { display: flex; gap: 10px; margin-top: 12px; flex-shrink: 0; align-items: center; }
+  .ws-actions .ws-save { margin: 0 !important; }
 </style>
 </body>
 </html>
