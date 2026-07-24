@@ -2615,23 +2615,14 @@
       </div>
     </div>
 
-    <!-- Дневник состояния: вход в ежедневный ритуал прямо с «Сегодня» (VERUM v116).
-         Тап по звезде = мгновенная отметка; «выплеснуть» открывает полноэкранный лист. -->
-    <div class="glass-card checkin-today" id="checkinToday">
-      <div class="ct-eyebrow">Дневник · как ты?</div>
+    <!-- Дневник состояния: вход в ежедневный ритуал прямо с «Сегодня» (VERUM v117).
+         Одна шкала из 5 звёзд (без утро/вечер — решение Аны); после выбора остаётся
+         одна звезда + лозунг снизу. Тап по самой карточке ведёт в календарь на Пути. -->
+    <div class="glass-card checkin-today" id="checkinToday" onclick="checkinCardTap()">
+      <div class="ct-eyebrow">Дневник · как ты сегодня?</div>
+      <div class="ct-stars" id="ctStars"></div>
       <div class="ct-phrase" id="ctPhrase"></div>
-      <div class="ct-slots">
-        <div class="ct-slot" id="ctSlotM">
-          <div class="ct-slot-label">утро</div>
-          <div class="ct-stars" id="ctStarsM"></div>
-        </div>
-        <div class="ct-slot" id="ctSlotE">
-          <div class="ct-slot-label">вечер</div>
-          <div class="ct-stars" id="ctStarsE"></div>
-        </div>
-      </div>
-      <div class="ct-caption" id="ctCaption">&nbsp;</div>
-      <div class="ct-note-link" id="ctNoteLink" onclick="openWriteSheet()">выплеснуть пару строк →</div>
+      <div class="ct-note-link" id="ctNoteLink" onclick="event.stopPropagation();openWriteSheet()">записать мысли в дневник →</div>
     </div>
 
     <div class="section-eyebrow" style="margin-top:22px">Продолжить путь</div>
@@ -2862,7 +2853,7 @@
       </div>
     </div>
 
-    <div class="section-eyebrow">Дневник</div>
+    <div class="section-eyebrow" id="journalEyebrow">Дневник</div>
     <div class="journal-tabs">
       <button class="jt-tab active" id="jtState" onclick="setJournalTab('state')">Состояние</button>
       <button class="jt-tab" onclick="setJournalTab('goals')">Намерения</button>
@@ -3068,11 +3059,8 @@
     <div class="ps-title" id="ciTitle">Как ты сегодня?</div>
     <div class="ci-phrase" id="ciPhrase"></div>
     <div class="ci-practices" id="ciPractices"></div>
-    <div class="ps-sub" id="ciSub">отметь своё состояние звездой — утром и вечером</div>
-    <div class="ci-slot-label">Утро</div>
-    <div class="ci-moons" id="ciMoonsM"></div>
-    <div class="ci-slot-label">Вечер</div>
-    <div class="ci-moons" id="ciMoonsE"></div>
+    <div class="ps-sub" id="ciSub">отметь своё состояние звездой</div>
+    <div class="ci-moons" id="ciStarsRow"></div>
     <div class="ci-moon-caption" id="ciCaption">&nbsp;</div>
     <textarea class="claim-input fb-input" id="ciNote" rows="4" placeholder="Что происходит в теле? Какие эмоции живут в тебе сегодня — выплесни сюда всё…"></textarea>
     <button class="ps-btn jo-save" id="ciSave" onclick="saveCheckin()">Сохранить</button>
@@ -3175,8 +3163,7 @@
     <div class="jo-space"></div>
   </div>
   <div class="ws-body">
-    <div class="ws-phrase" id="wsPhrase"></div>
-    <textarea class="ws-input" id="wsInput" placeholder="Что происходит в теле? Какие эмоции живут в тебе сегодня — выплесни сюда всё…"></textarea>
+    <textarea class="ws-input" id="wsInput" placeholder="Какие мысли и эмоции живут в тебе сегодня — …"></textarea>
     <button class="ps-btn jo-save ws-save" onclick="saveWriteSheet()">Сохранить</button>
   </div>
 </div>
@@ -4670,10 +4657,10 @@ function renderCalendar() {
     let cell = '<span class="cd-num">' + d + '</span>';
     if (dayLevel) cell += '<span class="cd-star">' + moonSvg(dayLevel, 13) + '</span>';
     let dots = '';
-    if (practiced.has(key)) dots += '<span class="cd-dot cd-practice"></span>';
     if (photoDays.has(key)) dots += '<span class="cd-dot cd-photo"></span>';
     if (dots) cell += '<span class="cd-dots">' + dots + '</span>';
     el.innerHTML = cell;
+    if (practiced.has(key)) el.classList.add('practiced');
     if (ci && (ci.morning || ci.evening || ci.note)) el.classList.add('has-state');
     if (manifested.has(key)) el.classList.add('manifested');
     if (day.toDateString() === today.toDateString()) el.classList.add('today');
@@ -4687,9 +4674,9 @@ function renderCalendar() {
   // легенда слоёв
   const legend = document.getElementById('calLegend');
   if (legend) legend.innerHTML =
-    '<span class="cl-item"><span class="cd-dot cd-practice"></span>практика</span>' +
-    '<span class="cl-item"><span class="cd-dot cd-photo"></span>фото</span>' +
+    '<span class="cl-item"><span class="cl-practiced"></span>практика</span>' +
     '<span class="cl-item"><span class="cl-star">✦</span>состояние</span>' +
+    '<span class="cl-item"><span class="cd-dot cd-photo"></span>фото</span>' +
     '<span class="cl-item"><span class="cl-mani"></span>сбылось</span>';
 }
 
@@ -4717,23 +4704,34 @@ function weekKeyOf(d) {
   return t.getUTCFullYear() + '-W' + String(wn).padStart(2, '0');
 }
 
-// Луны: 5 фаз, тонкая золотая линия — старая гравюра, не эмодзи
-const MOON_LABELS = ['совсем нет сил', 'еле теплится', 'спокойно, ровно', 'легко и светло', 'полна сил'];
-// Бинду-звезда: 5 состояний — пустой тонкий контур → яркая золотая искра.
-// Тема VERUM — точка света (бинду), поэтому знак состояния = ✦, не луна.
+// Подписи 5 состояний (тексты Аны, 2026-07-24)
+const MOON_LABELS = ['пустота и апатия', 'энергии мало', 'спокойно, ровно',
+  'легко и светло', 'любовь, вдохновение и единство со всем'];
+// Бинду-звезда: 5 состояний — уровни разведены сильнее (фидбек Аны: 2–4 сливались,
+// 5-я не праздновала): 1 контур · 2 четверть света · 3 половина · 4 полная без
+// сияния · 5 полная + ореол и тонкие лучи, как бинду в логотипе.
 function moonSvg(level, size) {
   const s = size || 20;
   const path = 'M12 2.6C12.6 8.8 15.2 11.4 21.4 12C15.2 12.6 12.6 15.2 12 21.4C11.4 15.2 8.8 12.6 2.6 12C8.8 11.4 11.4 8.8 12 2.6Z';
+  const lv = Math.max(1, Math.min(5, level));
   const conf = [
-    { fill: 0,    stroke: 0.4,  op: 0.42 },
-    { fill: 0.14, stroke: 0.55, op: 0.62 },
-    { fill: 0.42, stroke: 0.7,  op: 0.8 },
-    { fill: 0.72, stroke: 0.85, op: 0.92 },
+    { fill: 0,    stroke: 0.35, op: 0.55 },
+    { fill: 0.22, stroke: 0.5,  op: 0.78 },
+    { fill: 0.55, stroke: 0.72, op: 0.92 },
+    { fill: 0.95, stroke: 0.9,  op: 1 },
     { fill: 1,    stroke: 1,    op: 1, glow: true },
-  ][Math.max(1, Math.min(5, level)) - 1];
+  ][lv - 1];
   const fillAttr = conf.fill ? 'rgba(246,231,194,' + conf.fill + ')' : 'none';
-  const glow = conf.glow ? ' style="filter:drop-shadow(0 0 3px rgba(246,231,194,0.55))"' : '';
-  return '<svg width="' + s + '" height="' + s + '" viewBox="0 0 24 24" fill="none"' + glow + '>' +
+  const glow = conf.glow
+    ? ' style="filter:drop-shadow(0 0 ' + Math.max(3, Math.round(s * 0.18)) + 'px rgba(246,231,194,0.85)) ' +
+      'drop-shadow(0 0 ' + Math.max(6, Math.round(s * 0.4)) + 'px rgba(201,174,125,0.45))"'
+    : '';
+  // лучи-бинду только у 5-го уровня и только на крупных размерах (в календаре не мельчим)
+  const rays = (conf.glow && s >= 18)
+    ? '<rect x="11.65" y="0.2" width="0.7" height="23.6" fill="rgba(246,231,194,0.38)"/>' +
+      '<rect x="0.2" y="11.65" width="23.6" height="0.7" fill="rgba(246,231,194,0.3)"/>'
+    : '';
+  return '<svg width="' + s + '" height="' + s + '" viewBox="0 0 24 24" fill="none"' + glow + '>' + rays +
     '<path d="' + path + '" fill="' + fillAttr + '" stroke="rgba(201,174,125,' + conf.stroke + ')" ' +
     'stroke-width="1.1" stroke-linejoin="round" opacity="' + conf.op + '"/></svg>';
 }
@@ -4825,87 +4823,78 @@ function loadJournal() {
 }
 
 // ---- Карточка дня (состояние + практики дня + поддерживающая фраза) ----
-let ciDate = null, ciMorning = null, ciEvening = null;
+let ciDate = null, ciLevel = null;
 let ciReadonly = false;
 
-// Банк поддерживающих фраз в тоне VERUM. Выбор зависит от состояния дня:
-// нет отметки → мягкое приглашение; низкое → бережная опора; высокое → празднование.
-const DAY_PHRASES = {
-  none: [
-    'Этот день — чистый лист. Отметь, как ты, — я рядом.',
-    'Ты пришла. Уже этого достаточно.',
-  ],
-  low: [
-    'Даже в самый тёмный день внутри тебя есть свет. Он не гаснет.',
-    'Тяжесть проходит. Ты не обязана быть сильной каждый день.',
-    'Ты позволила себе почувствовать — это и есть смелость.',
-  ],
-  mid: [
-    'Ровный день — тоже опора. Ты идёшь своим ритмом.',
-    'Ты здесь, ты в контакте с собой. Это путь.',
-  ],
-  high: [
-    'Ты сияешь — запомни это состояние телом.',
-    'Вот она, ты настоящая. Побудь в этом свете подольше.',
-    'Полна сил — из этого состояния и создаётся реальность.',
-  ],
-};
-function pickPhrase(key, level) {
-  let bucket = 'none';
-  if (level) bucket = level <= 2 ? 'low' : level === 3 ? 'mid' : 'high';
-  const arr = DAY_PHRASES[bucket];
-  // стабильно для дня: индекс по дате, чтобы фраза не «прыгала» при перерисовке
-  let h = 0; for (let i = 0; i < key.length; i++) h = (h * 31 + key.charCodeAt(i)) >>> 0;
-  return arr[h % arr.length];
-}
+// Лозунги пяти состояний (тексты Аны, 2026-07-24): показываются после выбора звезды.
+const STATE_PHRASES = [
+  'Позволь себе побыть в режиме тотальной заботы о себе. Тебе это сейчас необходимо.',
+  'Не требуй от себя многого. Ты в режиме кокона и восстановления.',
+  'Ровный день — твоя опора. Из устойчивости рождается ясность.',
+  'Лёгкость — знак, что ты в контакте с собой и идёшь по своему пути. Запомни это ощущение телом и продолжай!',
+  'Расширенное состояние сознания и любовь — из этой точки и создаётся реальность.',
+];
+const INVITE_PHRASE = 'Этот день — чистый лист. Отметь своё состояние.';
+function statePhrase(level) { return level ? STATE_PHRASES[level - 1] : INVITE_PHRASE; }
 
-// ---- Чек-ин на «Сегодня» (v116) ----
-// Привычка живёт там, где утро начинается: тап по звезде = отметка одним движением,
-// без форм и календаря. «Выплеснуть» открывает полноэкранный лист письма.
+// ---- Чек-ин на «Сегодня» (v117) ----
+// Одна шкала из 5 звёзд (утро/вечер убраны — решение Аны 2026-07-24). После выбора
+// шкала складывается в одну звезду, лозунг состояния — снизу. Тап по звезде
+// раскрывает шкалу обратно; тап по карточке ведёт в календарь на Пути.
+let ctPickerOpen = false;
 function renderTodayCheckin() {
   const box = document.getElementById('checkinToday');
   if (!box) return;
   const key = dateKey(new Date());
   const ci = journal.checkins[key] || {};
-  const eveningNow = new Date().getHours() >= 17;
-  document.getElementById('ctSlotM').classList.toggle('now', !eveningNow);
-  document.getElementById('ctSlotE').classList.toggle('now', eveningNow);
-  const mk = (slot, val) => {
-    const el = document.getElementById(slot === 'm' ? 'ctStarsM' : 'ctStarsE');
-    el.innerHTML = '';
+  const level = ci.evening || ci.morning || null;
+  const stars = document.getElementById('ctStars');
+  stars.innerHTML = '';
+  if (level && !ctPickerOpen) {
+    // состояние выбрано: одна звезда дня, крупнее
+    const b = document.createElement('button');
+    b.className = 'ct-star one';
+    b.innerHTML = moonSvg(level, 40);
+    b.onclick = (e) => { e.stopPropagation(); haptic('light'); ctPickerOpen = true; renderTodayCheckin(); };
+    stars.appendChild(b);
+  } else {
     for (let p = 1; p <= 5; p++) {
       const b = document.createElement('button');
-      b.className = 'ct-star' + (val === p ? ' sel' : '');
-      b.innerHTML = moonSvg(p, 20);
-      b.onclick = () => tapTodayStar(slot, p);
-      el.appendChild(b);
+      b.className = 'ct-star' + (level === p ? ' sel' : '');
+      b.innerHTML = moonSvg(p, 24);
+      b.onclick = (e) => { e.stopPropagation(); tapTodayStar(p); };
+      stars.appendChild(b);
     }
-  };
-  mk('m', ci.morning || null);
-  mk('e', ci.evening || null);
-  const cap = document.getElementById('ctCaption');
-  if (!subActive) cap.textContent = 'дневник — часть пространства VERUM';
-  else {
-    const shown = eveningNow ? (ci.evening || ci.morning) : (ci.morning || ci.evening);
-    cap.textContent = shown ? MOON_LABELS[shown - 1] : ' ';
   }
-  document.getElementById('ctPhrase').textContent = pickPhrase(key, ci.evening || ci.morning);
+  // минимализм (решение Аны): постоянного текста на карточке нет — лозунг
+  // всплывает золотым тостом в момент выбора звезды (tapTodayStar)
+  const ph = document.getElementById('ctPhrase');
+  ph.textContent = subActive ? '' : 'дневник — часть пространства VERUM';
   document.getElementById('ctNoteLink').textContent =
-    ci.note ? 'перечитать свою запись →' : 'выплеснуть пару строк →';
+    ci.note ? 'перечитать записи →' : 'записать мысли в дневник →';
 }
-function tapTodayStar(slot, p) {
+function tapTodayStar(p) {
   if (!subActive) { openPaywall(); return; }
   haptic('light');
   const key = dateKey(new Date());
   const ci = journal.checkins[key] || { date: key };
-  // без «снятия» звезды: сервер хранит отметку навсегда (COALESCE), локальный
-  // сброс только рассинхронил бы — повторный тап просто подтверждает выбор
-  if (slot === 'm') ci.morning = p; else ci.evening = p;
+  // одна звезда дня: пишем в оба слота — календарь, луны недели и старые
+  // записи (evening||morning) читают одинаково, схема D1 не меняется
+  ci.morning = p; ci.evening = p;
   journal.checkins[key] = ci;
   saveJournalCache();
-  meApi('/me/checkin', { date: key, morning: ci.morning || null, evening: ci.evening || null, note: ci.note || '' });
+  meApi('/me/checkin', { date: key, morning: p, evening: p, note: ci.note || '' });
+  ctPickerOpen = false;
   renderTodayCheckin();
+  showToast(STATE_PHRASES[p - 1], true, 4200);
   if (document.getElementById('screen-path').classList.contains('active')) renderCalendar();
+}
+// тап по свободному месту карточки — в календарь (паттерн карточек «Шаг N»)
+function checkinCardTap() {
+  haptic('light');
+  nav('path');
+  const eyeb = document.getElementById('journalEyebrow');
+  if (eyeb) setTimeout(() => { try { eyeb.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) {} }, 80);
 }
 
 // Полноэкранный лист письма: одна фраза, крупный серифный текст, ничего лишнего —
@@ -4915,9 +4904,11 @@ function openWriteSheet() {
   haptic('light');
   const key = dateKey(new Date());
   const ci = journal.checkins[key] || {};
-  document.getElementById('wsDate').textContent =
-    new Date().toLocaleDateString('ru', { weekday: 'short', day: 'numeric', month: 'long' });
-  document.getElementById('wsPhrase').textContent = pickPhrase(key, ci.evening || ci.morning);
+  const wsLevel = ci.evening || ci.morning || null;
+  const wsDateStr = new Date().toLocaleDateString('ru', { weekday: 'short', day: 'numeric', month: 'long' });
+  // звезда дня слева от даты — вместо второго курсива (лозунг + подсказка сливались)
+  document.getElementById('wsDate').innerHTML =
+    (wsLevel ? moonSvg(wsLevel, 18) : '') + '<span>' + wsDateStr + '</span>';
   document.getElementById('wsInput').value = ci.note || '';
   document.getElementById('writeSheet').classList.add('show');
   syncBack();
@@ -4944,8 +4935,7 @@ function openDayCard(key) {
   if (!subActive) { openPaywall(); return; }
   ciDate = key;
   const ci = journal.checkins[key] || {};
-  ciMorning = ci.morning || null;
-  ciEvening = ci.evening || null;
+  ciLevel = ci.evening || ci.morning || null;
   const d = new Date(key + 'T12:00:00');
   document.getElementById('ciTitle').textContent =
     d.toLocaleDateString('ru', { weekday: 'short', day: 'numeric', month: 'long' });
@@ -4961,8 +4951,8 @@ function openDayCard(key) {
   } else {
     prBox.style.display = 'none';
   }
-  // поддерживающая фраза по состоянию дня
-  document.getElementById('ciPhrase').textContent = pickPhrase(key, ciEvening || ciMorning);
+  // лозунг состояния дня (или приглашение, если день не отмечен)
+  document.getElementById('ciPhrase').textContent = statePhrase(ciLevel);
   // заполненный день открываем как запись (только чтение) + ссылка «внести изменения»
   ciReadonly = !!(ci.morning || ci.evening || ci.note);
   applyCiMode();
@@ -4977,9 +4967,8 @@ function applyCiMode() {
   document.getElementById('ciEditLink').style.display = ciReadonly ? 'block' : 'none';
   note.classList.toggle('ci-note-ro', ciReadonly);
   const cap = document.getElementById('ciCaption');
-  const shown = ciEvening || ciMorning;
-  cap.textContent = shown ? MOON_LABELS[shown - 1] : ' ';
-  renderCiMoons();
+  cap.textContent = ciLevel ? MOON_LABELS[ciLevel - 1] : ' ';
+  renderCiStars();
 }
 function ciEnableEdit() {
   haptic('light');
@@ -4990,38 +4979,39 @@ function closeCheckin() {
   document.getElementById('checkinSheet').classList.remove('show');
   syncBack();
 }
-function renderCiMoons() {
-  const mk = (slot, val) => {
-    const box = document.getElementById(slot === 'm' ? 'ciMoonsM' : 'ciMoonsE');
-    box.innerHTML = '';
-    for (let p = 1; p <= 5; p++) {
-      const b = document.createElement('button');
-      // в режиме чтения показываем только выбранную луну как активную, прочие приглушены и не кликаются
-      b.className = 'ci-moon' + (val === p ? ' sel' : '') + (ciReadonly ? ' ro' : '');
-      b.innerHTML = moonSvg(p, 26);
-      if (!ciReadonly) {
-        b.onclick = () => {
-          haptic('light');
-          if (slot === 'm') ciMorning = (ciMorning === p ? null : p);
-          else ciEvening = (ciEvening === p ? null : p);
-          document.getElementById('ciCaption').textContent = MOON_LABELS[p - 1];
-          renderCiMoons();
-        };
-      }
-      box.appendChild(b);
-    }
-  };
-  mk('m', ciMorning);
-  mk('e', ciEvening);
+function renderCiStars() {
+  const box = document.getElementById('ciStarsRow');
+  box.innerHTML = '';
+  if (ciReadonly) {
+    // запись: одна звезда дня (как на «Сегодня»), без шкалы
+    const b = document.createElement('button');
+    b.className = 'ci-moon one';
+    b.innerHTML = moonSvg(ciLevel || 1, 34);
+    box.appendChild(b);
+    return;
+  }
+  for (let p = 1; p <= 5; p++) {
+    const b = document.createElement('button');
+    b.className = 'ci-moon' + (ciLevel === p ? ' sel' : '');
+    b.innerHTML = moonSvg(p, 26);
+    b.onclick = () => {
+      haptic('light');
+      ciLevel = p;
+      document.getElementById('ciCaption').textContent = MOON_LABELS[p - 1];
+      document.getElementById('ciPhrase').textContent = statePhrase(p);
+      renderCiStars();
+    };
+    box.appendChild(b);
+  }
 }
 function saveCheckin() {
   if (!ciDate) return;
   const note = document.getElementById('ciNote').value.slice(0, 4000);
   const ci = journal.checkins[ciDate] || { date: ciDate };
-  ci.morning = ciMorning; ci.evening = ciEvening; ci.note = note;
+  ci.morning = ciLevel; ci.evening = ciLevel; ci.note = note;
   journal.checkins[ciDate] = ci;
   saveJournalCache();
-  meApi('/me/checkin', { date: ciDate, morning: ciMorning, evening: ciEvening, note });
+  meApi('/me/checkin', { date: ciDate, morning: ciLevel, evening: ciLevel, note });
   haptic('success');
   closeCheckin();
   renderCalendar();
@@ -6144,7 +6134,7 @@ const FOUNDING_SEATS = 43;
 
 // Валютная оплата через Lava.top ($ / €). Ссылки на подписки:
 // стандарт: $39/мес · $329/год; основательницы: $25/мес · $259/год (период выбирается на странице Lava)
-const APP_BUILD = 116; // внутренняя метка (= блок VERUM v116), в интерфейсе не показывается
+const APP_BUILD = 118; // внутренняя метка (= блок VERUM v118), в интерфейсе не показывается
 
 // клавиатура iOS: поле email в фокусе → шторка поднимается наверх
 document.querySelectorAll('.claim-input').forEach(inp => {
@@ -7795,6 +7785,59 @@ renderTodayCheckin();
   .reflect-invite {
     text-align: center; font-family: 'Cormorant Garamond', serif; font-style: italic;
     font-size: 13.5px; line-height: 1.55; color: var(--faint); padding: 6px 8px 10px;
+  }
+
+  /* === VERUM v117 · чек-ин по фидбеку Аны: одна шкала, одна звезда дня,
+     лозунг снизу, шрифт как у «ПЯТНИЦА», меньше золота === */
+  .checkin-today { cursor: pointer; }
+  .ct-eyebrow { font-size: 10px; letter-spacing: 0.3em; } /* = .today-date и ШАГ N */
+  .ct-stars {
+    display: flex; justify-content: center; align-items: center;
+    gap: 8px; margin-top: 16px; min-height: 52px;
+  }
+  /* уровни различает сама звезда — сплющивающую прозрачность v116 снимаем */
+  .ct-star { width: 38px; height: 38px; opacity: 1; }
+  .ct-star.sel { transform: none; }
+  .ct-star.one { width: 54px; height: 54px; background: none; }
+  .ct-phrase { margin: 12px 0 2px; }
+  /* подпись состояния в карточке дня — белым жемчугом; золото остаётся лозунгу */
+  .ci-moon-caption { color: #E6EEEE; }
+  /* карточка дня: одиночная звезда записи — чистая, без кольца-кнопки */
+  .ci-moons { min-height: 52px; align-items: center; }
+  .ci-moon.one {
+    opacity: 1 !important; border: none !important; background: none !important;
+    box-shadow: none !important; cursor: default; width: 56px; height: 56px;
+  }
+
+  /* === VERUM v118 · минимализм Сегодня + иерархия календаря ===
+     Лозунг не живёт на карточке — всплывает тостом при выборе; «Мысль дня»
+     приглушена; дни практик — эталонное тил-стекло с золотой кромкой (главное —
+     медитации), сбывшееся — жемчужный свет на глубоком тиле. */
+  .thought-text { color: var(--soft); text-shadow: none; }
+  .ct-phrase:empty { display: none; }
+  .ct-stars { margin-top: 14px; }
+  .checkin-today { padding-bottom: 18px; }
+  /* тост умеет длинный лозунг: перенос строк, не шире экрана */
+  .toast { max-width: calc(100% - 44px); white-space: normal; text-align: center; line-height: 1.55; }
+  /* звезда дня слева от даты в листе письма */
+  .write-sheet .jo-title svg { vertical-align: -3.5px; margin-right: 7px; }
+  /* легенда: образцы новых слоёв */
+  .cl-practiced {
+    display: inline-block; width: 10px; height: 10px; border-radius: 3px;
+    background: linear-gradient(180deg, rgba(16,68,76,0.65), rgba(5,22,26,0.75));
+    box-shadow: inset 0 0 0 1px rgba(201,174,125,0.55);
+  }
+  .cl-mani {
+    box-shadow: none; border-radius: 3px;
+    background: radial-gradient(circle, rgba(246,231,194,0.55), rgba(222,238,244,0.12));
+  }
+  /* сбывшееся: жемчужно-золотой свет, заливающий день, поверх глубокого тила */
+  .cal-day.manifested {
+    background: radial-gradient(circle at 50% 42%, rgba(246,231,194,0.30),
+      rgba(222,238,244,0.10) 58%, rgba(16,68,76,0.55) 100%) !important;
+  }
+  .cal-day.manifested::after {
+    box-shadow: inset 0 0 0 1px rgba(246,231,194,0.4), 0 0 14px rgba(246,231,194,0.22);
   }
 </style>
 </body>
