@@ -2989,6 +2989,9 @@
 
     <div class="pw-list">
       <div class="pw-item">Все авторские медитации библиотеки</div>
+      <div class="pw-item"><span><b>Дневник мыслей</b> — выплеснуть день на бумагу и перечитать себя месяцы спустя</span></div>
+      <div class="pw-item"><span><b>Дневник намерений</b> — ежедневная практика создания реальности</span></div>
+      <div class="pw-item"><span><b>Дневник манифестаций</b> — летопись сбывшегося: твоё доказательство, что метод работает</span></div>
       <div class="pw-item">Дыхательные практики, таймер тишины и ваш путь в цифрах</div>
       <div class="pw-item">Каждый месяц — новая медитация</div>
     </div>
@@ -4531,7 +4534,7 @@ function renderCompSpark() {
   const key = dateKey(new Date());
   const ci = journal.checkins[key] || {};
   const has = !!(ci.evening || ci.morning);
-  if (!subActive || has) { box.style.display = 'none'; return; }
+  if (has) { box.style.display = 'none'; return; }   // v127: искра бесплатна и здесь
   const stars = document.getElementById('csStars');
   const done = document.getElementById('csDone');
   const anchors = document.getElementById('csAnchors');
@@ -4981,19 +4984,20 @@ function feedRow(key, d) {
       (longNote || photo ? '<div class="fr-more">' + (open ? 'свернуть ↑' : 'ещё ↓') + '</div>' : '');
   }
   if (open && photo) html += '<img class="fr-photo-big" loading="lazy" alt="">';
-  // чипы следов дня
-  let chips = '';
-  d.sess.slice(0, 2).forEach((s) => {
-    chips += '<span class="fr-chip">' + s.type + ' · ' + (s.minutes || 0) + ' мин</span>';
-  });
-  if (d.sess.length > 2) chips += '<span class="fr-chip">+' + (d.sess.length - 2) + '</span>';
+  // v127: следы дня — ОДНА тихая строка вместо россыпи пилюль (пилюли давали
+  // «вразброс»: разная длина, разные веса, рваный ритм). Практики — своей
+  // строкой, потому что это главное в продукте; счётчики — одной строчкой ниже.
+  if (d.sess.length) {
+    html += '<div class="fr-meta">' +
+      d.sess.map((s) => '<span class="fr-pr">' + s.type + '<i>' + (s.minutes || 0) + ' мин</i></span>').join('') +
+      '</div>';
+  }
+  const counts = [];
   if (d.goals.length && feedFilter !== 'goals')
-    chips += '<span class="fr-chip gold" data-act="goals">✦ ' + d.goals.length + ' ' + plural3(d.goals.length, 'намерение', 'намерения', 'намерений') + '</span>';
+    counts.push('<span class="fr-count" data-act="goals">✦ ' + d.goals.length + ' ' + plural3(d.goals.length, 'намерение', 'намерения', 'намерений') + '</span>');
   if (d.mans.length && feedFilter !== 'mani')
-    chips += '<span class="fr-chip gold">✧ ' + d.mans.length + ' ' + plural3(d.mans.length, 'творение', 'творения', 'творений') + '</span>';
-  if (!note && !d.sess.length && !d.goals.length && !d.mans.length && lv)
-    chips += '<span class="fr-chip quiet">без записи · только искра</span>';
-  if (chips) html += '<div class="fr-chips">' + chips + '</div>';
+    counts.push('<span class="fr-count">✧ ' + d.mans.length + ' ' + plural3(d.mans.length, 'творение', 'творения', 'творений') + '</span>');
+  if (counts.length) html += '<div class="fr-counts">' + counts.join('') + '</div>';
   // фильтр «Намерения»: показать сами намерения дня списком
   if (feedFilter === 'goals' && d.goals.length) {
     html += '<div class="fr-goals">' + d.goals.map(() =>
@@ -5022,8 +5026,8 @@ function feedRow(key, d) {
   const more = row.querySelector('.fr-more');
   if (more) more.onclick = toggle;
   if (noteEl && (longNote || photo)) noteEl.onclick = toggle;
-  const gchip = row.querySelector('.fr-chip[data-act="goals"]');
-  if (gchip) gchip.onclick = () => openGoalsAt(key);
+  const gchip = row.querySelector('.fr-count[data-act="goals"]');
+  if (gchip) gchip.onclick = (e) => { e.stopPropagation(); openGoalsAt(key); };
   return row;
 }
 // «Итог месяца ✦» — карточка в начале ленты завершённого месяца
@@ -5287,7 +5291,12 @@ function loadJournal() {
       if (!d || !d.ok) return;
       const map = {};
       (d.checkins || []).forEach((c) => { map[c.date] = c; });
+      // локальные искры (отмеченные до подписки) не теряем — сливаем и досылаем
+      const localOnly = Object.keys(journal.checkins).filter((k) => !map[k]);
+      localOnly.forEach((k) => { map[k] = journal.checkins[k]; });
+      const serverKeys = new Set(Object.keys(map).filter((k) => !localOnly.includes(k)));
       journal.checkins = map;
+      pushLocalCheckins(serverKeys);
       journal.goals = d.goals || [];
       journal.reflections = d.reflections || [];
       journal.manifests = d.manifests || [];
@@ -5307,68 +5316,18 @@ let ciReadonly = false;
 // чтение + «дописать» (мягкость вместо FOMO — решение Аны 25.07)
 let ciEditableDay = true;
 
-// Банк лозунгов пяти состояний (v125): по 8 на уровень, выбор стабилен в течение
-// дня (по номеру дня года) — на шестой день фразы больше не наизусть.
-// Первая фраза каждого уровня — авторский текст Аны (2026-07-24); остальные —
-// черновики Claude в том же тоне, Ана заменит любые своими.
-const STATE_PHRASE_BANK = [
-  [ // 1 · пустота и апатия — забота и разрешение не мочь
-    'Позволь себе побыть в режиме тотальной заботы о себе. Тебе это сейчас необходимо.',
-    'Пустота — не враг. Это пауза, в которой ты собираешься заново.',
-    'Сегодня можно ничего не мочь. Ты всё равно на своём пути.',
-    'Обними себя первой. Остальное подождёт.',
-    'Темнота — часть цикла. Свет уже в дороге.',
-    'Разреши себе медленность. Корни растут в тишине.',
-    'Ты не обязана светить каждый день. Побудь в тепле для себя.',
-    'Самое смелое сегодня — отдых без вины.',
-  ],
-  [ // 2 · энергии мало
-    'Не требуй от себя многого. Ты в режиме кокона и восстановления.',
-    'Маленькие шаги сегодня — это тоже путь.',
-    'Береги огонёк: не раздувай, просто не гаси.',
-    'Тише темп — глубже дыхание. Этого достаточно.',
-    'Сегодня выбирай только важное. Остальное подождёт тебя.',
-    'Энергия вернётся. Твоё дело — не торопить и не корить.',
-    'Позаботься о теле — оно первым скажет тебе спасибо.',
-    'Сосуд наполняется у той, что перестала бежать.',
-  ],
-  [ // 3 · спокойно, ровно
-    'Ровный день — твоя опора. Из устойчивости рождается ясность.',
-    'Тишина внутри — это не скука. Это фундамент.',
-    'Спокойствие — валюта силы. Сегодня ты богата.',
-    'Из ровного состояния видно дальше. Загляни в свои намерения.',
-    'Штиль — лучшее время строить. Кирпичик сегодня — дом завтра.',
-    'Ты в балансе. Заметь это телом — и запомни.',
-    'Обычный день — тоже дар. В нём есть место маленькому чуду.',
-    'Устойчивость — тихая суперсила. Она у тебя есть.',
-  ],
-  [ // 4 · легко и светло
-    'Лёгкость — знак, что ты в контакте с собой и идёшь по своему пути. Запомни это ощущение телом и продолжай!',
-    'Свет изнутри — лучший ориентир. Иди за ним.',
-    'Сегодня хороший день, чтобы сделать шаг к желаемому.',
-    'Лёгкость любит благодарность. Скажи спасибо — себе.',
-    'Заметь, что наполняет тебя сегодня, — и добавь этого в завтра.',
-    'В таком состоянии намерения пишутся сами. Поймай волну.',
-    'Ты звучишь чисто. Пусть мир услышит.',
-    'Свет притягивает свет. Наблюдай, как отвечает реальность.',
-  ],
-  [ // 5 · любовь, вдохновение и единство со всем
-    'Расширенное состояние сознания и любовь — из этой точки и создаётся реальность.',
-    'Ты сейчас — чистый источник. Твори из него.',
-    'Запомни этот день телом: сюда можно возвращаться.',
-    'Из любви создаётся всё настоящее. Сегодня твой день творения.',
-    'Единство со всем — твоя истинная природа. Ты вспомнила.',
-    'Такие дни — маяки. Поставь свет на карту своей жизни.',
-    'Вдохновение — язык души. Сегодня она говорит громко.',
-    'Всё, чего ты касаешься сегодня, наполняется светом.',
-  ],
+// Лозунги пяти состояний — ТЕКСТЫ АНЫ (2026-07-24). Черновики Claude убраны
+// по её решению 29.07: «не нравится лозунг у первой звезды — мой вариант был лучше».
+// Голос наставницы авторский; расширять банк — только её текстами.
+const STATE_PHRASES = [
+  'Позволь себе побыть в режиме тотальной заботы о себе. Тебе это сейчас необходимо.',
+  'Не требуй от себя многого. Ты в режиме кокона и восстановления.',
+  'Ровный день — твоя опора. Из устойчивости рождается ясность.',
+  'Лёгкость — знак, что ты в контакте с собой и идёшь по своему пути. Запомни это ощущение телом и продолжай!',
+  'Расширенное состояние сознания и любовь — из этой точки и создаётся реальность.',
 ];
 function statePhrase(level) {
-  const bank = STATE_PHRASE_BANK[level - 1] || [];
-  if (!bank.length) return '';
-  const d = new Date();
-  const doy = Math.floor((d - new Date(d.getFullYear(), 0, 0)) / 86400000);
-  return bank[doy % bank.length];
+  return STATE_PHRASES[level - 1] || '';
 }
 
 // ---- Чек-ин на «Сегодня» (v117 → v125) ----
@@ -5459,8 +5418,10 @@ function renderTodayCheckin() {
   } else {
     intent.style.display = 'none';
   }
-  const ph = document.getElementById('ctPhrase');
-  ph.textContent = subActive ? '' : 'дневник — часть пространства VERUM';
+  // v127: у неподписчицы место под звездой занимает шаг-приглашение (renderCtStep),
+  // второй курсив «дневник — часть пространства VERUM» убран — два курсива подряд
+  // читались как каша (её скрин 29.07)
+  document.getElementById('ctPhrase').textContent = '';
   document.getElementById('ctEyebrow').textContent =
     picked ? 'Дневник' : 'Дневник · как ты сегодня?';
   renderCtStep(level, ci);
@@ -5525,7 +5486,18 @@ function renderCtStep(level, ci) {
   const el = document.getElementById('ctStep');
   const prog = document.getElementById('ctProg');
   const st = ctStepState(level, ci);
-  if (!subActive || !st) {
+  // v127: неподписчица отмечает искру бесплатно — и здесь же видит, что дальше.
+  // Это честный момент конверсии: приглашение появляется после её действия.
+  if (!subActive) {
+    if (prog) prog.style.display = 'none';
+    ctStepSeen = null;
+    if (!level) { el.style.display = 'none'; return; }
+    el.style.display = 'block';
+    el.textContent = '✦ записать мысли и намерения';
+    el.dataset.act = 'paywall';
+    return;
+  }
+  if (!st) {
     el.style.display = 'none';
     if (prog) prog.style.display = 'none';
     ctStepSeen = null;
@@ -5573,25 +5545,43 @@ function recordSpark(p) {
   ci.morning = p; ci.evening = p;
   journal.checkins[key] = ci;
   saveJournalCache();
-  meApi('/me/checkin', { date: key, morning: p, evening: p, note: ci.note || '' });
+  // без подписки сервер /me/* закрыт — искра копится локально и уедет при оплате
+  if (subActive) meApi('/me/checkin', { date: key, morning: p, evening: p, note: ci.note || '' });
   if (document.getElementById('screen-path').classList.contains('active')) renderCalendar();
 }
+// после оплаты: досылаем искры, отмеченные до подписки (сервер их ещё не видел)
+function pushLocalCheckins(serverKeys) {
+  if (!subActive) return;
+  Object.keys(journal.checkins).forEach((k) => {
+    if (serverKeys.has(k)) return;
+    const c = journal.checkins[k];
+    if (!c || !(c.morning || c.evening || c.note)) return;
+    meApi('/me/checkin', { date: k, morning: c.morning || null, evening: c.evening || null, note: c.note || '' });
+  });
+}
+// v127: искра БЕСПЛАТНА — отметить состояние может каждая (решение Аны).
+// Платными остаются мысли, намерения и творения. Без подписки чек-ин живёт
+// локально; при оплате накопленное досылается на сервер (pushLocalCheckins).
 function tapTodayStar(p) {
-  if (!subActive) { openPaywall(); return; }
   haptic('light');
   recordSpark(p);
   ctPickerOpen = false;
   ctJustPicked = true; // лозунг проступает внутри карточки (тост убран, v125)
   renderTodayCheckin();
 }
-// тап по свободному месту карточки — тот же текущий шаг ритуала
+// v127 (решение Аны): тап по карточке ведёт в ДНЕВНИК — на «Путь», к календарю
+// и ленте. Намерения открываются только со строки «✦ создать реальность».
 function checkinCardTap() {
   haptic('light');
   const key = dateKey(new Date());
   const ci = journal.checkins[key] || {};
   const level = ci.evening || ci.morning || null;
-  if (!level) return; // шаг №1 — звёзды прямо на карточке
-  ctStepAction();
+  if (!level) return; // шаг №1 — звёзды прямо на карточке, никуда не уводим
+  nav('path');
+  setTimeout(() => {
+    const anchor = document.getElementById('journalEyebrow');
+    if (anchor) anchor.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 60);
 }
 
 // ===== Книга дней: весь дневник одним скроллом (мысли + искры + фото) =====
@@ -7063,7 +7053,7 @@ const FOUNDING_SEATS = 43;
 
 // Валютная оплата через Lava.top ($ / €). Ссылки на подписки:
 // стандарт: $39/мес · $329/год; основательницы: $25/мес · $259/год (период выбирается на странице Lava)
-const APP_BUILD = 126; // внутренняя метка (= блок VERUM v125/v126 «Путь = дом дневника» + тишина на Сегодня)
+const APP_BUILD = 127; // внутренняя метка (= блок VERUM v127 «канон вернулся»)
 
 // клавиатура iOS: поле email в фокусе → шторка поднимается наверх
 document.querySelectorAll('.claim-input').forEach(inp => {
@@ -9029,6 +9019,37 @@ renderTodayCheckin();
   /* v126: без слов под звездой намерение прижимается к искре — добавляем воздух */
   .ct-intent { margin-top: 14px; }
 
+  /* v127 — карточка практики дня: симметрия вместо «уехало влево».
+     Без снятого заголовка композиция развалилась: два капса жались к левому
+     краю, а круг с текстом висел отдельным блоком. Собираем по центральной оси —
+     как «Дневник» и «Мысль дня»: дата · практика дня · имя · описание · круг. */
+  .today-hero { text-align: center; padding: 34px 26px 30px !important; }
+  .today-hero .today-date { margin-bottom: 10px; }
+  .today-hero .today-sub { margin-bottom: 18px; }
+  .today-hero .practice-row {
+    flex-direction: column-reverse; gap: 20px; align-items: center;
+  }
+  .today-hero .practice-meta { width: 100%; }
+  .today-hero .practice-meta .p-name {
+    font-size: 24px !important; line-height: 1.25 !important; letter-spacing: 0.01em;
+  }
+  .today-hero .practice-meta .p-desc {
+    margin: 7px auto 0; max-width: 30ch; font-size: 12px !important;
+  }
+  .today-hero .practice-meta .p-dur { margin-top: 10px; }
+  /* волосок между текстом и кругом — тихая граница «читаю» / «слушаю» */
+  .today-hero .play-orb {
+    position: relative; width: 62px; height: 62px;
+  }
+  .today-hero .play-orb::before {
+    content: ''; position: absolute; top: -20px; left: 50%; width: 74px; height: 1px;
+    transform: translateX(-50%);
+    background: linear-gradient(90deg, transparent, rgba(201,174,125,0.4), transparent);
+  }
+
+  /* v127: три дневника в пейволле — названия выделены, чтобы читались списком */
+  .pw-item b { font-weight: 500; color: var(--pearl); }
+
   /* — тихая строка-правило в прошлых днях Намерений — */
   .jo-past-hint {
     text-align: center; font-size: 11px; letter-spacing: 0.05em;
@@ -9054,33 +9075,49 @@ renderTodayCheckin();
     color: var(--gold); border-color: rgba(201,174,125,0.55);
     background: linear-gradient(180deg, rgba(16,68,76,0.5), rgba(5,22,26,0.55));
   }
+  /* v127 — КАНОН ВОССТАНОВЛЕН. Заливка золотом по клетке давала оливу
+     («тёплое золото поверх тила = олива» — закон цвета). Теперь состояние
+     красится ХОЛОДНЫМ лунным светом (rgba(222,238,244) — «свет луны» из
+     канона), золото осталось только контуром (практика) и знаком (сбылось). */
   .cal-sq {
-    position: relative; aspect-ratio: 1; border-radius: 7px;
-    background: rgba(220,244,246,0.05);
-    display: flex; align-items: flex-start; justify-content: flex-end;
-    padding: 3px 5px 0 0; font-size: 9.5px; color: rgba(147,167,172,0.8);
+    position: relative; aspect-ratio: 1; border-radius: 10px;
+    background: linear-gradient(180deg, rgba(16,68,76,0.30), rgba(5,22,26,0.42));
+    border: 1px solid rgba(220,244,246,0.07);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; color: rgba(147,167,172,0.75);
     cursor: pointer; -webkit-tap-highlight-color: transparent;
+    transition: transform 0.15s ease;
   }
-  .cal-sq.l1 { background: rgba(201,174,125,0.14); }
-  .cal-sq.l2 { background: rgba(201,174,125,0.27); }
-  .cal-sq.l3 { background: rgba(201,174,125,0.43); }
-  .cal-sq.l4 { background: rgba(201,174,125,0.63); color: rgba(4,22,26,0.72); }
-  .cal-sq.l5 { background: #F6E7C2; color: rgba(4,22,26,0.78); }
-  .cal-sq.pr { box-shadow: inset 0 0 0 1.2px rgba(201,174,125,0.85); }
+  .cal-sq:active { transform: scale(0.94); }
+  .cal-sq.l1 { background: linear-gradient(180deg, rgba(222,238,244,0.05), rgba(16,68,76,0.34)); }
+  .cal-sq.l2 { background: linear-gradient(180deg, rgba(222,238,244,0.10), rgba(16,68,76,0.40)); }
+  .cal-sq.l3 { background: linear-gradient(180deg, rgba(222,238,244,0.17), rgba(20,82,90,0.48)); color: var(--soft-ink); }
+  .cal-sq.l4 { background: linear-gradient(180deg, rgba(222,238,244,0.26), rgba(24,96,104,0.55)); color: var(--soft-ink); }
+  .cal-sq.l5 {
+    background: linear-gradient(180deg, rgba(222,238,244,0.42), rgba(28,110,118,0.62));
+    color: #F2F6F6; box-shadow: 0 0 14px rgba(222,238,244,0.14);
+  }
+  /* практика — та самая золотая кромка ранних сборок (эталон Аны) */
+  .cal-sq.pr {
+    border-color: rgba(201,174,125,0.6);
+    box-shadow: inset 0 1px 0 rgba(222,244,246,0.10), 0 0 14px rgba(201,174,125,0.16);
+  }
+  .cal-sq.l5.pr { box-shadow: inset 0 1px 0 rgba(222,244,246,0.12), 0 0 16px rgba(201,174,125,0.2); }
   .cal-sq.win::after {
-    content: '✦'; position: absolute; left: 4px; bottom: 2px;
-    font-size: 9px; line-height: 1; color: #F6E7C2;
+    content: '✦'; position: absolute; top: 2px; right: 4px;
+    font-size: 8.5px; line-height: 1; color: #F6E7C2;
+    text-shadow: 0 0 6px rgba(246,231,194,0.6);
   }
-  .cal-sq.l4.win::after, .cal-sq.l5.win::after { color: rgba(4,22,26,0.82); }
-  .cal-sq.today { outline: 1px solid rgba(246,231,194,0.9); outline-offset: 1.5px; }
-  .cal-sq.fut { opacity: 0.25; cursor: default; }
+  .cal-sq.today { border-color: rgba(246,231,194,0.85); color: var(--gold); }
+  .cal-sq.fut { opacity: 0.22; cursor: default; }
   .sq-demo {
     display: inline-block; width: 12px; height: 12px; border-radius: 3px;
-    background: rgba(220,244,246,0.05); position: relative; vertical-align: -2px;
-    font-size: 8px; line-height: 12px; text-align: center; color: #F6E7C2;
+    background: rgba(222,238,244,0.05); border: 1px solid rgba(220,244,246,0.07);
+    position: relative; vertical-align: -2px; box-sizing: border-box;
+    font-size: 8px; line-height: 10px; text-align: center; color: #F6E7C2;
   }
-  .sq-demo.sq-l3 { background: rgba(201,174,125,0.43); }
-  .sq-demo.sq-pr { box-shadow: inset 0 0 0 1.2px rgba(201,174,125,0.85); }
+  .sq-demo.sq-l3 { background: rgba(222,238,244,0.24); border-color: rgba(220,244,246,0.10); }
+  .sq-demo.sq-pr { border-color: rgba(201,174,125,0.6); }
   /* — режим «Год»: только заливка-состояние — */
   .cal-grid.year { display: block !important; }
   .yr-title {
@@ -9095,13 +9132,14 @@ renderTodayCheckin();
   .yr-cells { flex: 1; display: flex; gap: 2px; }
   .yr-px {
     flex: 1; aspect-ratio: 1; border-radius: 1.5px;
-    background: rgba(220,244,246,0.06); min-width: 0;
+    background: rgba(222,238,244,0.045); min-width: 0;
   }
-  .yr-px.l1 { background: rgba(201,174,125,0.16); }
-  .yr-px.l2 { background: rgba(201,174,125,0.3); }
-  .yr-px.l3 { background: rgba(201,174,125,0.46); }
-  .yr-px.l4 { background: rgba(201,174,125,0.66); }
-  .yr-px.l5 { background: #F6E7C2; }
+  /* v127: год в том же холодном лунном свете, что и месяц — без оливы */
+  .yr-px.l1 { background: rgba(222,238,244,0.11); }
+  .yr-px.l2 { background: rgba(222,238,244,0.20); }
+  .yr-px.l3 { background: rgba(222,238,244,0.32); }
+  .yr-px.l4 { background: rgba(222,238,244,0.48); }
+  .yr-px.l5 { background: rgba(230,244,248,0.72); }
   .yr-px.fut { opacity: 0.4; }
 
   /* — фильтры и лента — */
@@ -9137,7 +9175,12 @@ renderTodayCheckin();
   }
   .fr-d { font-family: 'Cormorant Garamond', serif; font-size: 16px; color: var(--ink); }
   .fr-d.quiet { color: var(--faint); }
-  .fr-lab { font-size: 10px; letter-spacing: 0.06em; color: var(--faint); white-space: nowrap; }
+  /* v127: «любовь, вдохновение и единство со всем» длиннее строки — даём перенос
+     и потолок ширины, чтобы подпись не воевала с датой */
+  .fr-lab {
+    font-size: 10px; letter-spacing: 0.06em; color: var(--faint);
+    text-align: right; max-width: 46%; line-height: 1.4; flex-shrink: 0;
+  }
   .fr-note {
     margin-top: 5px; font-size: 13px; line-height: 1.62; font-weight: 300;
     color: var(--soft-ink); white-space: pre-wrap; cursor: pointer;
@@ -9156,13 +9199,18 @@ renderTodayCheckin();
     flex: 0 0 38px; width: 38px; height: 38px; object-fit: cover;
     border-radius: 8px; border: 1px solid rgba(220,244,246,0.16); margin-top: 2px;
   }
-  .fr-chips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 7px; }
-  .fr-chip {
-    font-size: 9px; letter-spacing: 0.06em; padding: 3px 8px; border-radius: 20px;
-    border: 1px solid rgba(220,244,246,0.14); color: var(--faint); white-space: nowrap;
+  /* v127: следы дня — тихие строки одного ритма, без пилюль */
+  .fr-meta { margin-top: 7px; }
+  .fr-pr {
+    display: flex; justify-content: space-between; align-items: baseline; gap: 10px;
+    font-size: 11.5px; line-height: 1.5; color: var(--faint); padding: 1px 0;
   }
-  .fr-chip.gold { border-color: rgba(201,174,125,0.42); color: var(--gold); cursor: pointer; }
-  .fr-chip.quiet { border-style: dashed; }
+  .fr-pr i { font-style: normal; font-size: 10.5px; color: var(--faint); white-space: nowrap; opacity: 0.8; }
+  .fr-counts { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 6px; }
+  .fr-count {
+    font-size: 10.5px; letter-spacing: 0.04em; color: var(--gold);
+    white-space: nowrap; cursor: pointer;
+  }
   .fr-mani { display: flex; align-items: baseline; gap: 7px; margin-top: 6px; flex-wrap: wrap; }
   .fr-mani-text { font-size: 13px; line-height: 1.5; color: var(--soft-ink); }
   .fr-mani-amt { font-size: 11.5px; color: var(--gold); white-space: nowrap; }
