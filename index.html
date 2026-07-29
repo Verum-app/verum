@@ -2603,7 +2603,9 @@
 
     <div class="glass-card today-hero">
       <div class="today-date" id="todayDate"></div>
-      <div class="today-title">Искусство управления<br><em>реальностью</em></div>
+      <!-- v126: статичный заголовок «Искусство управления реальностью» убран —
+           он не менялся (баннерная слепота), повторял брендовую строку сверху
+           и стоял перед практикой, ради которой открывают приложение. -->
       <div class="today-sub">Практика дня</div>
       <div class="practice-row">
         <div class="play-orb" onclick="playDaily()"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" style="margin-left:3px"><path d="M7.5 5.2c0-.9 1-1.5 1.8-1L19 11a1.2 1.2 0 0 1 0 2L9.3 19.8c-.8.5-1.8-.1-1.8-1V5.2Z"/></svg></div>
@@ -2624,8 +2626,10 @@
       <div class="ct-stars" id="ctStars"></div>
       <div class="ct-anchors" id="ctAnchors"><span>пусто</span><span>полна света</span></div>
       <div class="ct-live" id="ctLive"></div>
-      <div class="ct-phrase-day" id="ctPhraseDay"></div>
-      <div class="ct-confirm" id="ctConfirm"></div>
+      <!-- v126: подпись состояния, лозунг и «записано ✓» больше не висят на карточке —
+           они проступают эхом в момент выбора и тают. Слово о состоянии нужно в секунду
+           ответа, а не весь день: отмеченная искра — не диагноз. Остаётся одна звезда. -->
+      <div class="ct-echo" id="ctEcho"></div>
       <div class="ct-intent" id="ctIntent" onclick="event.stopPropagation();openGoalsFromToday()"></div>
       <div class="ct-phrase" id="ctPhrase"></div>
       <div class="ct-prog" id="ctProg"></div>
@@ -5373,7 +5377,24 @@ function statePhrase(level) {
 // НЕ всплывает тостом — проступает внутри карточки. Ниже: намерение дня (повторная
 // встреча с образом — работа РАС) и прогресс ритуала ● ● ○.
 let ctPickerOpen = false;
-let ctJustPicked = false; // для fade-in лозунга в момент выбора
+let ctJustPicked = false;   // слова показываются только в момент выбора
+let ctEchoTimer = null;
+let ctStepSeen = null;      // прошлое состояние шага — чтобы поймать момент «день закрылся»
+// Эхо: слова проступают и тают, оставляя только звезду (v126).
+// Один контейнер на все исчезающие сообщения карточки.
+function ctEcho(html) {
+  const el = document.getElementById('ctEcho');
+  if (!el) return;
+  clearTimeout(ctEchoTimer);
+  el.innerHTML = html;
+  el.classList.remove('play');
+  void el.offsetWidth;        // перезапуск анимации
+  el.classList.add('play');
+  ctEchoTimer = setTimeout(() => {
+    el.classList.remove('play');
+    el.innerHTML = '';
+  }, 5200);
+}
 function todayGoals() {
   const k = dateKey(new Date());
   return journal.goals.filter((g) => g.horizon === 'day' && g.period_key === k && g.text);
@@ -5387,26 +5408,28 @@ function renderTodayCheckin() {
   const stars = document.getElementById('ctStars');
   const anchors = document.getElementById('ctAnchors');
   const live = document.getElementById('ctLive');
-  const phraseDay = document.getElementById('ctPhraseDay');
-  const confirm = document.getElementById('ctConfirm');
   const intent = document.getElementById('ctIntent');
   stars.innerHTML = '';
   const picked = level && !ctPickerOpen;
   if (picked) {
-    // состояние выбрано: искра дня крупно + подпись + лозунг внутри карточки
+    // состояние выбрано: остаётся ОДНА звезда. Слова (подпись, лозунг, «записано»)
+    // проступают эхом только в момент выбора — и тают (v126, решение Аны).
     const b = document.createElement('button');
     b.className = 'ct-star one';
     b.innerHTML = moonSvg(level, 40);
     b.onclick = (e) => { e.stopPropagation(); haptic('light'); ctPickerOpen = true; renderTodayCheckin(); };
     stars.appendChild(b);
     anchors.style.display = 'none';
-    live.textContent = MOON_LABELS[level - 1];
-    live.style.display = 'block';
-    phraseDay.textContent = statePhrase(level);
-    phraseDay.style.display = 'block';
-    phraseDay.classList.toggle('appear', ctJustPicked);
-    confirm.textContent = 'записано ✓ · можно изменить';
-    confirm.style.display = 'block';
+    // важно гасить инлайном: display:block ставится при раскрытой шкале и иначе
+    // переживает схлопывание, оставляя 20px пустоты под звездой (min-height)
+    live.textContent = '';
+    live.style.display = 'none';
+    if (ctJustPicked) {
+      ctEcho('<span class="ce-cap"></span><span class="ce-phrase"></span><span class="ce-ok">записано ✓</span>');
+      const box = document.getElementById('ctEcho');
+      box.querySelector('.ce-cap').textContent = MOON_LABELS[level - 1];
+      box.querySelector('.ce-phrase').textContent = statePhrase(level);
+    }
   } else {
     for (let p = 1; p <= 5; p++) {
       const b = document.createElement('button');
@@ -5417,13 +5440,10 @@ function renderTodayCheckin() {
       stars.appendChild(b);
     }
     anchors.style.display = 'flex';
-    // живая подпись: пока не выбрано — приглашение первой недели, потом пусто
+    // живая подпись под пальцем: она нужна В МОМЕНТ выбора — здесь слово уместно
     live.textContent = level ? MOON_LABELS[level - 1]
       : (Object.keys(journal.checkins).length ? '' : 'отметь состояние — это две секунды');
     live.style.display = 'block';
-    phraseDay.style.display = 'none';
-    phraseDay.classList.remove('appear');
-    confirm.style.display = 'none';
   }
   ctJustPicked = false;
   // намерение дня: одно из сегодняшних, стабильное в течение дня — повторная
@@ -5508,11 +5528,21 @@ function renderCtStep(level, ci) {
   if (!subActive || !st) {
     el.style.display = 'none';
     if (prog) prog.style.display = 'none';
+    ctStepSeen = null;
     return;
   }
-  el.style.display = 'block';
-  el.textContent = st.text;
-  el.dataset.act = st.act;
+  // v126: «день записан ✦» — не постоянная строка, а исчезающее сообщение
+  // в момент, когда день закрылся. Дальше карточка молчит: тишина и есть награда.
+  if (st.act === 'day') {
+    el.style.display = 'none';
+    el.dataset.act = st.act;
+    if (ctStepSeen && ctStepSeen !== 'day') ctEcho('<span class="ce-done">день записан ✦</span>');
+  } else {
+    el.style.display = 'block';
+    el.textContent = st.text;
+    el.dataset.act = st.act;
+  }
+  ctStepSeen = st.act;
   // прогресс ритуала: искра · намерения · мысли — незакрытый день тянет вернуться
   if (prog) {
     const hasGoals = journal.goals.some((g) => g.horizon === 'day' && g.period_key === dateKey(new Date()));
@@ -6159,6 +6189,9 @@ function addGoal() {
   document.getElementById('goalPhotoBtn').classList.remove('has');
   haptic('success');
   renderGoals();
+  // карточка «Сегодня» под оверлеем: обновляем точки прогресса и намерение дня —
+  // иначе они устаревают до смены вкладки (v126)
+  renderTodayCheckin();
 }
 function toggleGoalDone(g) {
   haptic('light');
@@ -7030,7 +7063,7 @@ const FOUNDING_SEATS = 43;
 
 // Валютная оплата через Lava.top ($ / €). Ссылки на подписки:
 // стандарт: $39/мес · $329/год; основательницы: $25/мес · $259/год (период выбирается на странице Lava)
-const APP_BUILD = 125; // внутренняя метка (= блок VERUM v125 «Путь = дом дневника»), в интерфейсе не показывается
+const APP_BUILD = 126; // внутренняя метка (= блок VERUM v125/v126 «Путь = дом дневника» + тишина на Сегодня)
 
 // клавиатура iOS: поле email в фокусе → шторка поднимается наверх
 document.querySelectorAll('.claim-input').forEach(inp => {
@@ -8942,16 +8975,32 @@ renderTodayCheckin();
     font-family: 'Cormorant Garamond', serif; font-style: italic;
     font-size: 15px; color: #E6EEEE;
   }
-  .ct-phrase-day {
-    font-family: 'Cormorant Garamond', serif; font-style: italic;
-    font-size: 15.5px; line-height: 1.5; color: var(--gold);
-    text-align: center; margin: 9px 6px 0; text-wrap: balance;
+  /* v126 — эхо: слова проступают в момент выбора и тают, оставляя одну звезду.
+     Схлопывается по max-height, чтобы карточка не прыгала в конце. */
+  .ct-echo { overflow: hidden; max-height: 0; opacity: 0; text-align: center; }
+  .ct-echo.play { animation: ctEchoFade 5s ease both; }
+  @keyframes ctEchoFade {
+    0%   { opacity: 0; max-height: 0;     transform: translateY(4px); }
+    9%   { opacity: 1; max-height: 200px; transform: none; }
+    76%  { opacity: 1; max-height: 200px; transform: none; }
+    100% { opacity: 0; max-height: 0;     transform: translateY(-2px); }
   }
-  .ct-phrase-day.appear { animation: ctAppear 0.7s ease both; }
-  @keyframes ctAppear { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: none; } }
-  .ct-confirm {
-    font-size: 9.5px; letter-spacing: 0.14em; color: var(--faint);
-    text-align: center; margin-top: 8px;
+  .ct-echo .ce-cap {
+    display: block; font-family: 'Cormorant Garamond', serif; font-style: italic;
+    font-size: 15px; color: #E6EEEE; margin-top: 7px;
+  }
+  .ct-echo .ce-phrase {
+    display: block; font-family: 'Cormorant Garamond', serif; font-style: italic;
+    font-size: 15.5px; line-height: 1.5; color: var(--gold);
+    margin: 9px 6px 0; text-wrap: balance;
+  }
+  .ct-echo .ce-ok {
+    display: block; font-size: 9.5px; letter-spacing: 0.14em;
+    color: var(--faint); margin-top: 9px;
+  }
+  .ct-echo .ce-done {
+    display: block; font-family: 'Cormorant Garamond', serif; font-style: italic;
+    font-size: 15px; letter-spacing: 0.06em; color: var(--gold); margin-top: 9px;
   }
   .ct-intent {
     margin: 12px 8px 0; padding-top: 11px; cursor: pointer;
@@ -8976,7 +9025,9 @@ renderTodayCheckin();
   }
   .ct-dot.on { background: var(--gold); border-color: var(--gold); }
   .ct-step { margin-top: 7px; }
-  .ct-live:empty, .ct-confirm:empty, .ct-phrase-day:empty { display: none; }
+  .ct-live:empty { display: none; }
+  /* v126: без слов под звездой намерение прижимается к искре — добавляем воздух */
+  .ct-intent { margin-top: 14px; }
 
   /* — тихая строка-правило в прошлых днях Намерений — */
   .jo-past-hint {
