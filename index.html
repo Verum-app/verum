@@ -2616,12 +2616,19 @@
     </div>
 
     <!-- Дневник состояния: вход в ежедневный ритуал прямо с «Сегодня» (VERUM v117).
-         Одна шкала из 5 звёзд (без утро/вечер — решение Аны); после выбора остаётся
-         одна звезда + лозунг снизу. Тап по самой карточке ведёт в календарь на Пути. -->
+         v125: шкала объясняет себя — якоря «пусто/полна света», живая подпись под
+         пальцем, «записано ✓»; ответ дня проступает ВНУТРИ карточки (тост убран);
+         ниже — намерение дня и прогресс ритуала ● ● ○. -->
     <div class="glass-card checkin-today" id="checkinToday" onclick="checkinCardTap()">
       <div class="ct-eyebrow" id="ctEyebrow">Дневник · как ты сегодня?</div>
       <div class="ct-stars" id="ctStars"></div>
+      <div class="ct-anchors" id="ctAnchors"><span>пусто</span><span>полна света</span></div>
+      <div class="ct-live" id="ctLive"></div>
+      <div class="ct-phrase-day" id="ctPhraseDay"></div>
+      <div class="ct-confirm" id="ctConfirm"></div>
+      <div class="ct-intent" id="ctIntent" onclick="event.stopPropagation();openGoalsFromToday()"></div>
       <div class="ct-phrase" id="ctPhrase"></div>
+      <div class="ct-prog" id="ctProg"></div>
       <div class="ct-step" id="ctStep" onclick="event.stopPropagation();ctStepAction()"></div>
     </div>
 
@@ -2818,6 +2825,7 @@
           <svg viewBox="0 0 14 11" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M1.5 5.5L5.2 9.2L12.5 1.8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </button>
       </div>
+      <div class="ph-slogan">Манифестируй с VERUM</div>
     </div>
     <div class="glass-card path-lock">
       <div class="pl-icon">
@@ -2845,7 +2853,7 @@
       </div>
       <div class="glass-card streak-chip">
         <div class="streak-num" id="statTotal">0</div>
-        <div class="streak-label">всего сессий</div>
+        <div class="streak-label">творений</div>
       </div>
       <div class="glass-card streak-chip">
         <div class="streak-num" id="statMinutes">0</div>
@@ -2853,13 +2861,16 @@
       </div>
     </div>
 
+    <!-- v125: «Путь» = дом дневника. Карта состояния (квадраты) — обзор и навигация,
+         лента месяца — чтение. Тап по дню карты прокручивает ленту, не открывает модалку.
+         Старые сущности (богатый календарь, «Книга дней», блок «История практик»)
+         слиты сюда — данные те же, дублирования нет. -->
     <div class="section-eyebrow" id="journalEyebrow">Дневник</div>
-    <div class="journal-tabs">
-      <button class="jt-tab active" id="jtState" onclick="setJournalTab('state')">Состояние</button>
-      <button class="jt-tab" onclick="setJournalTab('goals')">Намерения</button>
-      <button class="jt-tab" onclick="setJournalTab('mani')">Творения</button>
-    </div>
     <div class="glass-card cal-card">
+      <div class="cal-mode-row">
+        <button class="cal-mode active" id="pvMonth" onclick="setPathView('month')">Месяц</button>
+        <button class="cal-mode" id="pvYear" onclick="setPathView('year')">Год</button>
+      </div>
       <div class="cal-nav">
         <div class="cal-arrow" onclick="calShift(-1)">‹</div>
         <div class="cal-title" id="calTitle"></div>
@@ -2867,12 +2878,19 @@
       </div>
       <div class="cal-grid" id="calGrid"></div>
       <div class="cal-legend" id="calLegend"></div>
-      <div class="cal-state-hint">коснись дня — состояние, практики и заметка</div>
-      <div class="ct-step book-link" onclick="openBook()">перелистать книгу дней ✦</div>
+      <div class="cal-state-hint" id="calHint">коснись дня — лента откроется на нём</div>
     </div>
 
-    <div class="section-eyebrow" id="historyEyebrow">История практик</div>
-    <div class="history-list" id="historyList"></div>
+    <div class="journal-tabs feed-filters">
+      <button class="jt-tab active" data-f="days" onclick="setFeedFilter('days')">Дни</button>
+      <button class="jt-tab" data-f="pract" onclick="setFeedFilter('pract')">Практики</button>
+      <button class="jt-tab" data-f="goals" onclick="setFeedFilter('goals')">Намерения</button>
+      <button class="jt-tab" data-f="mani" onclick="setFeedFilter('mani')">Творения</button>
+    </div>
+    <div id="feedContext"></div>
+    <div class="feed-month-head" id="feedMonthHead"></div>
+    <div class="feed-list" id="feedList"></div>
+    <div class="feed-nav" id="feedNav"></div>
     </div><!-- /.path-preview -->
 
     <div class="glass-card fb-card">
@@ -3098,6 +3116,8 @@
       <div class="jo-period" id="goalPeriod"></div>
       <button class="jp-arrow" id="goalNext" onclick="goalDayShift(1)">›</button>
     </div>
+    <!-- v125: правило вместо золотой вести — тихая строка под датой в прошлых днях -->
+    <div class="jo-past-hint" id="goalPastHint" style="display:none">не живи прошлым — пиши из состояния здесь-и-сейчас</div>
     <!-- итоги: авто-сводка недели (вс) и месяца (последние дни) + рефлексия -->
     <div id="periodSummary"></div>
     <div class="jo-moons-week" id="goalWeekDots" style="display:none"></div>
@@ -3215,6 +3235,14 @@
   <div class="completion-orb"><svg viewBox="0 0 64 64" width="46" height="46" xmlns="http://www.w3.org/2000/svg"><g fill="none"><circle cx="32" cy="32" r="21" stroke="rgba(201,174,125,0.35)" stroke-width="1"/><circle cx="32" cy="32" r="13.5" stroke="rgba(224,203,160,0.8)" stroke-width="1.1"/></g><circle cx="32" cy="32" r="7.5" fill="url(#bnCore)"/><rect x="31.55" y="11" width="0.9" height="42" fill="url(#bnRayV)"/><rect x="11" y="31.6" width="42" height="0.8" fill="url(#bnRayH)"/><circle cx="32" cy="32" r="1.7" fill="#fff8e4"/></svg></div>
   <h2>Сессия завершена</h2>
   <p id="completionMsg"></p>
+  <!-- v125: искра сразу после практики — привязка чек-ина к существующей привычке.
+       Показывается ТОЛЬКО если искры за сегодня ещё нет (второй раз не спрашиваем). -->
+  <div class="comp-spark" id="compSpark" style="display:none">
+    <div class="cs-title">Как ты сейчас?</div>
+    <div class="ct-stars cs-stars" id="csStars"></div>
+    <div class="ct-anchors cs-anchors" id="csAnchors"><span>пусто</span><span>полна света</span></div>
+    <div class="cs-done" id="csDone"></div>
+  </div>
   <div class="comp-fav" id="compFav">
     <svg class="fav-heart" viewBox="0 0 24 22"><path d="M12 20.2 C7 15.8 2.4 12.2 2.4 7.6 C2.4 4.6 4.7 2.4 7.5 2.4 C9.3 2.4 11 3.4 12 5 C13 3.4 14.7 2.4 16.5 2.4 C19.3 2.4 21.6 4.6 21.6 7.6 C21.6 12.2 17 15.8 12 20.2 Z"/></svg>
     <span id="compFavLabel">Добавить практику в избранное?</span>
@@ -4479,6 +4507,7 @@ function completeTimer() {
   document.getElementById('completionMsg').innerHTML =
     `Вы провели ${mins} мин в тишине.<br>Практика становится частью вас.`;
   document.getElementById('compFav').classList.remove('show');
+  renderCompSpark();
   document.getElementById('completion').classList.add('show');
   resetTimer();
 }
@@ -4487,6 +4516,46 @@ document.getElementById('completionBtn').addEventListener('click', () => {
   haptic('light');
   document.getElementById('completion').classList.remove('show');
 });
+
+// ===== Искра после практики (v125) =====
+// Habit stacking: чек-ин цепляется к привычке, которая уже есть, — медитации.
+// Она только что вышла из состояния, приложение открыто — момент идеальный.
+// Показывается ТОЛЬКО если искры за сегодня ещё нет (второй раз не спрашиваем).
+function renderCompSpark() {
+  const box = document.getElementById('compSpark');
+  if (!box) return;
+  const key = dateKey(new Date());
+  const ci = journal.checkins[key] || {};
+  const has = !!(ci.evening || ci.morning);
+  if (!subActive || has) { box.style.display = 'none'; return; }
+  const stars = document.getElementById('csStars');
+  const done = document.getElementById('csDone');
+  const anchors = document.getElementById('csAnchors');
+  stars.innerHTML = '';
+  done.textContent = '';
+  anchors.style.display = 'flex';
+  for (let p = 1; p <= 5; p++) {
+    const b = document.createElement('button');
+    b.className = 'ct-star';
+    b.innerHTML = moonSvg(p, 22);
+    b.onclick = () => {
+      haptic('success');
+      recordSpark(p);
+      // шкала складывается в искру дня, ниже — подпись и «записано ✓»
+      stars.innerHTML = '';
+      const one = document.createElement('span');
+      one.className = 'ct-star one';
+      one.innerHTML = moonSvg(p, 36);
+      stars.appendChild(one);
+      anchors.style.display = 'none';
+      done.innerHTML = '<span class="cs-cap">' + MOON_LABELS[p - 1] + '</span>' +
+        '<span class="cs-ok">записано ✓</span>';
+      renderTodayCheckin();
+    };
+    stars.appendChild(b);
+  }
+  box.style.display = 'block';
+}
 
 // нажатие на вопрос-сердечко: практика улетает в избранное
 document.getElementById('compFav').addEventListener('click', (e) => {
@@ -4534,6 +4603,7 @@ function stopBreath(save) {
     document.getElementById('completionMsg').innerHTML =
       `${breathCycles} циклов дыхания.<br>Нервная система благодарит.`;
     document.getElementById('compFav').classList.remove('show');
+    renderCompSpark();
     document.getElementById('completion').classList.add('show');
   }
 }
@@ -4628,13 +4698,40 @@ function renderTodayStats() {
   setStat('tMinutes', mins, 'минута', 'минуты', 'минут');
 }
 
-// Календарь практик: листается по месяцам
-let calOffset = 0; // 0 = текущий месяц, -1 = прошлый…
+// ===== КАРТА СОСТОЯНИЯ (v125) — обзор и навигация по ленте =====
+// Три независимых канала на квадрате дня: заливка = состояние (5 ступеней золота),
+// золотая кромка внутри = практика, искра ✦ в углу = сбылось. Точка фото убрана
+// (фото видно в ленте; четвёртая отметка = шум). Тап по дню НЕ открывает модалку —
+// прокручивает ленту к этому дню. Режим «Год» — только заливка-состояние.
+let calOffset = 0;          // 0 = текущий месяц, -1 = прошлый…
+let pathView = 'month';     // 'month' | 'year' (решение Аны: открывается месяцем)
 function calShift(dir) {
+  if (pathView === 'year') return; // год не листаем — он целиком
   if (calOffset + dir > 0) return;
   calOffset += dir;
   haptic('light');
   renderCalendar();
+}
+function setPathView(v) {
+  if (pathView === v) return;
+  haptic('light');
+  pathView = v;
+  document.getElementById('pvMonth').classList.toggle('active', v === 'month');
+  document.getElementById('pvYear').classList.toggle('active', v === 'year');
+  renderCalendar();
+}
+// уровень дня из чек-ина (evening||morning — как везде)
+function dayLevelOf(key) {
+  const ci = journal.checkins[key];
+  return ci ? (ci.evening || ci.morning || null) : null;
+}
+function calMaps() {
+  const practiced = new Set(sessions.map(s => dateKey(new Date(s.date))));
+  const manifested = new Set();
+  (journal.manifests || []).forEach(m => {
+    if (m.date && m.kind === 'fulfilled') manifested.add(m.date);
+  });
+  return { practiced, manifested };
 }
 function renderCalendar() {
   const grid = document.getElementById('calGrid');
@@ -4643,6 +4740,36 @@ function renderCalendar() {
   if (!grid) return;
   grid.innerHTML = '';
   const today = new Date(); today.setHours(0,0,0,0);
+  const { practiced, manifested } = calMaps();
+  const nav = document.querySelector('.cal-nav');
+  if (pathView === 'year') {
+    // «Год в пикселях»: 12 строк-месяцев × дни, только заливка-состояние
+    if (nav) nav.style.display = 'none';
+    grid.classList.add('year');
+    const y = today.getFullYear();
+    let html = '<div class="yr-title">твой ' + y + ' год</div>';
+    const ML = ['я','ф','м','а','м','и','и','а','с','о','н','д'];
+    for (let m = 0; m < 12; m++) {
+      const dIn = new Date(y, m + 1, 0).getDate();
+      let cells = '';
+      for (let d = 1; d <= dIn; d++) {
+        const day = new Date(y, m, d);
+        const lv = day <= today ? dayLevelOf(dateKey(day)) : null;
+        cells += '<span class="yr-px' + (lv ? ' l' + lv : '') + (day > today ? ' fut' : '') + '"></span>';
+      }
+      html += '<div class="yr-row"><span class="yr-lab">' + ML[m] + '</span><div class="yr-cells">' + cells + '</div></div>';
+    }
+    grid.innerHTML = html;
+    const legend = document.getElementById('calLegend');
+    if (legend) legend.innerHTML =
+      '<span class="cl-item"><span class="sq-demo sq-l3"></span>цвет дня — твоё состояние</span>';
+    const hint = document.getElementById('calHint');
+    if (hint) hint.textContent = 'заполненную строку месяца хочется достроить';
+    renderFeed();
+    return;
+  }
+  if (nav) nav.style.display = '';
+  grid.classList.remove('year');
   const base = new Date(today.getFullYear(), today.getMonth() + calOffset, 1);
   title.textContent = base.toLocaleDateString('ru', { month: 'long', year: 'numeric' }).replace(' г.', '');
   if (fwd) fwd.classList.toggle('off', calOffset >= 0);
@@ -4652,24 +4779,10 @@ function renderCalendar() {
     el.textContent = l;
     grid.appendChild(el);
   });
-  // Богатый календарь (Вариант A): каждый день несёт слои —
-  // состояние (звезда-бинду), практика (точка), фото (точка), сбывшееся (золотая рамка).
-  const practiced = new Set(sessions.map(s => dateKey(new Date(s.date))));
-  const manifested = new Set();   // даты сбывшихся материализаций
-  const photoDays = new Set();    // даты с фото (в материализациях)
-  (journal.manifests || []).forEach(m => {
-    if (!m.date) return;
-    if (m.kind === 'fulfilled') manifested.add(m.date);
-    if (m.photo_key) photoDays.add(m.date);
-  });
-  // фото дня из дневника состояния — тоже точка на календаре
-  for (const k in journal.checkins) {
-    if (journal.checkins[k] && journal.checkins[k].photo_key) photoDays.add(k);
-  }
   const firstDow = (base.getDay() + 6) % 7;
   for (let i = 0; i < firstDow; i++) {
     const el = document.createElement('div');
-    el.className = 'cal-day';
+    el.className = 'cal-sq';
     el.style.visibility = 'hidden';
     grid.appendChild(el);
   }
@@ -4678,33 +4791,358 @@ function renderCalendar() {
     const day = new Date(base.getFullYear(), base.getMonth(), d);
     const key = dateKey(day);
     const el = document.createElement('div');
-    el.className = 'cal-day';
-    const ci = journal.checkins[key];
-    const dayLevel = ci ? (ci.evening || ci.morning) : null;
-    let cell = '<span class="cd-num">' + d + '</span>';
-    if (dayLevel) cell += '<span class="cd-star">' + moonSvg(dayLevel, 13) + '</span>';
-    let dots = '';
-    if (photoDays.has(key)) dots += '<span class="cd-dot cd-photo"></span>';
-    if (dots) cell += '<span class="cd-dots">' + dots + '</span>';
-    el.innerHTML = cell;
-    if (practiced.has(key)) el.classList.add('practiced');
-    if (ci && (ci.morning || ci.evening || ci.note)) el.classList.add('has-state');
-    if (manifested.has(key)) el.classList.add('manifested');
+    const lv = dayLevelOf(key);
+    el.className = 'cal-sq' + (lv ? ' l' + lv : '');
+    el.textContent = d;
+    if (practiced.has(key)) el.classList.add('pr');
+    if (manifested.has(key)) el.classList.add('win');
     if (day.toDateString() === today.toDateString()) el.classList.add('today');
-    if (day > today) { el.style.opacity = '0.25'; }
-    else {
-      el.classList.add('tappable');
-      el.onclick = () => { haptic('light'); openDayCard(key); };
-    }
+    if (day > today) el.classList.add('fut');
+    else el.onclick = () => { haptic('light'); feedScrollTo(key); };
     grid.appendChild(el);
   }
-  // легенда слоёв
   const legend = document.getElementById('calLegend');
   if (legend) legend.innerHTML =
-    '<span class="cl-item"><span class="cl-practiced"></span>практика</span>' +
-    '<span class="cl-item"><span class="cl-star">✦</span>состояние</span>' +
-    '<span class="cl-item"><span class="cd-dot cd-photo"></span>фото</span>' +
-    '<span class="cl-item"><span class="cl-mani"></span>сбылось</span>';
+    '<span class="cl-item"><span class="sq-demo sq-l3"></span>состояние</span>' +
+    '<span class="cl-item"><span class="sq-demo sq-pr"></span>практика</span>' +
+    '<span class="cl-item"><span class="sq-demo sq-win">✦</span>сбылось</span>';
+  const hint = document.getElementById('calHint');
+  if (hint) hint.textContent = 'коснись дня — лента откроется на нём';
+  renderFeed();
+}
+
+// ===== ЛЕТОПИСЬ: лента месяца (v125) =====
+// Лента = тот же месяц, что открыт в карте (одни стрелки листают обоих).
+// Строка дня появляется при ЛЮБОМ следе: искра, мысль, фото, практика, намерение,
+// творение. Мысль видна на 5 строк, раскрывается НА МЕСТЕ («ещё ↓» / «свернуть ↑»).
+// Фильтры: Дни · Практики · Намерения · Творения. Максимум 31 строка — футер
+// «Пути» (отзыв, забота, канал) достижим на любом месяце.
+let feedFilter = 'days';
+const feedExpanded = new Set(); // раскрытые дни (ключи дат)
+function setFeedFilter(f) {
+  haptic('light');
+  feedFilter = f;
+  document.querySelectorAll('.feed-filters .jt-tab').forEach((t) =>
+    t.classList.toggle('active', t.dataset.f === f));
+  renderFeed();
+}
+function feedBase() {
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  return new Date(today.getFullYear(), today.getMonth() + calOffset, 1);
+}
+// один проход по данным месяца → карта день→следы
+function feedDays() {
+  const base = feedBase();
+  const mKey = dateKey(base).slice(0, 7);
+  const todayKey = dateKey(new Date());
+  const days = {}; // key → {ci, sess:[], goals:[], mans:[]}
+  const touch = (k) => (days[k] = days[k] || { ci: null, sess: [], goals: [], mans: [] });
+  for (const k in journal.checkins) {
+    const c = journal.checkins[k];
+    if (k.slice(0, 7) === mKey && c && (c.note || c.photo_key || c.evening || c.morning))
+      touch(k).ci = c;
+  }
+  sessions.forEach((s) => {
+    const k = dateKey(new Date(s.date));
+    if (k.slice(0, 7) === mKey) touch(k).sess.push(s);
+  });
+  journal.goals.forEach((g) => {
+    if (g.horizon === 'day' && (g.period_key || '').slice(0, 7) === mKey && g.text)
+      touch(g.period_key).goals.push(g);
+  });
+  (journal.manifests || []).forEach((m) => {
+    if ((m.date || '').slice(0, 7) === mKey) touch(m.date).mans.push(m);
+  });
+  return Object.keys(days)
+    .filter((k) => k <= todayKey)
+    .sort().reverse()
+    .map((k) => ({ key: k, d: days[k] }));
+}
+function feedDateLabel(key) {
+  const todayKey = dateKey(new Date());
+  const yest = new Date(); yest.setDate(yest.getDate() - 1);
+  if (key === todayKey) return 'сегодня';
+  if (key === dateKey(yest)) return 'вчера';
+  return '';
+}
+function renderFeed() {
+  const list = document.getElementById('feedList');
+  if (!list) return;
+  const head = document.getElementById('feedMonthHead');
+  const ctx = document.getElementById('feedContext');
+  const nav = document.getElementById('feedNav');
+  list.innerHTML = ''; ctx.innerHTML = ''; nav.innerHTML = '';
+  const base = feedBase();
+  const monthName = base.toLocaleDateString('ru', { month: 'long' });
+  const Month = monthName.charAt(0).toUpperCase() + monthName.slice(1);
+  let rows = feedDays();
+  const allCount = rows.length;
+  if (feedFilter === 'pract') rows = rows.filter((r) => r.d.sess.length);
+  if (feedFilter === 'goals') rows = rows.filter((r) => r.d.goals.length);
+  if (feedFilter === 'mani') rows = rows.filter((r) => r.d.mans.length);
+  // заголовок месяца — итог по выбранному фильтру
+  const headText = {
+    days: allCount + ' ' + plural3(allCount, 'день записан', 'дня записано', 'дней записано'),
+    pract: rows.length + ' ' + plural3(rows.length, 'день с практикой', 'дня с практиками', 'дней с практиками'),
+    goals: rows.length + ' ' + plural3(rows.length, 'день с намерениями', 'дня с намерениями', 'дней с намерениями'),
+    mani: rows.reduce((a, r) => a + r.d.mans.length, 0) + ' ' +
+      plural3(rows.reduce((a, r) => a + r.d.mans.length, 0), 'творение', 'творения', 'творений'),
+  }[feedFilter];
+  head.textContent = allCount || rows.length ? Month + ' · ' + headText : Month;
+  // контекст фильтра: входы записи (Видение / творение)
+  if (subActive && feedFilter === 'goals') {
+    const c = document.createElement('div');
+    c.className = 'feed-ctx';
+    c.innerHTML =
+      '<button class="jo-photo-btn fc-btn" onclick="openVisionFromPath()">✦ видение — карта желаний</button>' +
+      '<button class="jo-photo-btn fc-btn" onclick="openGoalsFromToday()">✦ создать реальность</button>';
+    ctx.appendChild(c);
+  }
+  if (subActive && feedFilter === 'mani') {
+    const mans = rows.reduce((a, r) => a.concat(r.d.mans), []);
+    let money = 0; mans.forEach((m) => { money += Number(m.amount) || 0; });
+    const c = document.createElement('div');
+    c.className = 'feed-ctx';
+    c.innerHTML =
+      (mans.length ? '<div class="fc-lead">в ' + MONTHS_PREP[base.getMonth()] + ' — ' + mans.length + ' ' +
+        plural3(mans.length, 'творение', 'творения', 'творений') +
+        (money ? ' · ' + money.toLocaleString('ru-RU') + ' ₽' : '') + '</div>' : '') +
+      '<button class="jo-photo-btn fc-btn" onclick="openManiForm()">✦ записать творение</button>';
+    ctx.appendChild(c);
+  }
+  // карточка «Итог месяца» — в начале ленты завершённого месяца
+  if (calOffset < 0 && allCount) list.appendChild(feedMonthSummary(base, Month));
+  // карточка-веха 7/21/40 — просьба отзыва в момент пика (только текущий месяц)
+  if (calOffset === 0) {
+    const ms = feedMilestoneCard();
+    if (ms) list.appendChild(ms);
+  }
+  if (!rows.length) {
+    const empty = document.createElement('div');
+    empty.className = 'jo-empty feed-empty';
+    empty.textContent = calOffset === 0
+      ? 'Летопись ждёт первых страниц. Отметь искру дня — она ляжет сюда.'
+      : 'в этом месяце записей не было';
+    list.appendChild(empty);
+  }
+  rows.forEach((r, i) => {
+    list.appendChild(feedRow(r.key, r.d));
+    // «месяц назад»: после первой строки текущего месяца — мостик к себе прошлой
+    if (calOffset === 0 && i === 0) {
+      const back = feedBackCard();
+      if (back) list.appendChild(back);
+    }
+  });
+  // навигация месяцев внизу ленты (в режиме «Год» карта не листается — скрываем)
+  if (pathView === 'month') {
+    const prev = new Date(base.getFullYear(), base.getMonth() - 1, 1);
+    const pn = prev.toLocaleDateString('ru', { month: 'long', year: 'numeric' }).replace(' г.', '');
+    let navHtml = '<button class="feed-nav-btn" onclick="calShift(-1)">‹ ' + pn + '</button>';
+    if (calOffset < 0) {
+      const next = new Date(base.getFullYear(), base.getMonth() + 1, 1);
+      const nn = next.toLocaleDateString('ru', { month: 'long', year: 'numeric' }).replace(' г.', '');
+      navHtml += '<button class="feed-nav-btn" onclick="calShift(1)">' + nn + ' ›</button>';
+    }
+    nav.innerHTML = navHtml;
+  }
+}
+// строка дня летописи
+function feedRow(key, d) {
+  const row = document.createElement('div');
+  row.className = 'feed-row';
+  row.dataset.day = key;
+  const lv = d.ci ? (d.ci.evening || d.ci.morning || null) : null;
+  const dd = new Date(key + 'T12:00:00');
+  const dateStr = dd.toLocaleDateString('ru', { weekday: 'short', day: 'numeric', month: 'long' });
+  const rel = feedDateLabel(key);
+  const note = (d.ci && d.ci.note) || '';
+  const photo = d.ci && d.ci.photo_key;
+  const open = feedExpanded.has(key);
+  const longNote = note.length > 160 || note.split('\n').length > 5;
+  // правая подпись: сегодня/вчера, иначе слово состояния
+  const lab = rel || (lv ? MOON_LABELS[lv - 1] : '');
+  let html =
+    '<div class="fr-star">' + (lv ? moonSvg(lv, 15) : '<span class="fr-nostar">◌</span>') + '</div>' +
+    '<div class="fr-main">' +
+      '<div class="fr-date"><span class="fr-d' + (d.ci || d.goals.length || d.mans.length ? '' : ' quiet') + '">' + dateStr + '</span>' +
+        (lab ? '<span class="fr-lab">' + lab + '</span>' : '') + '</div>';
+  if (feedFilter === 'mani' && d.mans.length) {
+    // фильтр «Творения»: вместо мысли — сами творения
+    html += d.mans.map((m) =>
+      '<div class="fr-mani"><span class="mani-tag k-' + m.kind + '">' + (MANI_KIND_RU[m.kind] || '') + '</span>' +
+      '<span class="fr-mani-text"></span>' +
+      (m.amount ? '<span class="fr-mani-amt">' + Number(m.amount).toLocaleString('ru-RU') + ' ₽</span>' : '') + '</div>').join('');
+  } else if (note) {
+    html += '<div class="fr-note' + (open ? ' open' : '') + '"></div>' +
+      (longNote || photo ? '<div class="fr-more">' + (open ? 'свернуть ↑' : 'ещё ↓') + '</div>' : '');
+  }
+  if (open && photo) html += '<img class="fr-photo-big" loading="lazy" alt="">';
+  // чипы следов дня
+  let chips = '';
+  d.sess.slice(0, 2).forEach((s) => {
+    chips += '<span class="fr-chip">' + s.type + ' · ' + (s.minutes || 0) + ' мин</span>';
+  });
+  if (d.sess.length > 2) chips += '<span class="fr-chip">+' + (d.sess.length - 2) + '</span>';
+  if (d.goals.length && feedFilter !== 'goals')
+    chips += '<span class="fr-chip gold" data-act="goals">✦ ' + d.goals.length + ' ' + plural3(d.goals.length, 'намерение', 'намерения', 'намерений') + '</span>';
+  if (d.mans.length && feedFilter !== 'mani')
+    chips += '<span class="fr-chip gold">✧ ' + d.mans.length + ' ' + plural3(d.mans.length, 'творение', 'творения', 'творений') + '</span>';
+  if (!note && !d.sess.length && !d.goals.length && !d.mans.length && lv)
+    chips += '<span class="fr-chip quiet">без записи · только искра</span>';
+  if (chips) html += '<div class="fr-chips">' + chips + '</div>';
+  // фильтр «Намерения»: показать сами намерения дня списком
+  if (feedFilter === 'goals' && d.goals.length) {
+    html += '<div class="fr-goals">' + d.goals.map(() =>
+      '<div class="fr-goal"><span class="fr-goal-star">✦</span><span class="fr-goal-text"></span></div>').join('') + '</div>';
+  }
+  html += '</div>' +
+    (photo && !open ? '<img class="fr-thumb" loading="lazy" alt="">' : '');
+  row.innerHTML = html;
+  // тексты — через textContent (без склейки HTML)
+  const noteEl = row.querySelector('.fr-note');
+  if (noteEl) noteEl.textContent = note;
+  row.querySelectorAll('.fr-mani-text').forEach((el, i) => { el.textContent = d.mans[i] ? (d.mans[i].text || '') : ''; });
+  row.querySelectorAll('.fr-goal-text').forEach((el, i) => { el.textContent = d.goals[i] ? (d.goals[i].text || '') : ''; });
+  const thumb = row.querySelector('.fr-thumb');
+  if (thumb) thumb.src = photoURL(photo);
+  const big = row.querySelector('.fr-photo-big');
+  if (big) big.src = photoURL(photo);
+  // тапы: дата → страница дня (правка); мысль/«ещё» → раскрыть на месте;
+  // чип намерений → лист того дня
+  row.querySelector('.fr-date').onclick = () => { haptic('light'); openDayCard(key); };
+  const toggle = () => {
+    haptic('light');
+    if (feedExpanded.has(key)) feedExpanded.delete(key); else feedExpanded.add(key);
+    renderFeed();
+  };
+  const more = row.querySelector('.fr-more');
+  if (more) more.onclick = toggle;
+  if (noteEl && (longNote || photo)) noteEl.onclick = toggle;
+  const gchip = row.querySelector('.fr-chip[data-act="goals"]');
+  if (gchip) gchip.onclick = () => openGoalsAt(key);
+  return row;
+}
+// «Итог месяца ✦» — карточка в начале ленты завершённого месяца
+function feedMonthSummary(base, Month) {
+  const last = new Date(base.getFullYear(), base.getMonth() + 1, 0);
+  const k1 = dateKey(base), k2 = dateKey(last);
+  const inR = (k) => k >= k1 && k <= k2;
+  let prN = 0, prMin = 0;
+  sessions.forEach((s) => {
+    const k = dateKey(new Date(s.date));
+    if (inR(k)) { prN++; prMin += s.minutes || 0; }
+  });
+  let starDays = 0;
+  for (const k in journal.checkins) {
+    const c = journal.checkins[k];
+    if (inR(k) && c && (c.evening || c.morning)) starDays++;
+  }
+  const mans = (journal.manifests || []).filter((m) => m.date && inR(m.date));
+  let money = 0; mans.forEach((m) => { money += Number(m.amount) || 0; });
+  const bits = [];
+  if (starDays) bits.push(starDays + ' ' + plural3(starDays, 'день с искрой', 'дня с искрой', 'дней с искрой'));
+  if (prN) bits.push(prN + ' ' + plural3(prN, 'практика', 'практики', 'практик') + ' · ' + prMin + ' мин');
+  if (mans.length) bits.push(mans.length + ' ' + plural3(mans.length, 'творение', 'творения', 'творений'));
+  if (money) bits.push(money.toLocaleString('ru-RU') + ' ₽');
+  const card = document.createElement('div');
+  card.className = 'feed-card';
+  let html = '<div class="fc-eyebrow">Итог месяца ✦</div>' +
+    '<div class="fc-title">' + Month + '</div>' +
+    (bits.length ? '<div class="fc-stats">' + bits.join(' · ') + '</div>' : '');
+  // рефлексия месяца (если записана в Намерениях) — читается здесь
+  const mk = base.getFullYear() + '-M' + String(base.getMonth() + 1).padStart(2, '0');
+  const r = (journal.reflections || []).find((x) => x.week_key === mk);
+  if (r && (r.went_well || r.improve || r.learned)) {
+    html += '<div class="fc-refl">' +
+      (r.went_well ? '<div class="fc-r"><span>что получилось</span><i></i></div>' : '') +
+      (r.improve ? '<div class="fc-r"><span>что улучшить</span><i></i></div>' : '') +
+      (r.learned ? '<div class="fc-r"><span>чему научилась</span><i></i></div>' : '') + '</div>';
+  }
+  html += '<div class="fc-sign">Манифестируй с VERUM</div>';
+  card.innerHTML = html;
+  const vals = [r && r.went_well, r && r.improve, r && r.learned].filter(Boolean);
+  card.querySelectorAll('.fc-r i').forEach((el, i) => { el.textContent = vals[i] || ''; });
+  return card;
+}
+// веха 7/21/40 «дней в пути» → тёплая просьба отзыва в момент пика
+function feedMilestoneCard() {
+  if (!subActive) return null;
+  const days = uniqueDayCount();
+  const MS = [40, 21, 7];
+  const hit = MS.find((n) => days >= n && !localStorage.getItem('verum_ms_' + n));
+  if (!hit) return null;
+  const TXT = {
+    7: 'Неделя с собой — это уже привычка рождается. Расскажешь, что чувствуешь?',
+    21: 'Три недели ты возвращаешься к себе. Расскажешь, что изменилось?',
+    40: 'Сорок дней пути — глубина, которую видно. Поделишься, что произошло?',
+  };
+  const card = document.createElement('div');
+  card.className = 'feed-card milestone';
+  card.innerHTML =
+    '<div class="fc-eyebrow">' + hit + ' ' + plural3(hit, 'день в пути', 'дня в пути', 'дней в пути') + ' ✦</div>' +
+    '<div class="fc-quote">' + TXT[hit] + '</div>' +
+    '<div class="fc-sub">Анне важно каждое слово · анонимно</div>' +
+    '<button class="jo-photo-btn fc-btn" data-act="write">Написать</button>' +
+    '<div class="fc-later" data-act="later">не сейчас</div>';
+  card.querySelector('[data-act="write"]').onclick = () => {
+    localStorage.setItem('verum_ms_' + hit, '1');
+    openFeedback('milestone' + hit);
+  };
+  card.querySelector('[data-act="later"]').onclick = () => {
+    haptic('light');
+    localStorage.setItem('verum_ms_' + hit, '1');
+    renderFeed();
+  };
+  return card;
+}
+// «Год назад / месяц назад»: мостик к себе прошлой (год приоритетнее)
+function feedBackCard() {
+  const today = new Date();
+  const tries = [
+    { d: new Date(today.getFullYear() - 1, today.getMonth(), today.getDate()), lab: 'Год назад' },
+    { d: new Date(today.getFullYear(), today.getMonth() - 1, today.getDate()), lab: 'Месяц назад' },
+  ];
+  for (const t of tries) {
+    const k = dateKey(t.d);
+    const ci = journal.checkins[k];
+    const goals = journal.goals.filter((g) => g.horizon === 'day' && g.period_key === k && g.text);
+    const quote = (ci && ci.note) || (goals[0] && goals[0].text) || '';
+    if (!quote) continue;
+    const card = document.createElement('div');
+    card.className = 'feed-card back';
+    card.innerHTML =
+      '<div class="fc-eyebrow">' + t.lab + ' · ' +
+        t.d.toLocaleDateString('ru', { day: 'numeric', month: 'long' }) + '</div>' +
+      '<div class="fc-quote"></div>' +
+      '<div class="fc-later" data-act="open">перечитать тот день →</div>';
+    card.querySelector('.fc-quote').textContent = '«' + quote.slice(0, 140) + (quote.length > 140 ? '…' : '') + '»';
+    card.querySelector('[data-act="open"]').onclick = () => { haptic('light'); openDayCard(k); };
+    return card;
+  }
+  return null;
+}
+// тап по дню карты → лента раскрывается на нём
+function feedScrollTo(key) {
+  if (feedFilter !== 'days') setFeedFilter('days');
+  const row = document.querySelector('.feed-row[data-day="' + key + '"]');
+  if (!row) { showToast('в этом дне записей не было'); return; }
+  row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  row.classList.remove('flash');
+  requestAnimationFrame(() => row.classList.add('flash'));
+}
+// входы из контекста фильтра «Намерения»
+function openVisionFromPath() {
+  if (!subActive) { openPaywall(); return; }
+  goalTab = 'vision';
+  openJournal('goals');
+}
+function openGoalsAt(key) {
+  if (!subActive) { openPaywall(); return; }
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const d = new Date(key + 'T12:00:00'); d.setHours(0, 0, 0, 0);
+  goalTab = 'day';
+  goalDayOffset = Math.round((d - today) / 86400000);
+  openJournal('goals');
 }
 
 // ===== ДНЕВНИКИ (v113): состояние · намерения · материализации =====
@@ -4804,12 +5242,8 @@ function confirmDelete(what, cb) {
 
 // 3 вкладки дневника: Состояние = богатый календарь (инлайн);
 // Намерения и Отклики открываются полноэкранными оверлеями.
-function setJournalTab(which) {
-  haptic('light');
-  if (which === 'goals') { openJournal('goals'); return; }
-  if (which === 'mani') { openJournal('mani'); return; }
-  // 'state' — календарь уже показан инлайн; вкладка Состояние остаётся активной
-}
+// setJournalTab удалён (v125): табы [Состояние|Намерения|Творения] заменены
+// фильтрами ленты (setFeedFilter) — чтение живёт в летописи, не в оверлеях.
 
 // ---- API с офлайн-очередью ----
 function meApi(path, body, cb) {
@@ -4869,20 +5303,81 @@ let ciReadonly = false;
 // чтение + «дописать» (мягкость вместо FOMO — решение Аны 25.07)
 let ciEditableDay = true;
 
-// Лозунги пяти состояний (тексты Аны, 2026-07-24): показываются после выбора звезды.
-const STATE_PHRASES = [
-  'Позволь себе побыть в режиме тотальной заботы о себе. Тебе это сейчас необходимо.',
-  'Не требуй от себя многого. Ты в режиме кокона и восстановления.',
-  'Ровный день — твоя опора. Из устойчивости рождается ясность.',
-  'Лёгкость — знак, что ты в контакте с собой и идёшь по своему пути. Запомни это ощущение телом и продолжай!',
-  'Расширенное состояние сознания и любовь — из этой точки и создаётся реальность.',
+// Банк лозунгов пяти состояний (v125): по 8 на уровень, выбор стабилен в течение
+// дня (по номеру дня года) — на шестой день фразы больше не наизусть.
+// Первая фраза каждого уровня — авторский текст Аны (2026-07-24); остальные —
+// черновики Claude в том же тоне, Ана заменит любые своими.
+const STATE_PHRASE_BANK = [
+  [ // 1 · пустота и апатия — забота и разрешение не мочь
+    'Позволь себе побыть в режиме тотальной заботы о себе. Тебе это сейчас необходимо.',
+    'Пустота — не враг. Это пауза, в которой ты собираешься заново.',
+    'Сегодня можно ничего не мочь. Ты всё равно на своём пути.',
+    'Обними себя первой. Остальное подождёт.',
+    'Темнота — часть цикла. Свет уже в дороге.',
+    'Разреши себе медленность. Корни растут в тишине.',
+    'Ты не обязана светить каждый день. Побудь в тепле для себя.',
+    'Самое смелое сегодня — отдых без вины.',
+  ],
+  [ // 2 · энергии мало
+    'Не требуй от себя многого. Ты в режиме кокона и восстановления.',
+    'Маленькие шаги сегодня — это тоже путь.',
+    'Береги огонёк: не раздувай, просто не гаси.',
+    'Тише темп — глубже дыхание. Этого достаточно.',
+    'Сегодня выбирай только важное. Остальное подождёт тебя.',
+    'Энергия вернётся. Твоё дело — не торопить и не корить.',
+    'Позаботься о теле — оно первым скажет тебе спасибо.',
+    'Сосуд наполняется у той, что перестала бежать.',
+  ],
+  [ // 3 · спокойно, ровно
+    'Ровный день — твоя опора. Из устойчивости рождается ясность.',
+    'Тишина внутри — это не скука. Это фундамент.',
+    'Спокойствие — валюта силы. Сегодня ты богата.',
+    'Из ровного состояния видно дальше. Загляни в свои намерения.',
+    'Штиль — лучшее время строить. Кирпичик сегодня — дом завтра.',
+    'Ты в балансе. Заметь это телом — и запомни.',
+    'Обычный день — тоже дар. В нём есть место маленькому чуду.',
+    'Устойчивость — тихая суперсила. Она у тебя есть.',
+  ],
+  [ // 4 · легко и светло
+    'Лёгкость — знак, что ты в контакте с собой и идёшь по своему пути. Запомни это ощущение телом и продолжай!',
+    'Свет изнутри — лучший ориентир. Иди за ним.',
+    'Сегодня хороший день, чтобы сделать шаг к желаемому.',
+    'Лёгкость любит благодарность. Скажи спасибо — себе.',
+    'Заметь, что наполняет тебя сегодня, — и добавь этого в завтра.',
+    'В таком состоянии намерения пишутся сами. Поймай волну.',
+    'Ты звучишь чисто. Пусть мир услышит.',
+    'Свет притягивает свет. Наблюдай, как отвечает реальность.',
+  ],
+  [ // 5 · любовь, вдохновение и единство со всем
+    'Расширенное состояние сознания и любовь — из этой точки и создаётся реальность.',
+    'Ты сейчас — чистый источник. Твори из него.',
+    'Запомни этот день телом: сюда можно возвращаться.',
+    'Из любви создаётся всё настоящее. Сегодня твой день творения.',
+    'Единство со всем — твоя истинная природа. Ты вспомнила.',
+    'Такие дни — маяки. Поставь свет на карту своей жизни.',
+    'Вдохновение — язык души. Сегодня она говорит громко.',
+    'Всё, чего ты касаешься сегодня, наполняется светом.',
+  ],
 ];
+function statePhrase(level) {
+  const bank = STATE_PHRASE_BANK[level - 1] || [];
+  if (!bank.length) return '';
+  const d = new Date();
+  const doy = Math.floor((d - new Date(d.getFullYear(), 0, 0)) / 86400000);
+  return bank[doy % bank.length];
+}
 
-// ---- Чек-ин на «Сегодня» (v117) ----
-// Одна шкала из 5 звёзд (утро/вечер убраны — решение Аны 2026-07-24). После выбора
-// шкала складывается в одну звезду, лозунг состояния — снизу. Тап по звезде
-// раскрывает шкалу обратно; тап по карточке ведёт в календарь на Пути.
+// ---- Чек-ин на «Сегодня» (v117 → v125) ----
+// v125: шкала объясняет себя. Якоря «пусто/полна света», живая подпись под пальцем
+// (pointermove по шкале), «записано ✓ · можно изменить». Ответ дня (лозунг) больше
+// НЕ всплывает тостом — проступает внутри карточки. Ниже: намерение дня (повторная
+// встреча с образом — работа РАС) и прогресс ритуала ● ● ○.
 let ctPickerOpen = false;
+let ctJustPicked = false; // для fade-in лозунга в момент выбора
+function todayGoals() {
+  const k = dateKey(new Date());
+  return journal.goals.filter((g) => g.horizon === 'day' && g.period_key === k && g.text);
+}
 function renderTodayCheckin() {
   const box = document.getElementById('checkinToday');
   if (!box) return;
@@ -4890,33 +5385,114 @@ function renderTodayCheckin() {
   const ci = journal.checkins[key] || {};
   const level = ci.evening || ci.morning || null;
   const stars = document.getElementById('ctStars');
+  const anchors = document.getElementById('ctAnchors');
+  const live = document.getElementById('ctLive');
+  const phraseDay = document.getElementById('ctPhraseDay');
+  const confirm = document.getElementById('ctConfirm');
+  const intent = document.getElementById('ctIntent');
   stars.innerHTML = '';
-  if (level && !ctPickerOpen) {
-    // состояние выбрано: звезда дня = вход в дневник дня (менять искру — там)
+  const picked = level && !ctPickerOpen;
+  if (picked) {
+    // состояние выбрано: искра дня крупно + подпись + лозунг внутри карточки
     const b = document.createElement('button');
     b.className = 'ct-star one';
     b.innerHTML = moonSvg(level, 40);
-    b.onclick = (e) => { e.stopPropagation(); haptic('light'); openDayCard(key); };
+    b.onclick = (e) => { e.stopPropagation(); haptic('light'); ctPickerOpen = true; renderTodayCheckin(); };
     stars.appendChild(b);
+    anchors.style.display = 'none';
+    live.textContent = MOON_LABELS[level - 1];
+    live.style.display = 'block';
+    phraseDay.textContent = statePhrase(level);
+    phraseDay.style.display = 'block';
+    phraseDay.classList.toggle('appear', ctJustPicked);
+    confirm.textContent = 'записано ✓ · можно изменить';
+    confirm.style.display = 'block';
   } else {
     for (let p = 1; p <= 5; p++) {
       const b = document.createElement('button');
       b.className = 'ct-star' + (level === p ? ' sel' : '');
+      b.dataset.p = p;
       b.innerHTML = moonSvg(p, 24);
       b.onclick = (e) => { e.stopPropagation(); tapTodayStar(p); };
       stars.appendChild(b);
     }
+    anchors.style.display = 'flex';
+    // живая подпись: пока не выбрано — приглашение первой недели, потом пусто
+    live.textContent = level ? MOON_LABELS[level - 1]
+      : (Object.keys(journal.checkins).length ? '' : 'отметь состояние — это две секунды');
+    live.style.display = 'block';
+    phraseDay.style.display = 'none';
+    phraseDay.classList.remove('appear');
+    confirm.style.display = 'none';
   }
-  // минимализм (решение Аны): постоянного текста на карточке нет — лозунг
-  // всплывает золотым тостом в момент выбора звезды (tapTodayStar)
+  ctJustPicked = false;
+  // намерение дня: одно из сегодняшних, стабильное в течение дня — повторная
+  // встреча с написанным образом (то, ради чего намерения пишутся)
+  const goals = subActive ? todayGoals() : [];
+  if (picked && goals.length) {
+    const d = new Date();
+    const doy = Math.floor((d - new Date(d.getFullYear(), 0, 0)) / 86400000);
+    const g = goals[doy % goals.length];
+    intent.innerHTML = '<span class="ct-intent-cap">твоё намерение сегодня</span><span class="ct-intent-text"></span>';
+    intent.querySelector('.ct-intent-text').textContent = '«' + g.text.slice(0, 140) + (g.text.length > 140 ? '…' : '') + '»';
+    intent.style.display = 'block';
+  } else {
+    intent.style.display = 'none';
+  }
   const ph = document.getElementById('ctPhrase');
   ph.textContent = subActive ? '' : 'дневник — часть пространства VERUM';
-  // вопрос задан — и отвечен: после выбора искры заголовок сжимается до «Дневник»
   document.getElementById('ctEyebrow').textContent =
-    (level && !ctPickerOpen) ? 'Дневник' : 'Дневник · как ты сегодня?';
+    picked ? 'Дневник' : 'Дневник · как ты сегодня?';
   renderCtStep(level, ci);
 }
-// Ритуал ведёт сам: карточка показывает ОДИН следующий шаг, не меню.
+// Живая подпись «под пальцем»: ведёшь по шкале — слово меняется до отпускания.
+// pointermove по контейнеру шкалы; отпускание = выбор. touch-action: none в CSS.
+(function bindCtLiveScale() {
+  const stars = document.getElementById('ctStars');
+  if (!stars || !window.PointerEvent) return;
+  let tracking = false, lastP = null;
+  const starAt = (x) => {
+    const btns = stars.querySelectorAll('.ct-star[data-p]');
+    let best = null, dist = 1e9;
+    btns.forEach((b) => {
+      const r = b.getBoundingClientRect();
+      const c = r.left + r.width / 2;
+      const d = Math.abs(x - c);
+      if (d < dist) { dist = d; best = b; }
+    });
+    return best;
+  };
+  stars.addEventListener('pointerdown', (e) => {
+    if (!stars.querySelector('.ct-star[data-p]')) return; // шкала свёрнута
+    tracking = true; lastP = null;
+  });
+  stars.addEventListener('pointermove', (e) => {
+    if (!tracking) return;
+    const b = starAt(e.clientX);
+    if (!b) return;
+    const p = Number(b.dataset.p);
+    if (p !== lastP) {
+      lastP = p;
+      document.getElementById('ctLive').textContent = MOON_LABELS[p - 1];
+      stars.querySelectorAll('.ct-star').forEach((s) => s.classList.toggle('hot', s === b));
+      haptic('light');
+    }
+  });
+  const end = (e) => {
+    if (!tracking) return;
+    tracking = false;
+    // если палец вели (была «примерка») — фиксируем выбор; обычный тап
+    // обрабатывает onclick самой звезды
+    if (lastP !== null && e.type === 'pointerup') {
+      const b = starAt(e.clientX);
+      if (b && Number(b.dataset.p) === lastP) return; // onclick сделает своё
+      tapTodayStar(lastP);
+    }
+  };
+  stars.addEventListener('pointerup', end);
+  stars.addEventListener('pointercancel', () => { tracking = false; });
+})();
+// Ритуал ведёт сам: карточка показывает ОДИН следующий шаг + прогресс ● ● ○.
 // искра → намерения дня → мысли — а дальше «день записан».
 function ctStepState(level, ci) {
   if (!level) return null; // шаг №1 — сама шкала звёзд
@@ -4927,11 +5503,23 @@ function ctStepState(level, ci) {
 }
 function renderCtStep(level, ci) {
   const el = document.getElementById('ctStep');
+  const prog = document.getElementById('ctProg');
   const st = ctStepState(level, ci);
-  if (!subActive || !st) { el.style.display = 'none'; return; }
+  if (!subActive || !st) {
+    el.style.display = 'none';
+    if (prog) prog.style.display = 'none';
+    return;
+  }
   el.style.display = 'block';
   el.textContent = st.text;
   el.dataset.act = st.act;
+  // прогресс ритуала: искра · намерения · мысли — незакрытый день тянет вернуться
+  if (prog) {
+    const hasGoals = journal.goals.some((g) => g.horizon === 'day' && g.period_key === dateKey(new Date()));
+    const dots = [!!level, hasGoals, !!ci.note];
+    prog.innerHTML = dots.map((on) => '<span class="ct-dot' + (on ? ' on' : '') + '"></span>').join('');
+    prog.style.display = 'flex';
+  }
 }
 function ctStepAction() {
   if (!subActive) { openPaywall(); return; }
@@ -4947,21 +5535,24 @@ function openGoalsFromToday() {
   goalDayOffset = 0;
   openJournal('goals');
 }
-function tapTodayStar(p) {
-  if (!subActive) { openPaywall(); return; }
-  haptic('light');
+// Запись искры дня — общая для карточки «Сегодня» и экрана завершения практики.
+// Пишем в оба слота — все читатели (evening||morning) работают, схема D1 не меняется.
+function recordSpark(p) {
   const key = dateKey(new Date());
   const ci = journal.checkins[key] || { date: key };
-  // одна звезда дня: пишем в оба слота — календарь, луны недели и старые
-  // записи (evening||morning) читают одинаково, схема D1 не меняется
   ci.morning = p; ci.evening = p;
   journal.checkins[key] = ci;
   saveJournalCache();
   meApi('/me/checkin', { date: key, morning: p, evening: p, note: ci.note || '' });
-  ctPickerOpen = false;
-  renderTodayCheckin();
-  showToast(STATE_PHRASES[p - 1], true, 4200);
   if (document.getElementById('screen-path').classList.contains('active')) renderCalendar();
+}
+function tapTodayStar(p) {
+  if (!subActive) { openPaywall(); return; }
+  haptic('light');
+  recordSpark(p);
+  ctPickerOpen = false;
+  ctJustPicked = true; // лозунг проступает внутри карточки (тост убран, v125)
+  renderTodayCheckin();
 }
 // тап по свободному месту карточки — тот же текущий шаг ритуала
 function checkinCardTap() {
@@ -5229,11 +5820,8 @@ function goalDayShift(dir) {
   if (goalDayOffset + dir > 0) return;
   haptic('light');
   goalDayOffset += dir;
-  // мягкое напоминание при первом уходе в прошлое (текст Аны)
-  if (goalDayOffset < 0 && !goalPastToastShown) {
-    goalPastToastShown = true;
-    showToast('Не живи прошлым — напиши намерения из состояния здесь-и-сейчас', true, 3600);
-  }
+  // v125: правило — не праздник; вместо золотой вести тихая строка под датой
+  // (#goalPastHint, показывается в renderGoals во всех прошлых днях)
   renderGoals();
 }
 function periodKeyFor(h) {
@@ -5256,6 +5844,9 @@ function setGoalTab(h) {
   renderGoals();
 }
 function renderGoals() {
+  // активный таб — по goalTab (входы извне ставят goalTab напрямую, v125)
+  document.querySelectorAll('#goalTabs .jo-tab').forEach((t) =>
+    t.classList.toggle('active', t.dataset.h === goalTab));
   document.getElementById('goalPeriod').textContent = periodLabel(goalTab);
   // стрелки листания — только на «Сегодня»; вперёд дальше сегодня нельзя
   const isDay = goalTab === 'day';
@@ -5264,6 +5855,9 @@ function renderGoals() {
   nextBtn.style.visibility = isDay ? 'visible' : 'hidden';
   nextBtn.classList.toggle('off', goalDayOffset >= 0);
   const isPastDay = isDay && goalDayOffset < 0;
+  // тихая строка «не живи прошлым…» — под датой во всех прошлых днях (v125)
+  const pastHint = document.getElementById('goalPastHint');
+  if (pastHint) pastHint.style.display = isPastDay ? 'block' : 'none';
   const list = document.getElementById('goalList');
   list.innerHTML = '';
   list.classList.toggle('vision-grid', goalTab === 'vision');
@@ -5814,19 +6408,17 @@ function migrateSessionsOnce() {
   });
 }
 
-// История практик: 7 на странице, дальше — страницы 1 2 3 →
-let histPage = 0;
-
 function renderPath() {
   document.getElementById('screen-path').classList.toggle('sub-locked', !subActive);
   // рисуем содержимое всегда — под замком оно показывается «под стеклом» (превью),
   // используя реальный локальный прогресс (бесплатная игра ПОТОК уже даёт историю)
   renderManiSummary();
+  // летопись в цифрах (v125): дни в пути · творения · минуты
   setStreakStat('statStreak');
-  setStat('statTotal', sessions.length, 'сессия', 'сессии', 'сессий');
+  setStat('statTotal', (journal.manifests || []).length, 'творение', 'творения', 'творений');
   setStat('statMinutes', sessions.reduce((a, s) => a + (s.minutes || 0), 0), 'минута', 'минуты', 'минут');
 
-  renderCalendar();
+  renderCalendar(); // карта состояния; внутри — renderFeed() (лента месяца)
 
   // — Карта пути: сколько практик каждого шага уже прожито
   const stepOf = (sess) => {
@@ -5865,46 +6457,8 @@ function renderPath() {
     pmBox.innerHTML = pmHtml || '<div class="empty-state" style="padding:10px">карта откроется с первой практикой</div>';
   }
 
-  const list = document.getElementById('historyList');
-  if (!sessions.length) {
-    list.innerHTML = '<div class="glass-card empty-state">практика ещё не начата<br>начните первую сессию</div>';
-    return;
-  }
-  list.innerHTML = '';
-  // Хроника постранично (по 5): при 100–500 практиках лист не растёт бесконечно —
-  // листается тонкими стрелками ‹ ›. Страница 0 — самые свежие записи.
-  const PER = 5;
-  const total = sessions.length;
-  const pages = Math.ceil(total / PER);
-  if (histPage >= pages) histPage = pages - 1;
-  if (histPage < 0) histPage = 0;
-  const start = histPage * PER;
-  sessions.slice(start, start + PER).forEach(s => {
-    const d = new Date(s.date);
-    const item = document.createElement('div');
-    item.className = 'history-item';
-    item.innerHTML = `
-      <div class="hi-main">
-        <div class="history-date">${d.toLocaleDateString('ru', {day:'numeric', month:'long', weekday:'short'})}</div>
-        <div class="history-type">${s.type}</div>
-        ${(function(){ let st = s.step || (meditations.find(m => m.name === s.type) || {}).step || ''; if (!st && /^День \d/.test(s.type)) st = 'Игра ПОТОК'; if (!st) st = 'Таймер'; const g = (st === 'Игра ПОТОК' || st === 'Таймер') ? STEP_GLYPHS[0] : stepGlyph({ level: st }); return '<div class="history-step"><span class="step-glyph sg-s">' + g + '</span>' + st + '</div>'; })()}
-      </div>
-      <div class="history-dur">${s.minutes} мин</div>`;
-    list.appendChild(item);
-  });
-  if (pages > 1) {
-    const CH_L = '<svg viewBox="0 0 12 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2.5L3 8l5 5.5"/></svg>';
-    const CH_R = '<svg viewBox="0 0 12 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2.5L9 8l-5 5.5"/></svg>';
-    const pager = document.createElement('div');
-    pager.className = 'hist-pager';
-    pager.innerHTML =
-      '<button class="hp-arrow"' + (histPage === 0 ? ' disabled' : '') + ' aria-label="Новее">' + CH_L + '</button>' +
-      '<span class="hp-count">' + (start + 1) + '–' + Math.min(start + PER, total) + ' из ' + total + '</span>' +
-      '<button class="hp-arrow"' + (histPage >= pages - 1 ? ' disabled' : '') + ' aria-label="Старее">' + CH_R + '</button>';
-    pager.children[0].onclick = () => { if (histPage > 0) { haptic('light'); histPage--; renderPath(); } };
-    pager.children[2].onclick = () => { if (histPage < pages - 1) { haptic('light'); histPage++; renderPath(); } };
-    list.appendChild(pager);
-  }
+  // v125: блок «История практик» ушёл — практики живут чипами в своих днях ленты,
+  // хроника по датам = фильтр «Практики». Третьей копии тех же данных больше нет.
 }
 
 
@@ -6123,6 +6677,7 @@ audio.addEventListener('ended', () => {
   }
   document.getElementById('completionMsg').innerHTML =
     'Практика «' + (currentMed ? currentMed.name : '') + '» завершена.<br>Носите это состояние с собой.';
+  renderCompSpark();
   document.getElementById('completion').classList.add('show');
 });
 
@@ -6475,7 +7030,7 @@ const FOUNDING_SEATS = 43;
 
 // Валютная оплата через Lava.top ($ / €). Ссылки на подписки:
 // стандарт: $39/мес · $329/год; основательницы: $25/мес · $259/год (период выбирается на странице Lava)
-const APP_BUILD = 124; // внутренняя метка (= блок VERUM v124 «Создать реальность»), в интерфейсе не показывается
+const APP_BUILD = 125; // внутренняя метка (= блок VERUM v125 «Путь = дом дневника»), в интерфейсе не показывается
 
 // клавиатура iOS: поле email в фокусе → шторка поднимается наверх
 document.querySelectorAll('.claim-input').forEach(inp => {
@@ -8364,6 +8919,274 @@ renderTodayCheckin();
   .jo-past-meta { padding: 8px 4px 0; font-size: 12.5px; line-height: 1.5; }
   .jpm-label { color: var(--faint); font-style: italic; }
   .jpm-text { color: var(--soft-ink); }
+
+  /* VERUM v125 — «Путь = дом дневника» (решения Аны 29.07):
+     1) Шкала объясняет себя: якоря, живая подпись, «записано ✓», касания 44px.
+     2) Ответ дня проступает ВНУТРИ карточки (тост убран) + намерение дня + ● ● ○.
+     3) Карта состояния: заливка=состояние · кромка=практика · ✦=сбылось; [Месяц|Год].
+     4) Летопись: лента месяца, мысль на 5 строк с раскрытием на месте, фильтры.
+     5) Тихая строка «не живи прошлым», искра после практики, слоган в шапке Пути. */
+
+  /* — карточка «Сегодня»: шкала — */
+  .ct-star { width: 44px !important; height: 44px !important; opacity: 0.72; }
+  .ct-star.one { width: 56px !important; height: 56px !important; opacity: 1; }
+  .ct-star.hot { opacity: 1; transform: scale(1.1); }
+  .ct-stars { gap: 2px; touch-action: none; }
+  .ct-anchors {
+    display: flex; justify-content: space-between; margin: 2px 10px 0;
+    font-size: 8.5px; letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--faint);
+  }
+  .ct-live {
+    min-height: 20px; margin-top: 7px; text-align: center;
+    font-family: 'Cormorant Garamond', serif; font-style: italic;
+    font-size: 15px; color: #E6EEEE;
+  }
+  .ct-phrase-day {
+    font-family: 'Cormorant Garamond', serif; font-style: italic;
+    font-size: 15.5px; line-height: 1.5; color: var(--gold);
+    text-align: center; margin: 9px 6px 0; text-wrap: balance;
+  }
+  .ct-phrase-day.appear { animation: ctAppear 0.7s ease both; }
+  @keyframes ctAppear { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: none; } }
+  .ct-confirm {
+    font-size: 9.5px; letter-spacing: 0.14em; color: var(--faint);
+    text-align: center; margin-top: 8px;
+  }
+  .ct-intent {
+    margin: 12px 8px 0; padding-top: 11px; cursor: pointer;
+    border-top: 1px solid rgba(220,244,246,0.09);
+  }
+  .ct-intent-cap {
+    display: block; font-size: 8.5px; letter-spacing: 0.24em;
+    text-transform: uppercase; color: var(--gold); margin-bottom: 5px;
+  }
+  .ct-intent-text {
+    display: block; font-family: 'Cormorant Garamond', serif;
+    font-size: 14.5px; line-height: 1.45; color: #E6EEEE;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .ct-prog {
+    display: flex; justify-content: center; align-items: center; gap: 7px;
+    margin-top: 11px;
+  }
+  .ct-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    border: 1px solid rgba(201,174,125,0.55); background: transparent;
+  }
+  .ct-dot.on { background: var(--gold); border-color: var(--gold); }
+  .ct-step { margin-top: 7px; }
+  .ct-live:empty, .ct-confirm:empty, .ct-phrase-day:empty { display: none; }
+
+  /* — тихая строка-правило в прошлых днях Намерений — */
+  .jo-past-hint {
+    text-align: center; font-size: 11px; letter-spacing: 0.05em;
+    color: var(--faint); font-style: italic; margin: 2px 18px 8px;
+  }
+
+  /* — шапка Пути: слоган — */
+  .ph-slogan {
+    font-family: 'Cormorant Garamond', serif; font-style: italic;
+    font-size: 15px; letter-spacing: 0.06em; color: var(--gold);
+    margin-top: 6px;
+  }
+
+  /* — карта состояния — */
+  .cal-mode-row { display: flex; gap: 6px; justify-content: center; margin-bottom: 10px; }
+  .cal-mode {
+    flex: 0 1 96px; padding: 6px 0; border-radius: 20px;
+    font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--faint); background: none; border: 1px solid rgba(220,244,246,0.13);
+    cursor: pointer;
+  }
+  .cal-mode.active {
+    color: var(--gold); border-color: rgba(201,174,125,0.55);
+    background: linear-gradient(180deg, rgba(16,68,76,0.5), rgba(5,22,26,0.55));
+  }
+  .cal-sq {
+    position: relative; aspect-ratio: 1; border-radius: 7px;
+    background: rgba(220,244,246,0.05);
+    display: flex; align-items: flex-start; justify-content: flex-end;
+    padding: 3px 5px 0 0; font-size: 9.5px; color: rgba(147,167,172,0.8);
+    cursor: pointer; -webkit-tap-highlight-color: transparent;
+  }
+  .cal-sq.l1 { background: rgba(201,174,125,0.14); }
+  .cal-sq.l2 { background: rgba(201,174,125,0.27); }
+  .cal-sq.l3 { background: rgba(201,174,125,0.43); }
+  .cal-sq.l4 { background: rgba(201,174,125,0.63); color: rgba(4,22,26,0.72); }
+  .cal-sq.l5 { background: #F6E7C2; color: rgba(4,22,26,0.78); }
+  .cal-sq.pr { box-shadow: inset 0 0 0 1.2px rgba(201,174,125,0.85); }
+  .cal-sq.win::after {
+    content: '✦'; position: absolute; left: 4px; bottom: 2px;
+    font-size: 9px; line-height: 1; color: #F6E7C2;
+  }
+  .cal-sq.l4.win::after, .cal-sq.l5.win::after { color: rgba(4,22,26,0.82); }
+  .cal-sq.today { outline: 1px solid rgba(246,231,194,0.9); outline-offset: 1.5px; }
+  .cal-sq.fut { opacity: 0.25; cursor: default; }
+  .sq-demo {
+    display: inline-block; width: 12px; height: 12px; border-radius: 3px;
+    background: rgba(220,244,246,0.05); position: relative; vertical-align: -2px;
+    font-size: 8px; line-height: 12px; text-align: center; color: #F6E7C2;
+  }
+  .sq-demo.sq-l3 { background: rgba(201,174,125,0.43); }
+  .sq-demo.sq-pr { box-shadow: inset 0 0 0 1.2px rgba(201,174,125,0.85); }
+  /* — режим «Год»: только заливка-состояние — */
+  .cal-grid.year { display: block !important; }
+  .yr-title {
+    text-align: center; font-size: 10px; letter-spacing: 0.3em;
+    text-transform: uppercase; color: var(--faint); margin: 2px 0 12px;
+  }
+  .yr-row { display: flex; align-items: center; gap: 7px; margin-bottom: 4px; }
+  .yr-lab {
+    flex: 0 0 10px; font-size: 8.5px; text-transform: uppercase;
+    color: var(--faint); text-align: center;
+  }
+  .yr-cells { flex: 1; display: flex; gap: 2px; }
+  .yr-px {
+    flex: 1; aspect-ratio: 1; border-radius: 1.5px;
+    background: rgba(220,244,246,0.06); min-width: 0;
+  }
+  .yr-px.l1 { background: rgba(201,174,125,0.16); }
+  .yr-px.l2 { background: rgba(201,174,125,0.3); }
+  .yr-px.l3 { background: rgba(201,174,125,0.46); }
+  .yr-px.l4 { background: rgba(201,174,125,0.66); }
+  .yr-px.l5 { background: #F6E7C2; }
+  .yr-px.fut { opacity: 0.4; }
+
+  /* — фильтры и лента — */
+  .feed-filters .jt-tab { font-size: 10.5px; letter-spacing: 0.1em; padding: 8px 2px; }
+  .feed-ctx { display: flex; gap: 8px; flex-wrap: wrap; margin: 2px 0 10px; }
+  .fc-btn { flex: 1 1 auto; }
+  .fc-lead {
+    flex: 1 1 100%; text-align: center;
+    font-family: 'Cormorant Garamond', serif; font-style: italic;
+    font-size: 14px; color: var(--gold); margin: 2px 0 4px;
+  }
+  .feed-month-head {
+    font-size: 10px; letter-spacing: 0.26em; text-transform: uppercase;
+    color: var(--gold); padding: 12px 2px 8px;
+    border-bottom: 1px solid rgba(201,174,125,0.28); margin-bottom: 2px;
+  }
+  .feed-month-head:empty { display: none; }
+  .feed-row {
+    display: flex; gap: 10px; align-items: flex-start;
+    padding: 13px 2px; border-bottom: 1px solid rgba(220,244,246,0.07);
+  }
+  .feed-row.flash { animation: frFlash 1.6s ease; }
+  @keyframes frFlash {
+    0% { background: rgba(201,174,125,0.16); }
+    100% { background: transparent; }
+  }
+  .fr-star { flex: 0 0 17px; padding-top: 2px; }
+  .fr-nostar { font-size: 12px; color: var(--faint); display: block; text-align: center; }
+  .fr-main { flex: 1; min-width: 0; }
+  .fr-date {
+    display: flex; justify-content: space-between; align-items: baseline;
+    gap: 8px; cursor: pointer;
+  }
+  .fr-d { font-family: 'Cormorant Garamond', serif; font-size: 16px; color: var(--ink); }
+  .fr-d.quiet { color: var(--faint); }
+  .fr-lab { font-size: 10px; letter-spacing: 0.06em; color: var(--faint); white-space: nowrap; }
+  .fr-note {
+    margin-top: 5px; font-size: 13px; line-height: 1.62; font-weight: 300;
+    color: var(--soft-ink); white-space: pre-wrap; cursor: pointer;
+    display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .fr-note.open { display: block; -webkit-line-clamp: unset; overflow: visible; }
+  .fr-more {
+    margin-top: 4px; font-size: 10px; letter-spacing: 0.14em;
+    color: var(--gold); cursor: pointer; padding: 2px 0;
+  }
+  .fr-photo-big {
+    display: block; width: 100%; max-width: 300px; border-radius: 12px;
+    border: 1px solid rgba(220,244,246,0.16); margin-top: 9px;
+  }
+  .fr-thumb {
+    flex: 0 0 38px; width: 38px; height: 38px; object-fit: cover;
+    border-radius: 8px; border: 1px solid rgba(220,244,246,0.16); margin-top: 2px;
+  }
+  .fr-chips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 7px; }
+  .fr-chip {
+    font-size: 9px; letter-spacing: 0.06em; padding: 3px 8px; border-radius: 20px;
+    border: 1px solid rgba(220,244,246,0.14); color: var(--faint); white-space: nowrap;
+  }
+  .fr-chip.gold { border-color: rgba(201,174,125,0.42); color: var(--gold); cursor: pointer; }
+  .fr-chip.quiet { border-style: dashed; }
+  .fr-mani { display: flex; align-items: baseline; gap: 7px; margin-top: 6px; flex-wrap: wrap; }
+  .fr-mani-text { font-size: 13px; line-height: 1.5; color: var(--soft-ink); }
+  .fr-mani-amt { font-size: 11.5px; color: var(--gold); white-space: nowrap; }
+  .fr-goals { margin-top: 6px; }
+  .fr-goal { display: flex; gap: 7px; align-items: baseline; padding: 3px 0; }
+  .fr-goal-star { flex: 0 0 auto; font-size: 9px; color: var(--gold); }
+  .fr-goal-text { font-size: 13px; line-height: 1.5; color: var(--soft-ink); }
+  .feed-empty { padding: 22px 10px; }
+  .feed-nav { display: flex; gap: 8px; margin: 14px 0 4px; }
+  .feed-nav:empty { display: none; }
+  .feed-nav-btn {
+    flex: 1; padding: 10px; border-radius: 12px; cursor: pointer;
+    font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--gold); border: 1px solid rgba(201,174,125,0.4);
+    background: linear-gradient(180deg, rgba(16,68,76,0.4), rgba(5,22,26,0.5));
+  }
+  /* — карточки ленты: итог месяца · веха · год назад — */
+  .feed-card {
+    border: 1px solid rgba(201,174,125,0.4); border-radius: 15px;
+    padding: 15px 14px; margin: 12px 0;
+    background: linear-gradient(180deg, rgba(16,68,76,0.34), rgba(5,22,26,0.55));
+  }
+  .fc-eyebrow {
+    font-size: 9px; letter-spacing: 0.26em; text-transform: uppercase;
+    color: var(--gold); margin-bottom: 8px; text-align: center;
+  }
+  .fc-title {
+    font-family: 'Cormorant Garamond', serif; font-size: 21px;
+    color: var(--ink); text-align: center; margin-bottom: 4px;
+  }
+  .fc-stats {
+    text-align: center; font-family: 'Cormorant Garamond', serif; font-style: italic;
+    font-size: 13.5px; line-height: 1.5; color: var(--soft-ink); margin: 4px 0;
+  }
+  .fc-quote {
+    font-family: 'Cormorant Garamond', serif; font-size: 15px; line-height: 1.5;
+    color: #E6EEEE; text-align: center; margin: 4px 4px 8px; text-wrap: balance;
+  }
+  .fc-sub { font-size: 10.5px; color: var(--faint); text-align: center; margin-bottom: 10px; }
+  .fc-later {
+    text-align: center; font-size: 10px; letter-spacing: 0.12em;
+    color: var(--faint); margin-top: 10px; cursor: pointer; padding: 3px;
+  }
+  .fc-refl { margin: 10px 0 2px; }
+  .fc-r { padding: 5px 0; }
+  .fc-r span {
+    display: block; font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--faint); margin-bottom: 2px;
+  }
+  .fc-r i { font-style: normal; font-size: 12.5px; line-height: 1.5; color: var(--soft-ink); }
+  .fc-sign {
+    text-align: center; font-family: 'Cormorant Garamond', serif; font-style: italic;
+    font-size: 12.5px; color: var(--gold); margin-top: 10px;
+  }
+  /* — искра после практики (экран завершения) — */
+  .comp-spark {
+    margin: 16px auto 4px; max-width: 320px; padding: 14px 12px 12px;
+    border: 1px solid rgba(201,174,125,0.4); border-radius: 16px;
+    background: linear-gradient(180deg, rgba(16,68,76,0.4), rgba(5,22,26,0.55));
+  }
+  .cs-title {
+    font-family: 'Cormorant Garamond', serif; font-size: 17px;
+    color: var(--ink); margin-bottom: 8px;
+  }
+  .cs-stars .ct-star { width: 40px !important; height: 40px !important; }
+  .cs-anchors { margin-top: 0; }
+  .cs-done { min-height: 0; }
+  .cs-cap {
+    display: block; font-family: 'Cormorant Garamond', serif; font-style: italic;
+    font-size: 14px; color: #E6EEEE; margin-top: 6px;
+  }
+  .cs-ok {
+    display: block; font-size: 9px; letter-spacing: 0.16em;
+    color: var(--faint); margin-top: 5px;
+  }
 </style>
 </body>
 </html>
