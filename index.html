@@ -2845,8 +2845,9 @@
           <circle cx="12" cy="15.5" r="1.3" fill="url(#plLockG)"/>
         </svg>
       </div>
-      <div class="pl-title">Твой путь откроется с подпиской</div>
-      <div class="pl-sub">Серия дней, календарь практик и история — часть пространства VERUM. Начни путь — и становись архитектором своего главного проекта под названием ЖИЗНЬ.</div>
+      <!-- v128: замок = вариант 3+4 (утверждено Аной): навык + место встречи с собой -->
+      <div class="pl-title">Место, где ты встречаешься с собой</div>
+      <div class="pl-sub">Управление реальностью — это навык, а не удача. Он ставится здесь: дневник состояний, намерений и материализаций, календарь пути и летопись сбывшегося. Эти страницы видишь только ты — и та, кем ты становишься.</div>
       <button class="glass-pill gold" onclick="openPaywall()">Открыть пространство</button>
     </div>
     <div class="path-preview">
@@ -2865,16 +2866,17 @@
       </div>
     </div>
 
-    <!-- v125: «Путь» = дом дневника. Карта состояния (квадраты) — обзор и навигация,
-         лента месяца — чтение. Тап по дню карты прокручивает ленту, не открывает модалку.
-         Старые сущности (богатый календарь, «Книга дней», блок «История практик»)
-         слиты сюда — данные те же, дублирования нет. -->
+    <!-- v128: «Путь» возвращён к эталону Аны (v124): табы дневника, богатый
+         календарь (тил-стекло + золотая кромка практик, искра состояния по центру,
+         свечение «сбылось», точка фото), «История практик». Лента дней с экрана
+         УБРАНА — она живёт в оверлее «Архив» (вход из карточки дня). -->
     <div class="section-eyebrow" id="journalEyebrow">Дневник</div>
+    <div class="journal-tabs">
+      <button class="jt-tab active" id="jtState" onclick="setJournalTab('state')">Состояние</button>
+      <button class="jt-tab" onclick="setJournalTab('goals')">Намерения</button>
+      <button class="jt-tab" onclick="setJournalTab('mani')">Творения</button>
+    </div>
     <div class="glass-card cal-card">
-      <div class="cal-mode-row">
-        <button class="cal-mode active" id="pvMonth" onclick="setPathView('month')">Месяц</button>
-        <button class="cal-mode" id="pvYear" onclick="setPathView('year')">Год</button>
-      </div>
       <div class="cal-nav">
         <div class="cal-arrow" onclick="calShift(-1)">‹</div>
         <div class="cal-title" id="calTitle"></div>
@@ -2882,19 +2884,11 @@
       </div>
       <div class="cal-grid" id="calGrid"></div>
       <div class="cal-legend" id="calLegend"></div>
-      <div class="cal-state-hint" id="calHint">коснись дня — лента откроется на нём</div>
+      <div class="cal-state-hint" id="calHint">коснись дня — состояние, практики и заметка</div>
     </div>
 
-    <div class="journal-tabs feed-filters">
-      <button class="jt-tab active" data-f="days" onclick="setFeedFilter('days')">Дни</button>
-      <button class="jt-tab" data-f="pract" onclick="setFeedFilter('pract')">Практики</button>
-      <button class="jt-tab" data-f="goals" onclick="setFeedFilter('goals')">Намерения</button>
-      <button class="jt-tab" data-f="mani" onclick="setFeedFilter('mani')">Творения</button>
-    </div>
-    <div id="feedContext"></div>
-    <div class="feed-month-head" id="feedMonthHead"></div>
-    <div class="feed-list" id="feedList"></div>
-    <div class="feed-nav" id="feedNav"></div>
+    <div class="section-eyebrow" id="historyEyebrow">История практик</div>
+    <div class="history-list" id="historyList"></div>
     </div><!-- /.path-preview -->
 
     <div class="glass-card fb-card">
@@ -3093,6 +3087,8 @@
       <div class="ws-moments-title">моменты дня</div>
       <img class="jo-item-photo ci-photo" id="ciPhotoView" alt="">
     </div>
+    <!-- v128: сбывшееся этого дня — прямо в карточке дня -->
+    <div class="ci-mani" id="ciManiList" style="display:none"></div>
     <div class="jo-add-row" id="ciEditRow">
       <button class="jo-photo-btn" id="ciPhotoBtn" onclick="attachCiPhoto()">✦ фото</button>
       <button class="ps-btn jo-save" id="ciSave" onclick="saveCheckin()">Сохранить</button>
@@ -3102,6 +3098,8 @@
       <button class="jo-photo-btn" onclick="openManiFromDay()">✦ творение</button>
     </div>
     <div class="ci-edit-link" id="ciEditLink" onclick="ciEnableEdit()" style="display:none">внести изменения</div>
+    <!-- v128: вся летопись — отдельным окном из карточки дня -->
+    <div class="ci-archive-link" onclick="closeCheckin();openBook()">открыть архив ✦</div>
     <div class="ps-cancel" onclick="closeCheckin()">← назад</div>
   </div>
 </div>
@@ -3184,11 +3182,11 @@
   </div>
 </div>
 
-<!-- Книга дней: весь дневник одним скроллом (мысли, искры, фото) -->
+<!-- Архив (v128): вся летопись по месяцам одним скроллом; вход из карточки дня -->
 <div class="journal-overlay" id="journalBook">
   <div class="jo-head">
     <div class="jo-close" onclick="closeBook()">‹ назад</div>
-    <div class="jo-title">Книга дней</div>
+    <div class="jo-title">Архив</div>
     <div class="jo-space"></div>
   </div>
   <div class="jo-scroll" id="bookList"></div>
@@ -4705,40 +4703,17 @@ function renderTodayStats() {
   setStat('tMinutes', mins, 'минута', 'минуты', 'минут');
 }
 
-// ===== КАРТА СОСТОЯНИЯ (v125) — обзор и навигация по ленте =====
-// Три независимых канала на квадрате дня: заливка = состояние (5 ступеней золота),
-// золотая кромка внутри = практика, искра ✦ в углу = сбылось. Точка фото убрана
-// (фото видно в ленте; четвёртая отметка = шум). Тап по дню НЕ открывает модалку —
-// прокручивает ленту к этому дню. Режим «Год» — только заливка-состояние.
-let calOffset = 0;          // 0 = текущий месяц, -1 = прошлый…
-let pathView = 'month';     // 'month' | 'year' (решение Аны: открывается месяцем)
+// ===== КАЛЕНДАРЬ (v128 — возвращён эталон Аны из v124) =====
+// Слои дня: практика = глубокое тил-стекло с золотой кромкой (.practiced),
+// состояние = искра-бинду по центру над числом (.cd-star), сбылось = свечение
+// изнутри (.manifested), фото = точка. Тап по дню открывает карточку дня.
+// Режим «Год» удалён по решению Аны (29.07).
+let calOffset = 0; // 0 = текущий месяц, -1 = прошлый…
 function calShift(dir) {
-  if (pathView === 'year') return; // год не листаем — он целиком
   if (calOffset + dir > 0) return;
   calOffset += dir;
   haptic('light');
   renderCalendar();
-}
-function setPathView(v) {
-  if (pathView === v) return;
-  haptic('light');
-  pathView = v;
-  document.getElementById('pvMonth').classList.toggle('active', v === 'month');
-  document.getElementById('pvYear').classList.toggle('active', v === 'year');
-  renderCalendar();
-}
-// уровень дня из чек-ина (evening||morning — как везде)
-function dayLevelOf(key) {
-  const ci = journal.checkins[key];
-  return ci ? (ci.evening || ci.morning || null) : null;
-}
-function calMaps() {
-  const practiced = new Set(sessions.map(s => dateKey(new Date(s.date))));
-  const manifested = new Set();
-  (journal.manifests || []).forEach(m => {
-    if (m.date && m.kind === 'fulfilled') manifested.add(m.date);
-  });
-  return { practiced, manifested };
 }
 function renderCalendar() {
   const grid = document.getElementById('calGrid');
@@ -4747,36 +4722,6 @@ function renderCalendar() {
   if (!grid) return;
   grid.innerHTML = '';
   const today = new Date(); today.setHours(0,0,0,0);
-  const { practiced, manifested } = calMaps();
-  const nav = document.querySelector('.cal-nav');
-  if (pathView === 'year') {
-    // «Год в пикселях»: 12 строк-месяцев × дни, только заливка-состояние
-    if (nav) nav.style.display = 'none';
-    grid.classList.add('year');
-    const y = today.getFullYear();
-    let html = '<div class="yr-title">твой ' + y + ' год</div>';
-    const ML = ['я','ф','м','а','м','и','и','а','с','о','н','д'];
-    for (let m = 0; m < 12; m++) {
-      const dIn = new Date(y, m + 1, 0).getDate();
-      let cells = '';
-      for (let d = 1; d <= dIn; d++) {
-        const day = new Date(y, m, d);
-        const lv = day <= today ? dayLevelOf(dateKey(day)) : null;
-        cells += '<span class="yr-px' + (lv ? ' l' + lv : '') + (day > today ? ' fut' : '') + '"></span>';
-      }
-      html += '<div class="yr-row"><span class="yr-lab">' + ML[m] + '</span><div class="yr-cells">' + cells + '</div></div>';
-    }
-    grid.innerHTML = html;
-    const legend = document.getElementById('calLegend');
-    if (legend) legend.innerHTML =
-      '<span class="cl-item"><span class="sq-demo sq-l3"></span>цвет дня — твоё состояние</span>';
-    const hint = document.getElementById('calHint');
-    if (hint) hint.textContent = 'заполненную строку месяца хочется достроить';
-    renderFeed();
-    return;
-  }
-  if (nav) nav.style.display = '';
-  grid.classList.remove('year');
   const base = new Date(today.getFullYear(), today.getMonth() + calOffset, 1);
   title.textContent = base.toLocaleDateString('ru', { month: 'long', year: 'numeric' }).replace(' г.', '');
   if (fwd) fwd.classList.toggle('off', calOffset >= 0);
@@ -4786,10 +4731,21 @@ function renderCalendar() {
     el.textContent = l;
     grid.appendChild(el);
   });
+  const practiced = new Set(sessions.map(s => dateKey(new Date(s.date))));
+  const manifested = new Set();   // даты сбывшихся материализаций
+  const photoDays = new Set();    // даты с фото (творения + дни)
+  (journal.manifests || []).forEach(m => {
+    if (!m.date) return;
+    if (m.kind === 'fulfilled') manifested.add(m.date);
+    if (m.photo_key) photoDays.add(m.date);
+  });
+  for (const k in journal.checkins) {
+    if (journal.checkins[k] && journal.checkins[k].photo_key) photoDays.add(k);
+  }
   const firstDow = (base.getDay() + 6) % 7;
   for (let i = 0; i < firstDow; i++) {
     const el = document.createElement('div');
-    el.className = 'cal-sq';
+    el.className = 'cal-day';
     el.style.visibility = 'hidden';
     grid.appendChild(el);
   }
@@ -4798,51 +4754,51 @@ function renderCalendar() {
     const day = new Date(base.getFullYear(), base.getMonth(), d);
     const key = dateKey(day);
     const el = document.createElement('div');
-    const lv = dayLevelOf(key);
-    el.className = 'cal-sq' + (lv ? ' l' + lv : '');
-    el.textContent = d;
-    if (practiced.has(key)) el.classList.add('pr');
-    if (manifested.has(key)) el.classList.add('win');
+    el.className = 'cal-day';
+    const ci = journal.checkins[key];
+    const dayLevel = ci ? (ci.evening || ci.morning) : null;
+    let cell = '<span class="cd-num">' + d + '</span>';
+    if (dayLevel) cell += '<span class="cd-star">' + moonSvg(dayLevel, 13) + '</span>';
+    let dots = '';
+    if (photoDays.has(key)) dots += '<span class="cd-dot cd-photo"></span>';
+    if (dots) cell += '<span class="cd-dots">' + dots + '</span>';
+    el.innerHTML = cell;
+    if (practiced.has(key)) el.classList.add('practiced');
+    if (ci && (ci.morning || ci.evening || ci.note)) el.classList.add('has-state');
+    if (manifested.has(key)) el.classList.add('manifested');
     if (day.toDateString() === today.toDateString()) el.classList.add('today');
-    if (day > today) el.classList.add('fut');
-    else el.onclick = () => { haptic('light'); feedScrollTo(key); };
+    if (day > today) { el.style.opacity = '0.25'; }
+    else {
+      el.classList.add('tappable');
+      el.onclick = () => { haptic('light'); openDayCard(key); };
+    }
     grid.appendChild(el);
   }
   const legend = document.getElementById('calLegend');
   if (legend) legend.innerHTML =
-    '<span class="cl-item"><span class="sq-demo sq-l3"></span>состояние</span>' +
-    '<span class="cl-item"><span class="sq-demo sq-pr"></span>практика</span>' +
-    '<span class="cl-item"><span class="sq-demo sq-win">✦</span>сбылось</span>';
-  const hint = document.getElementById('calHint');
-  if (hint) hint.textContent = 'коснись дня — лента откроется на нём';
-  renderFeed();
+    '<span class="cl-item"><span class="cl-practiced"></span>практика</span>' +
+    '<span class="cl-item"><span class="cl-star">✦</span>состояние</span>' +
+    '<span class="cl-item"><span class="cd-dot cd-photo"></span>фото</span>' +
+    '<span class="cl-item"><span class="cl-mani"></span>сбылось</span>';
 }
 
-// ===== ЛЕТОПИСЬ: лента месяца (v125) =====
-// Лента = тот же месяц, что открыт в карте (одни стрелки листают обоих).
-// Строка дня появляется при ЛЮБОМ следе: искра, мысль, фото, практика, намерение,
-// творение. Мысль видна на 5 строк, раскрывается НА МЕСТЕ («ещё ↓» / «свернуть ↑»).
-// Фильтры: Дни · Практики · Намерения · Творения. Максимум 31 строка — футер
-// «Пути» (отзыв, забота, канал) достижим на любом месяце.
-let feedFilter = 'days';
+// ===== АРХИВ (v128) =====
+// Лента дней с экрана «Путь» убрана (решение Аны: «убого, нечитаемо инлайн»).
+// Вся летопись живёт в отдельном окне-оверлее: вход «архив» из карточки дня,
+// назад — BackButton/«‹ назад». Внутри — хронология по месяцам одним скроллом:
+// заголовок месяца · сводка (для прошлых) · строки дней.
 const feedExpanded = new Set(); // раскрытые дни (ключи дат)
-function setFeedFilter(f) {
-  haptic('light');
-  feedFilter = f;
-  document.querySelectorAll('.feed-filters .jt-tab').forEach((t) =>
-    t.classList.toggle('active', t.dataset.f === f));
-  renderFeed();
-}
-function feedBase() {
-  const today = new Date(); today.setHours(0, 0, 0, 0);
-  return new Date(today.getFullYear(), today.getMonth() + calOffset, 1);
-}
-// один проход по данным месяца → карта день→следы
-function feedDays() {
-  const base = feedBase();
-  const mKey = dateKey(base).slice(0, 7);
+function feedDateLabel(key) {
   const todayKey = dateKey(new Date());
-  const days = {}; // key → {ci, sess:[], goals:[], mans:[]}
+  const yest = new Date(); yest.setDate(yest.getDate() - 1);
+  if (key === todayKey) return 'сегодня';
+  if (key === dateKey(yest)) return 'вчера';
+  return '';
+}
+// следы месяца одним проходом → строки [{key, d:{ci,sess,goals,mans}}], новые сверху
+function archMonthDays(mKey) {
+  const todayKey = dateKey(new Date());
+  const days = {};
   const touch = (k) => (days[k] = days[k] || { ci: null, sess: [], goals: [], mans: [] });
   for (const k in journal.checkins) {
     const c = journal.checkins[k];
@@ -4865,93 +4821,65 @@ function feedDays() {
     .sort().reverse()
     .map((k) => ({ key: k, d: days[k] }));
 }
-function feedDateLabel(key) {
-  const todayKey = dateKey(new Date());
-  const yest = new Date(); yest.setDate(yest.getDate() - 1);
-  if (key === todayKey) return 'сегодня';
-  if (key === dateKey(yest)) return 'вчера';
-  return '';
-}
-function renderFeed() {
-  const list = document.getElementById('feedList');
-  if (!list) return;
-  const head = document.getElementById('feedMonthHead');
-  const ctx = document.getElementById('feedContext');
-  const nav = document.getElementById('feedNav');
-  list.innerHTML = ''; ctx.innerHTML = ''; nav.innerHTML = '';
-  const base = feedBase();
-  const monthName = base.toLocaleDateString('ru', { month: 'long' });
-  const Month = monthName.charAt(0).toUpperCase() + monthName.slice(1);
-  let rows = feedDays();
-  const allCount = rows.length;
-  if (feedFilter === 'pract') rows = rows.filter((r) => r.d.sess.length);
-  if (feedFilter === 'goals') rows = rows.filter((r) => r.d.goals.length);
-  if (feedFilter === 'mani') rows = rows.filter((r) => r.d.mans.length);
-  // заголовок месяца — итог по выбранному фильтру
-  const headText = {
-    days: allCount + ' ' + plural3(allCount, 'день записан', 'дня записано', 'дней записано'),
-    pract: rows.length + ' ' + plural3(rows.length, 'день с практикой', 'дня с практиками', 'дней с практиками'),
-    goals: rows.length + ' ' + plural3(rows.length, 'день с намерениями', 'дня с намерениями', 'дней с намерениями'),
-    mani: rows.reduce((a, r) => a + r.d.mans.length, 0) + ' ' +
-      plural3(rows.reduce((a, r) => a + r.d.mans.length, 0), 'творение', 'творения', 'творений'),
-  }[feedFilter];
-  head.textContent = allCount || rows.length ? Month + ' · ' + headText : Month;
-  // контекст фильтра: входы записи (Видение / творение)
-  if (subActive && feedFilter === 'goals') {
-    const c = document.createElement('div');
-    c.className = 'feed-ctx';
-    c.innerHTML =
-      '<button class="jo-photo-btn fc-btn" onclick="openVisionFromPath()">✦ видение — карта желаний</button>' +
-      '<button class="jo-photo-btn fc-btn" onclick="openGoalsFromToday()">✦ создать реальность</button>';
-    ctx.appendChild(c);
+function renderArchive() {
+  const box = document.getElementById('bookList');
+  if (!box) return;
+  box.innerHTML = '';
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  let shown = 0;
+  // от текущего месяца назад; пустые месяцы пропускаем, глубина — 24 месяца
+  for (let off = 0; off > -24; off--) {
+    const base = new Date(today.getFullYear(), today.getMonth() + off, 1);
+    const rows = archMonthDays(dateKey(base).slice(0, 7));
+    if (!rows.length) continue;
+    const monthName = base.toLocaleDateString('ru', { month: 'long', year: 'numeric' }).replace(' г.', '');
+    const head = document.createElement('div');
+    head.className = 'feed-month-head';
+    head.textContent = monthName.charAt(0).toUpperCase() + monthName.slice(1) +
+      ' · ' + rows.length + ' ' + plural3(rows.length, 'день', 'дня', 'дней');
+    box.appendChild(head);
+    // прошлым месяцам — тихая строка-итог под заголовком
+    if (off < 0) {
+      const sum = archMonthSummaryLine(base);
+      if (sum) box.appendChild(sum);
+    }
+    rows.forEach((r) => box.appendChild(feedRow(r.key, r.d)));
+    shown += rows.length;
   }
-  if (subActive && feedFilter === 'mani') {
-    const mans = rows.reduce((a, r) => a.concat(r.d.mans), []);
-    let money = 0; mans.forEach((m) => { money += Number(m.amount) || 0; });
-    const c = document.createElement('div');
-    c.className = 'feed-ctx';
-    c.innerHTML =
-      (mans.length ? '<div class="fc-lead">в ' + MONTHS_PREP[base.getMonth()] + ' — ' + mans.length + ' ' +
-        plural3(mans.length, 'творение', 'творения', 'творений') +
-        (money ? ' · ' + money.toLocaleString('ru-RU') + ' ₽' : '') + '</div>' : '') +
-      '<button class="jo-photo-btn fc-btn" onclick="openManiForm()">✦ записать творение</button>';
-    ctx.appendChild(c);
-  }
-  // карточка «Итог месяца» — в начале ленты завершённого месяца
-  if (calOffset < 0 && allCount) list.appendChild(feedMonthSummary(base, Month));
-  // карточка-веха 7/21/40 — просьба отзыва в момент пика (только текущий месяц)
-  if (calOffset === 0) {
-    const ms = feedMilestoneCard();
-    if (ms) list.appendChild(ms);
-  }
-  if (!rows.length) {
+  if (!shown) {
     const empty = document.createElement('div');
     empty.className = 'jo-empty feed-empty';
-    empty.textContent = calOffset === 0
-      ? 'Летопись ждёт первых страниц. Отметь искру дня — она ляжет сюда.'
-      : 'в этом месяце записей не было';
-    list.appendChild(empty);
+    empty.textContent = 'Архив ждёт первых страниц. Отметь искру дня и запиши пару мыслей — они лягут сюда.';
+    box.appendChild(empty);
   }
-  rows.forEach((r, i) => {
-    list.appendChild(feedRow(r.key, r.d));
-    // «месяц назад»: после первой строки текущего месяца — мостик к себе прошлой
-    if (calOffset === 0 && i === 0) {
-      const back = feedBackCard();
-      if (back) list.appendChild(back);
-    }
+}
+// строка-итог месяца в архиве: дни с искрой · практики · творения · ₽
+function archMonthSummaryLine(base) {
+  const last = new Date(base.getFullYear(), base.getMonth() + 1, 0);
+  const k1 = dateKey(base), k2 = dateKey(last);
+  const inR = (k) => k >= k1 && k <= k2;
+  let prN = 0, prMin = 0, starDays = 0, money = 0, manN = 0;
+  sessions.forEach((s) => {
+    const k = dateKey(new Date(s.date));
+    if (inR(k)) { prN++; prMin += s.minutes || 0; }
   });
-  // навигация месяцев внизу ленты (в режиме «Год» карта не листается — скрываем)
-  if (pathView === 'month') {
-    const prev = new Date(base.getFullYear(), base.getMonth() - 1, 1);
-    const pn = prev.toLocaleDateString('ru', { month: 'long', year: 'numeric' }).replace(' г.', '');
-    let navHtml = '<button class="feed-nav-btn" onclick="calShift(-1)">‹ ' + pn + '</button>';
-    if (calOffset < 0) {
-      const next = new Date(base.getFullYear(), base.getMonth() + 1, 1);
-      const nn = next.toLocaleDateString('ru', { month: 'long', year: 'numeric' }).replace(' г.', '');
-      navHtml += '<button class="feed-nav-btn" onclick="calShift(1)">' + nn + ' ›</button>';
-    }
-    nav.innerHTML = navHtml;
+  for (const k in journal.checkins) {
+    const c = journal.checkins[k];
+    if (inR(k) && c && (c.evening || c.morning)) starDays++;
   }
+  (journal.manifests || []).forEach((m) => {
+    if (m.date && inR(m.date)) { manN++; money += Number(m.amount) || 0; }
+  });
+  const bits = [];
+  if (starDays) bits.push(starDays + ' ' + plural3(starDays, 'день с искрой', 'дня с искрой', 'дней с искрой'));
+  if (prN) bits.push(prN + ' ' + plural3(prN, 'практика', 'практики', 'практик') + ' · ' + prMin + ' мин');
+  if (manN) bits.push(manN + ' ' + plural3(manN, 'творение', 'творения', 'творений'));
+  if (money) bits.push(money.toLocaleString('ru-RU') + ' ₽');
+  if (!bits.length) return null;
+  const el = document.createElement('div');
+  el.className = 'arch-sum';
+  el.textContent = bits.join(' · ');
+  return el;
 }
 // строка дня летописи
 function feedRow(key, d) {
@@ -4973,177 +4901,51 @@ function feedRow(key, d) {
     '<div class="fr-main">' +
       '<div class="fr-date"><span class="fr-d' + (d.ci || d.goals.length || d.mans.length ? '' : ' quiet') + '">' + dateStr + '</span>' +
         (lab ? '<span class="fr-lab">' + lab + '</span>' : '') + '</div>';
-  if (feedFilter === 'mani' && d.mans.length) {
-    // фильтр «Творения»: вместо мысли — сами творения
-    html += d.mans.map((m) =>
-      '<div class="fr-mani"><span class="mani-tag k-' + m.kind + '">' + (MANI_KIND_RU[m.kind] || '') + '</span>' +
-      '<span class="fr-mani-text"></span>' +
-      (m.amount ? '<span class="fr-mani-amt">' + Number(m.amount).toLocaleString('ru-RU') + ' ₽</span>' : '') + '</div>').join('');
-  } else if (note) {
+  if (note) {
     html += '<div class="fr-note' + (open ? ' open' : '') + '"></div>' +
       (longNote || photo ? '<div class="fr-more">' + (open ? 'свернуть ↑' : 'ещё ↓') + '</div>' : '');
   }
   if (open && photo) html += '<img class="fr-photo-big" loading="lazy" alt="">';
-  // v127: следы дня — ОДНА тихая строка вместо россыпи пилюль (пилюли давали
-  // «вразброс»: разная длина, разные веса, рваный ритм). Практики — своей
-  // строкой, потому что это главное в продукте; счётчики — одной строчкой ниже.
+  // следы дня — тихие строки одного ритма: практики (главное в продукте) своей
+  // строкой, счётчики намерений/творений — строчкой ниже
   if (d.sess.length) {
     html += '<div class="fr-meta">' +
       d.sess.map((s) => '<span class="fr-pr">' + s.type + '<i>' + (s.minutes || 0) + ' мин</i></span>').join('') +
       '</div>';
   }
   const counts = [];
-  if (d.goals.length && feedFilter !== 'goals')
+  if (d.goals.length)
     counts.push('<span class="fr-count" data-act="goals">✦ ' + d.goals.length + ' ' + plural3(d.goals.length, 'намерение', 'намерения', 'намерений') + '</span>');
-  if (d.mans.length && feedFilter !== 'mani')
+  if (d.mans.length)
     counts.push('<span class="fr-count">✧ ' + d.mans.length + ' ' + plural3(d.mans.length, 'творение', 'творения', 'творений') + '</span>');
   if (counts.length) html += '<div class="fr-counts">' + counts.join('') + '</div>';
-  // фильтр «Намерения»: показать сами намерения дня списком
-  if (feedFilter === 'goals' && d.goals.length) {
-    html += '<div class="fr-goals">' + d.goals.map(() =>
-      '<div class="fr-goal"><span class="fr-goal-star">✦</span><span class="fr-goal-text"></span></div>').join('') + '</div>';
-  }
   html += '</div>' +
     (photo && !open ? '<img class="fr-thumb" loading="lazy" alt="">' : '');
   row.innerHTML = html;
   // тексты — через textContent (без склейки HTML)
   const noteEl = row.querySelector('.fr-note');
   if (noteEl) noteEl.textContent = note;
-  row.querySelectorAll('.fr-mani-text').forEach((el, i) => { el.textContent = d.mans[i] ? (d.mans[i].text || '') : ''; });
-  row.querySelectorAll('.fr-goal-text').forEach((el, i) => { el.textContent = d.goals[i] ? (d.goals[i].text || '') : ''; });
   const thumb = row.querySelector('.fr-thumb');
   if (thumb) thumb.src = photoURL(photo);
   const big = row.querySelector('.fr-photo-big');
   if (big) big.src = photoURL(photo);
-  // тапы: дата → страница дня (правка); мысль/«ещё» → раскрыть на месте;
-  // чип намерений → лист того дня
-  row.querySelector('.fr-date').onclick = () => { haptic('light'); openDayCard(key); };
+  // тапы: дата → карточка дня; мысль/«ещё» → раскрыть на месте; ✦ → лист того дня
+  row.querySelector('.fr-date').onclick = () => { haptic('light'); closeBook(); openDayCard(key); };
   const toggle = () => {
     haptic('light');
     if (feedExpanded.has(key)) feedExpanded.delete(key); else feedExpanded.add(key);
-    renderFeed();
+    renderArchive();
   };
   const more = row.querySelector('.fr-more');
   if (more) more.onclick = toggle;
   if (noteEl && (longNote || photo)) noteEl.onclick = toggle;
   const gchip = row.querySelector('.fr-count[data-act="goals"]');
-  if (gchip) gchip.onclick = (e) => { e.stopPropagation(); openGoalsAt(key); };
+  if (gchip) gchip.onclick = (e) => { e.stopPropagation(); closeBook(); openGoalsAt(key); };
   return row;
 }
-// «Итог месяца ✦» — карточка в начале ленты завершённого месяца
-function feedMonthSummary(base, Month) {
-  const last = new Date(base.getFullYear(), base.getMonth() + 1, 0);
-  const k1 = dateKey(base), k2 = dateKey(last);
-  const inR = (k) => k >= k1 && k <= k2;
-  let prN = 0, prMin = 0;
-  sessions.forEach((s) => {
-    const k = dateKey(new Date(s.date));
-    if (inR(k)) { prN++; prMin += s.minutes || 0; }
-  });
-  let starDays = 0;
-  for (const k in journal.checkins) {
-    const c = journal.checkins[k];
-    if (inR(k) && c && (c.evening || c.morning)) starDays++;
-  }
-  const mans = (journal.manifests || []).filter((m) => m.date && inR(m.date));
-  let money = 0; mans.forEach((m) => { money += Number(m.amount) || 0; });
-  const bits = [];
-  if (starDays) bits.push(starDays + ' ' + plural3(starDays, 'день с искрой', 'дня с искрой', 'дней с искрой'));
-  if (prN) bits.push(prN + ' ' + plural3(prN, 'практика', 'практики', 'практик') + ' · ' + prMin + ' мин');
-  if (mans.length) bits.push(mans.length + ' ' + plural3(mans.length, 'творение', 'творения', 'творений'));
-  if (money) bits.push(money.toLocaleString('ru-RU') + ' ₽');
-  const card = document.createElement('div');
-  card.className = 'feed-card';
-  let html = '<div class="fc-eyebrow">Итог месяца ✦</div>' +
-    '<div class="fc-title">' + Month + '</div>' +
-    (bits.length ? '<div class="fc-stats">' + bits.join(' · ') + '</div>' : '');
-  // рефлексия месяца (если записана в Намерениях) — читается здесь
-  const mk = base.getFullYear() + '-M' + String(base.getMonth() + 1).padStart(2, '0');
-  const r = (journal.reflections || []).find((x) => x.week_key === mk);
-  if (r && (r.went_well || r.improve || r.learned)) {
-    html += '<div class="fc-refl">' +
-      (r.went_well ? '<div class="fc-r"><span>что получилось</span><i></i></div>' : '') +
-      (r.improve ? '<div class="fc-r"><span>что улучшить</span><i></i></div>' : '') +
-      (r.learned ? '<div class="fc-r"><span>чему научилась</span><i></i></div>' : '') + '</div>';
-  }
-  html += '<div class="fc-sign">Манифестируй с VERUM</div>';
-  card.innerHTML = html;
-  const vals = [r && r.went_well, r && r.improve, r && r.learned].filter(Boolean);
-  card.querySelectorAll('.fc-r i').forEach((el, i) => { el.textContent = vals[i] || ''; });
-  return card;
-}
-// веха 7/21/40 «дней в пути» → тёплая просьба отзыва в момент пика
-function feedMilestoneCard() {
-  if (!subActive) return null;
-  const days = uniqueDayCount();
-  const MS = [40, 21, 7];
-  const hit = MS.find((n) => days >= n && !localStorage.getItem('verum_ms_' + n));
-  if (!hit) return null;
-  const TXT = {
-    7: 'Неделя с собой — это уже привычка рождается. Расскажешь, что чувствуешь?',
-    21: 'Три недели ты возвращаешься к себе. Расскажешь, что изменилось?',
-    40: 'Сорок дней пути — глубина, которую видно. Поделишься, что произошло?',
-  };
-  const card = document.createElement('div');
-  card.className = 'feed-card milestone';
-  card.innerHTML =
-    '<div class="fc-eyebrow">' + hit + ' ' + plural3(hit, 'день в пути', 'дня в пути', 'дней в пути') + ' ✦</div>' +
-    '<div class="fc-quote">' + TXT[hit] + '</div>' +
-    '<div class="fc-sub">Анне важно каждое слово · анонимно</div>' +
-    '<button class="jo-photo-btn fc-btn" data-act="write">Написать</button>' +
-    '<div class="fc-later" data-act="later">не сейчас</div>';
-  card.querySelector('[data-act="write"]').onclick = () => {
-    localStorage.setItem('verum_ms_' + hit, '1');
-    openFeedback('milestone' + hit);
-  };
-  card.querySelector('[data-act="later"]').onclick = () => {
-    haptic('light');
-    localStorage.setItem('verum_ms_' + hit, '1');
-    renderFeed();
-  };
-  return card;
-}
-// «Год назад / месяц назад»: мостик к себе прошлой (год приоритетнее)
-function feedBackCard() {
-  const today = new Date();
-  const tries = [
-    { d: new Date(today.getFullYear() - 1, today.getMonth(), today.getDate()), lab: 'Год назад' },
-    { d: new Date(today.getFullYear(), today.getMonth() - 1, today.getDate()), lab: 'Месяц назад' },
-  ];
-  for (const t of tries) {
-    const k = dateKey(t.d);
-    const ci = journal.checkins[k];
-    const goals = journal.goals.filter((g) => g.horizon === 'day' && g.period_key === k && g.text);
-    const quote = (ci && ci.note) || (goals[0] && goals[0].text) || '';
-    if (!quote) continue;
-    const card = document.createElement('div');
-    card.className = 'feed-card back';
-    card.innerHTML =
-      '<div class="fc-eyebrow">' + t.lab + ' · ' +
-        t.d.toLocaleDateString('ru', { day: 'numeric', month: 'long' }) + '</div>' +
-      '<div class="fc-quote"></div>' +
-      '<div class="fc-later" data-act="open">перечитать тот день →</div>';
-    card.querySelector('.fc-quote').textContent = '«' + quote.slice(0, 140) + (quote.length > 140 ? '…' : '') + '»';
-    card.querySelector('[data-act="open"]').onclick = () => { haptic('light'); openDayCard(k); };
-    return card;
-  }
-  return null;
-}
-// тап по дню карты → лента раскрывается на нём
-function feedScrollTo(key) {
-  if (feedFilter !== 'days') setFeedFilter('days');
-  const row = document.querySelector('.feed-row[data-day="' + key + '"]');
-  if (!row) { showToast('в этом дне записей не было'); return; }
-  row.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  row.classList.remove('flash');
-  requestAnimationFrame(() => row.classList.add('flash'));
-}
-// входы из контекста фильтра «Намерения»
-function openVisionFromPath() {
-  if (!subActive) { openPaywall(); return; }
-  goalTab = 'vision';
-  openJournal('goals');
-}
+// (v128) feedMonthSummary/feedMilestoneCard/feedBackCard/feedScrollTo удалены
+// вместе с инлайн-лентой; сводка месяца в архиве — archMonthSummaryLine.
+// Веха-отзыв 7/21/40 и «год назад» — вернуть при следующем витке ретеншна.
 function openGoalsAt(key) {
   if (!subActive) { openPaywall(); return; }
   const today = new Date(); today.setHours(0, 0, 0, 0);
@@ -5250,8 +5052,14 @@ function confirmDelete(what, cb) {
 
 // 3 вкладки дневника: Состояние = богатый календарь (инлайн);
 // Намерения и Отклики открываются полноэкранными оверлеями.
-// setJournalTab удалён (v125): табы [Состояние|Намерения|Творения] заменены
-// фильтрами ленты (setFeedFilter) — чтение живёт в летописи, не в оверлеях.
+// v128: табы дневника возвращены (решение Аны) — Намерения и Творения
+// открываются оверлеями, «Состояние» = календарь инлайн.
+function setJournalTab(which) {
+  haptic('light');
+  if (which === 'goals') { openJournal('goals'); return; }
+  if (which === 'mani') { openJournal('mani'); return; }
+  // 'state' — календарь уже показан инлайн; вкладка Состояние остаётся активной
+}
 
 // ---- API с офлайн-очередью ----
 function meApi(path, body, cb) {
@@ -5584,55 +5392,18 @@ function checkinCardTap() {
   }, 60);
 }
 
-// ===== Книга дней: весь дневник одним скроллом (мысли + искры + фото) =====
+// ===== Архив (v128): вся летопись в отдельном окне, вход из карточки дня =====
+// (бывш. «Книга дней» — тот же оверлей journalBook, контент теперь renderArchive)
 function openBook() {
   if (!subActive) { openPaywall(); return; }
   haptic('light');
-  renderBook();
+  renderArchive();
   document.getElementById('journalBook').classList.add('show');
   syncBack();
 }
 function closeBook() {
   document.getElementById('journalBook').classList.remove('show');
   syncBack();
-}
-function renderBook() {
-  const box = document.getElementById('bookList');
-  box.innerHTML = '';
-  const keys = Object.keys(journal.checkins)
-    .filter((k) => {
-      const c = journal.checkins[k];
-      return c && (c.note || c.photo_key || c.evening || c.morning);
-    })
-    .sort()
-    .reverse();
-  if (!keys.length) {
-    const empty = document.createElement('div');
-    empty.className = 'jo-empty';
-    empty.textContent = 'Книга пока ждёт первых страниц. Отметь искру дня и запиши пару мыслей — они лягут сюда.';
-    box.appendChild(empty);
-    return;
-  }
-  keys.forEach((k) => {
-    const c = journal.checkins[k];
-    const level = c.evening || c.morning || null;
-    const d = new Date(k + 'T12:00:00');
-    const page = document.createElement('div');
-    page.className = 'book-page';
-    page.innerHTML =
-      '<div class="book-date">' + (level ? moonSvg(level, 15) : '') + '<span>' +
-        d.toLocaleDateString('ru', { weekday: 'short', day: 'numeric', month: 'long' }) + '</span></div>' +
-      (c.note ? '<div class="book-note"></div>' : '') +
-      (c.photo_key ? '<img class="jo-item-photo book-photo" loading="lazy" alt="">' : '');
-    if (c.note) page.querySelector('.book-note').textContent = c.note;
-    if (c.photo_key) {
-      const ph = page.querySelector('.book-photo');
-      ph.src = photoURL(c.photo_key);
-      ph.onclick = (e) => { e.stopPropagation(); ph.classList.toggle('expanded'); };
-    }
-    page.querySelector('.book-date').onclick = () => { closeBook(); openDayCard(k); };
-    box.appendChild(page);
-  });
 }
 
 // Полноэкранный лист письма: одна фраза, крупный серифный текст, ничего лишнего —
@@ -5701,6 +5472,23 @@ function openDayCard(key) {
     pv.onclick = () => pv.classList.toggle('expanded');
   } else { mBox.style.display = 'none'; }
   document.getElementById('ciPhotoBtn').classList.toggle('has', !!ci.photo_key);
+  // сбывшееся этого дня (v128): тег + текст + сумма, только чтение
+  const dayMans = (journal.manifests || []).filter((m) => m.date === key);
+  const cmBox = document.getElementById('ciManiList');
+  if (cmBox) {
+    if (dayMans.length) {
+      cmBox.innerHTML = '<div class="ws-moments-title">сбылось в этот день</div>' +
+        dayMans.map((m) =>
+          '<div class="cim-row"><span class="mani-tag k-' + m.kind + '">' + (MANI_KIND_RU[m.kind] || '') + '</span>' +
+          '<span class="cim-text"></span>' +
+          (m.amount ? '<span class="cim-amt">' + Number(m.amount).toLocaleString('ru-RU') + ' ₽</span>' : '') +
+          '</div>').join('');
+      cmBox.querySelectorAll('.cim-text').forEach((el, i) => { el.textContent = dayMans[i].text || ''; });
+      cmBox.style.display = 'block';
+    } else {
+      cmBox.style.display = 'none';
+    }
+  }
   // практики этого дня — из локальной истории
   const dayPr = sessions.filter((s) => dateKey(new Date(s.date)) === key);
   const prBox = document.getElementById('ciPractices');
@@ -6431,6 +6219,7 @@ function migrateSessionsOnce() {
   });
 }
 
+let histPage = 0; // история практик: страница пейджера ‹ ›
 function renderPath() {
   document.getElementById('screen-path').classList.toggle('sub-locked', !subActive);
   // рисуем содержимое всегда — под замком оно показывается «под стеклом» (превью),
@@ -6441,7 +6230,7 @@ function renderPath() {
   setStat('statTotal', (journal.manifests || []).length, 'творение', 'творения', 'творений');
   setStat('statMinutes', sessions.reduce((a, s) => a + (s.minutes || 0), 0), 'минута', 'минуты', 'минут');
 
-  renderCalendar(); // карта состояния; внутри — renderFeed() (лента месяца)
+  renderCalendar(); // календарь-эталон v124 (v128: лента с экрана убрана — в Архиве)
 
   // — Карта пути: сколько практик каждого шага уже прожито
   const stepOf = (sess) => {
@@ -6480,8 +6269,47 @@ function renderPath() {
     pmBox.innerHTML = pmHtml || '<div class="empty-state" style="padding:10px">карта откроется с первой практикой</div>';
   }
 
-  // v125: блок «История практик» ушёл — практики живут чипами в своих днях ленты,
-  // хроника по датам = фильтр «Практики». Третьей копии тех же данных больше нет.
+  // v128: «История практик» возвращена (эталон Аны) — постранично по 5,
+  // тонкие стрелки ‹ ›, страница 0 — самые свежие записи.
+  const list = document.getElementById('historyList');
+  if (!list) return;
+  if (!sessions.length) {
+    list.innerHTML = '<div class="glass-card empty-state">практика ещё не начата<br>начните первую сессию</div>';
+    return;
+  }
+  list.innerHTML = '';
+  const PER = 5;
+  const total = sessions.length;
+  const pages = Math.ceil(total / PER);
+  if (histPage >= pages) histPage = pages - 1;
+  if (histPage < 0) histPage = 0;
+  const start = histPage * PER;
+  sessions.slice(start, start + PER).forEach(s => {
+    const d = new Date(s.date);
+    const item = document.createElement('div');
+    item.className = 'history-item';
+    item.innerHTML = `
+      <div class="hi-main">
+        <div class="history-date">${d.toLocaleDateString('ru', {day:'numeric', month:'long', weekday:'short'})}</div>
+        <div class="history-type">${s.type}</div>
+        ${(function(){ let st = s.step || (meditations.find(m => m.name === s.type) || {}).step || ''; if (!st && /^День \d/.test(s.type)) st = 'Игра ПОТОК'; if (!st) st = 'Таймер'; const g = (st === 'Игра ПОТОК' || st === 'Таймер') ? STEP_GLYPHS[0] : stepGlyph({ level: st }); return '<div class="history-step"><span class="step-glyph sg-s">' + g + '</span>' + st + '</div>'; })()}
+      </div>
+      <div class="history-dur">${s.minutes} мин</div>`;
+    list.appendChild(item);
+  });
+  if (pages > 1) {
+    const CH_L = '<svg viewBox="0 0 12 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2.5L3 8l5 5.5"/></svg>';
+    const CH_R = '<svg viewBox="0 0 12 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2.5L9 8l-5 5.5"/></svg>';
+    const pager = document.createElement('div');
+    pager.className = 'hist-pager';
+    pager.innerHTML =
+      '<button class="hp-arrow"' + (histPage === 0 ? ' disabled' : '') + ' aria-label="Новее">' + CH_L + '</button>' +
+      '<span class="hp-count">' + (start + 1) + '–' + Math.min(start + PER, total) + ' из ' + total + '</span>' +
+      '<button class="hp-arrow"' + (histPage >= pages - 1 ? ' disabled' : '') + ' aria-label="Старее">' + CH_R + '</button>';
+    pager.children[0].onclick = () => { if (histPage > 0) { haptic('light'); histPage--; renderPath(); } };
+    pager.children[2].onclick = () => { if (histPage < pages - 1) { haptic('light'); histPage++; renderPath(); } };
+    list.appendChild(pager);
+  }
 }
 
 
@@ -7053,7 +6881,7 @@ const FOUNDING_SEATS = 43;
 
 // Валютная оплата через Lava.top ($ / €). Ссылки на подписки:
 // стандарт: $39/мес · $329/год; основательницы: $25/мес · $259/год (период выбирается на странице Lava)
-const APP_BUILD = 127; // внутренняя метка (= блок VERUM v127 «канон вернулся»)
+const APP_BUILD = 128; // внутренняя метка (= блок VERUM v128 «эталон вернулся, лента в Архиве»)
 
 // клавиатура iOS: поле email в фокусе → шторка поднимается наверх
 document.querySelectorAll('.claim-input').forEach(inp => {
@@ -9019,33 +8847,8 @@ renderTodayCheckin();
   /* v126: без слов под звездой намерение прижимается к искре — добавляем воздух */
   .ct-intent { margin-top: 14px; }
 
-  /* v127 — карточка практики дня: симметрия вместо «уехало влево».
-     Без снятого заголовка композиция развалилась: два капса жались к левому
-     краю, а круг с текстом висел отдельным блоком. Собираем по центральной оси —
-     как «Дневник» и «Мысль дня»: дата · практика дня · имя · описание · круг. */
-  .today-hero { text-align: center; padding: 34px 26px 30px !important; }
-  .today-hero .today-date { margin-bottom: 10px; }
-  .today-hero .today-sub { margin-bottom: 18px; }
-  .today-hero .practice-row {
-    flex-direction: column-reverse; gap: 20px; align-items: center;
-  }
-  .today-hero .practice-meta { width: 100%; }
-  .today-hero .practice-meta .p-name {
-    font-size: 24px !important; line-height: 1.25 !important; letter-spacing: 0.01em;
-  }
-  .today-hero .practice-meta .p-desc {
-    margin: 7px auto 0; max-width: 30ch; font-size: 12px !important;
-  }
-  .today-hero .practice-meta .p-dur { margin-top: 10px; }
-  /* волосок между текстом и кругом — тихая граница «читаю» / «слушаю» */
-  .today-hero .play-orb {
-    position: relative; width: 62px; height: 62px;
-  }
-  .today-hero .play-orb::before {
-    content: ''; position: absolute; top: -20px; left: 50%; width: 74px; height: 1px;
-    transform: translateX(-50%);
-    background: linear-gradient(90deg, transparent, rgba(201,174,125,0.4), transparent);
-  }
+  /* v128: центрирование карточки практики (v127) снято по решению Аны —
+     «верни обратно как было»: круг слева, текст справа, всё как в v124. */
 
   /* v127: три дневника в пейволле — названия выделены, чтобы читались списком */
   .pw-item b { font-weight: 500; color: var(--pearl); }
@@ -9285,6 +9088,35 @@ renderTodayCheckin();
   .cs-ok {
     display: block; font-size: 9px; letter-spacing: 0.16em;
     color: var(--faint); margin-top: 5px;
+  }
+
+  /* VERUM v128 — «Путь» возвращён к эталону Аны (v124): табы дневника, богатый
+     календарь (тил-стекло + золотая кромка, искра по центру, свечение «сбылось»),
+     «История практик». Лента с экрана убрана — живёт в оверлее «Архив». */
+  /* искра состояния — по центру над числом (просьба Аны «по центру/в середине») */
+  .cd-star {
+    top: 3px !important; left: 50% !important; right: auto !important;
+    transform: translateX(-50%);
+  }
+  .cal-day.has-state .cd-num { margin-top: 9px; }
+  /* сбывшееся в карточке дня */
+  .ci-mani { margin-top: 10px; text-align: left; }
+  .cim-row {
+    display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap;
+    padding: 6px 2px;
+  }
+  .cim-text { font-size: 13px; line-height: 1.5; color: var(--soft-ink); }
+  .cim-amt { font-size: 11.5px; color: var(--gold); white-space: nowrap; }
+  /* вход в архив из карточки дня */
+  .ci-archive-link {
+    margin-top: 12px; font-size: 10.5px; letter-spacing: 0.18em;
+    text-transform: uppercase; color: var(--gold); cursor: pointer; padding: 4px;
+  }
+  /* сводка месяца в архиве — тихая строка под заголовком */
+  .arch-sum {
+    font-family: 'Cormorant Garamond', serif; font-style: italic;
+    font-size: 13px; line-height: 1.5; color: var(--faint);
+    padding: 8px 2px 2px;
   }
 </style>
 </body>
