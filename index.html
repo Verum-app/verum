@@ -3122,7 +3122,7 @@
       <button class="jp-arrow" id="goalNext" onclick="goalDayShift(1)">›</button>
     </div>
     <!-- v125: правило вместо золотой вести — тихая строка под датой в прошлых днях -->
-    <div class="jo-past-hint" id="goalPastHint" style="display:none">не живи прошлым — пиши из состояния здесь-и-сейчас</div>
+    <div class="jo-past-hint" id="goalPastHint" style="display:none">не живи прошлым —<br>пиши из состояния здесь-и-сейчас</div>
     <!-- итоги: авто-сводка недели (вс) и месяца (последние дни) + рефлексия -->
     <div id="periodSummary"></div>
     <div class="jo-moons-week" id="goalWeekDots" style="display:none"></div>
@@ -4715,16 +4715,21 @@ function calShift(dir) {
   haptic('light');
   renderCalendar();
 }
-// Мини-лого VERUM (v129): разомкнутый круг с точкой — как знак в шапке «Сегодня».
-// Знак «сбылось»: обводит искру дня; если искры нет — светится в центре сам.
+// Мини-лого VERUM (v129→v130): разомкнутый круг со светящейся точкой в разрыве —
+// как знак в шапке. v130: разрыв СИММЕТРИЧЕН вокруг точки (одинаковые отступы
+// с обоих концов дуги), свечение сильнее — знак «сбылось» должен сиять.
 function haloSvg(size) {
-  const s = size || 30, c = s / 2, r = c - 2;
-  const L = 2 * Math.PI * r;
-  const dx = c + r * 0.71, dy = c - r * 0.71;
+  const s = size || 30, c = s / 2, r = c - 2.2;
+  const th = -Math.PI / 4;        // точка — северо-восток, как у лого
+  const g = 0.52;                 // половина разрыва (рад) с КАЖДОЙ стороны точки
+  const a1 = th + g, a2 = th - g + 2 * Math.PI;
+  const p = (a) => (c + r * Math.cos(a)).toFixed(2) + ' ' + (c + r * Math.sin(a)).toFixed(2);
+  const dx = (c + r * Math.cos(th)).toFixed(2), dy = (c + r * Math.sin(th)).toFixed(2);
   return '<svg width="' + s + '" height="' + s + '" viewBox="0 0 ' + s + ' ' + s + '">' +
-    '<circle cx="' + c + '" cy="' + c + '" r="' + r + '" fill="none" stroke="rgba(224,203,160,0.9)" stroke-width="1.1" stroke-linecap="round" ' +
-    'stroke-dasharray="' + (L * 0.8).toFixed(1) + ' ' + L.toFixed(1) + '" transform="rotate(-36 ' + c + ' ' + c + ')"/>' +
-    '<circle cx="' + dx.toFixed(1) + '" cy="' + dy.toFixed(1) + '" r="1.7" fill="#F6E7C2"/></svg>';
+    '<path d="M ' + p(a1) + ' A ' + r.toFixed(2) + ' ' + r.toFixed(2) + ' 0 1 1 ' + p(a2) + '" ' +
+    'fill="none" stroke="#EBD9AE" stroke-width="1.2" stroke-linecap="round" opacity="0.95"/>' +
+    '<circle cx="' + dx + '" cy="' + dy + '" r="' + (s >= 22 ? 2 : 1.6) + '" fill="#FBF0D8"/>' +
+    '<circle cx="' + dx + '" cy="' + dy + '" r="' + (s >= 22 ? 3.6 : 2.8) + '" fill="rgba(246,231,194,0.28)"/></svg>';
 }
 function renderCalendar() {
   const grid = document.getElementById('calGrid');
@@ -4890,7 +4895,8 @@ function archMonthTab(base) {
   journal.goals.forEach((g) => {
     if (g.horizon === 'day' && g.period_key && inR(g.period_key) && g.text) goalDays.add(g.period_key);
   });
-  const mans = (journal.manifests || []).filter((m) => m.date && inR(m.date));
+  const mans = (journal.manifests || []).filter((m) => m.date && inR(m.date))
+    .sort((a, b) => (a.kind === 'fulfilled' ? 0 : 1) - (b.kind === 'fulfilled' ? 0 : 1));
   const mk = base.getFullYear() + '-M' + String(base.getMonth() + 1).padStart(2, '0');
   const r = (journal.reflections || []).find((x) => x.week_key === mk) || {};
   if (!prDays.size && !goalDays.size && !mans.length && !hasReflContent(r)) return null;
@@ -5522,9 +5528,13 @@ function openDayCard(key) {
   const cmBox = document.getElementById('ciManiList');
   if (cmBox) {
     if (dayMans.length) {
+      // сбылось — раньше синхроний; сбывшееся — золотом с лого-кольцом (v130)
+      dayMans.sort((a, b) => (a.kind === 'fulfilled' ? 0 : 1) - (b.kind === 'fulfilled' ? 0 : 1));
       cmBox.innerHTML = '<div class="ws-moments-title">сбылось в этот день</div>' +
         dayMans.map((m) =>
-          '<div class="cim-row"><span class="mani-tag k-' + m.kind + '">' + (MANI_KIND_RU[m.kind] || '') + '</span>' +
+          '<div class="cim-row' + (m.kind === 'fulfilled' ? ' cim-gold' : '') + '">' +
+          (m.kind === 'fulfilled' ? '<span class="cim-halo">' + haloSvg(16) + '</span>' : '') +
+          '<span class="mani-tag k-' + m.kind + '">' + (MANI_KIND_RU[m.kind] || '') + '</span>' +
           '<span class="cim-text"></span>' +
           (m.amount ? '<span class="cim-amt">' + Number(m.amount).toLocaleString('ru-RU') + ' ₽</span>' : '') +
           '</div>').join('');
@@ -5944,7 +5954,8 @@ function buildMonthSummary() {
   journal.goals.forEach((g) => {
     if (g.horizon === 'day' && g.period_key && inR(g.period_key) && g.text) goalDays.add(g.period_key);
   });
-  const mans = (journal.manifests || []).filter((m) => m.date && inR(m.date));
+  const mans = (journal.manifests || []).filter((m) => m.date && inR(m.date))
+    .sort((a, b) => (a.kind === 'fulfilled' ? 0 : 1) - (b.kind === 'fulfilled' ? 0 : 1));
   const photos = [];
   for (const k in journal.checkins) {
     if (inR(k) && journal.checkins[k].photo_key) photos.push(journal.checkins[k].photo_key);
@@ -6010,6 +6021,8 @@ function renderWeekReflect() {
     document.getElementById('rLearned' + suf).value = sec.r.learned || '';
   };
   box.querySelectorAll('.period-sum').forEach((root, i) => fill(sections[i], root));
+  // v130: длинные ответы рефлексии не обрезаются — авторост как у остальных полей
+  box.querySelectorAll('textarea').forEach((t) => { autoGrow(t); t.autoGrowFit(); });
 }
 function savePeriodReflection(key, suf) {
   const r = {
@@ -6999,7 +7012,7 @@ const FOUNDING_SEATS = 43;
 
 // Валютная оплата через Lava.top ($ / €). Ссылки на подписки:
 // стандарт: $39/мес · $329/год; основательницы: $25/мес · $259/год (период выбирается на странице Lava)
-const APP_BUILD = 129; // внутренняя метка (= блок VERUM v129, 12 правок Аны 30.07)
+const APP_BUILD = 130; // внутренняя метка (= блок VERUM v130, полировка 30.07 вечер)
 
 // клавиатура iOS: поле email в фокусе → шторка поднимается наверх
 document.querySelectorAll('.claim-input').forEach(inp => {
@@ -9354,6 +9367,47 @@ renderTodayCheckin();
     line-height: 0; pointer-events: none; z-index: 0;
   }
   .vg-halo svg { position: static; filter: drop-shadow(0 0 4px rgba(246,231,194,0.5)); }
+
+  /* VERUM v130 — полировка Аны (30.07, вечер): тонкая кромка практик,
+     сияющее лого-кольцо, золото сбывшегося в карточке дня, помеха/шаг золотом,
+     единые шрифты итогов, воздух и скролл во всех дневниках. */
+
+  /* кромка практики — тонкое золото олд мани, не жирная рамка */
+  .cal-day.practiced {
+    border: 1px solid rgba(211,177,118,0.55) !important;
+    box-shadow: inset 0 1px 0 rgba(222,244,246,0.06), 0 0 9px rgba(216,180,118,0.13) !important;
+  }
+  .cal-day.manifested.practiced { border-color: rgba(211,177,118,0.55) !important; }
+  .cl-practiced { box-shadow: inset 0 0 0 1px rgba(211,177,118,0.65) !important; }
+  .cal-day.today { border-width: 1px !important; }
+  /* кольцо «сбылось» сияет */
+  .cd-halo svg { filter: drop-shadow(0 0 3px rgba(246,231,194,0.9)) drop-shadow(0 0 9px rgba(246,231,194,0.45)); }
+  .cd-halo.alone svg { filter: drop-shadow(0 0 4px rgba(246,231,194,1)) drop-shadow(0 0 12px rgba(246,231,194,0.55)); }
+  .vg-halo svg { filter: drop-shadow(0 0 3px rgba(246,231,194,0.8)) drop-shadow(0 0 8px rgba(246,231,194,0.4)); }
+
+  /* помеха и опора · шаг дня в прошлых намерениях — мягкое золото, не белый */
+  .jpm-text { color: var(--gold); }
+
+  /* карточка дня: сбывшееся — золото с кольцом; синхронии остаются белыми */
+  .cim-halo { display: inline-flex; line-height: 0; vertical-align: -3px; flex: 0 0 auto; }
+  .cim-halo svg { filter: drop-shadow(0 0 3px rgba(246,231,194,0.7)); }
+  .cim-row.cim-gold .cim-text {
+    color: #F6E7C2; text-shadow: 0 0 12px rgba(246,231,194,0.35);
+  }
+
+  /* итоги месяца: единый шрифт и размер у всех записей творений и рефлексии */
+  .ps-man { align-items: flex-start; }
+  .ps-man .mani-tag { flex: 0 0 auto; font-size: 9px; letter-spacing: 0.14em; margin-top: 2px; }
+  .ps-man-text { font-size: 13.5px; line-height: 1.55; color: var(--soft-ink); }
+  .fc-r i { font-size: 13.5px; line-height: 1.55; color: var(--soft-ink); }
+  .fc-r span { margin-top: 4px; }
+
+  /* дыхание дневников: скролл везде, ничего не обрезается */
+  .ci-card { max-height: 86vh; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+  .arch-tab-body { padding-bottom: 16px; }
+  .period-sum textarea { overflow: hidden; }
+  .jo-past-hint { line-height: 1.6; }
+  .ps-chip .pc-l { line-height: 1.45; padding: 0 2px; }
 </style>
 </body>
 </html>
