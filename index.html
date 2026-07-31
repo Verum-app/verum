@@ -3171,7 +3171,7 @@
       <button class="mani-kind" data-k="synchro" onclick="setManiKind('synchro')">Синхрония</button>
     </div>
     <div class="mani-kind-hint" id="maniKindHint">желание стало фактом — материализация</div>
-    <textarea class="claim-input jo-input" id="maniInput" rows="3" placeholder="Что случилось — и что ты почувствовала…"></textarea>
+    <textarea class="claim-input jo-input" id="maniInput" rows="4" placeholder="Что случилось — и что ты почувствовала…"></textarea>
     <div class="mani-amount-link" id="maniAmountLink" onclick="toggleManiAmount()">+ сумма, если про деньги</div>
     <input class="claim-input jo-amount" id="maniAmount" type="number" inputmode="decimal" placeholder="Сумма, ₽" style="display:none">
     <div class="jo-add-row">
@@ -5555,8 +5555,9 @@ function openDayCard(key) {
   } else {
     prBox.style.display = 'none';
   }
-  // заполненный день открываем как запись (только чтение) + ссылка «внести изменения»
-  ciReadonly = !!(ci.morning || ci.evening || ci.note);
+  // v131 (решение Аны): в пределах 48 часов день открывается СРАЗУ в режиме
+  // записи — поле мыслей активно без кнопки «изменить». Read-only только >48ч.
+  ciReadonly = !ciEditableDay;
   applyCiMode();
   document.getElementById('checkinSheet').classList.add('show');
   syncBack();
@@ -5572,8 +5573,8 @@ function applyCiMode() {
   document.getElementById('ciSub').style.display = (ciReadonly || !ciEditableDay) ? 'none' : 'block';
   document.getElementById('ciEditRow').style.display = (ciReadonly || !ciEditableDay) ? 'none' : 'flex';
   document.getElementById('ciEditLink').style.display = 'none';
-  document.getElementById('ciActions').style.display = (ciReadonly || !ciEditableDay) ? 'flex' : 'none';
-  document.getElementById('ciEditBtn').style.display = ciEditableDay ? '' : 'none';
+  document.getElementById('ciActions').style.display = 'flex';
+  document.getElementById('ciEditBtn').style.display = 'none'; // v131: «изменить» не нужна — поле открыто сразу
   document.getElementById('ciAppend').style.display = 'none';
   document.getElementById('ciPhotoBtn').style.display = ciEditableDay ? '' : 'none';
   note.classList.toggle('ci-note-ro', ciReadonly || !ciEditableDay);
@@ -5720,7 +5721,9 @@ function renderGoals() {
   if (pastHint) pastHint.style.display = isPastDay ? 'block' : 'none';
   const list = document.getElementById('goalList');
   list.innerHTML = '';
-  list.classList.toggle('vision-grid', goalTab === 'vision');
+  // v131: класс vision-grid УБРАН — он делал весь список 2-колоночной сеткой,
+  // из-за чего коллаж вставал в одну колонку («криво и маленькие фото»)
+  list.classList.remove('vision-grid');
   const dayKey = periodKeyFor('day');
   const items = isDay
     ? journal.goals.filter((g) => g.horizon === 'day' && g.period_key === dayKey)
@@ -5761,27 +5764,36 @@ function renderGoals() {
   const hint = document.getElementById('goalListHint');
   if (hint) hint.style.display = (items.length && !isPastDay) ? 'block' : 'none';
   if (goalTab === 'vision') {
-    // v129 (ТЗ Аны): все фото — ВВЕРХУ коллажем (1 фото — на всю ширину,
-    // 2 — рядом, дальше сетка до 4×4 = 16; тап раскрывает на всю ширину,
-    // долгое нажатие на раскрытом — системное «Сохранить фото»).
-    // Тексты — внизу в едином стиле; сбывшееся — В САМОМ ВЕРХУ списка,
-    // светящимся золотом, звезда в лого-кольце. Ничего не зачёркиваем.
+    // v131 (ТЗ Аны): коллаж на ВСЮ ширину текста, ровная сетка одинаковых
+    // квадратов: 1 фото — во всю ширину · 2 — в ряд · 3 — в ряд · 4 — 2×2 ·
+    // 5+ — по 3 в ряд. Фото можно МЕНЯТЬ МЕСТАМИ перетаскиванием (порядок —
+    // локально в verum_vision_order; сервер порядок не хранит). Тап — раскрыть;
+    // долгое нажатие без движения — удалить (на раскрытом — системное «Сохранить»).
     const photos = items.filter((g) => g.photo_key).slice(0, 16);
     if (photos.length) {
-      const cols = photos.length === 1 ? 1 : photos.length === 2 ? 2 : photos.length <= 4 ? 2 : photos.length <= 9 ? 3 : 4;
+      const order = visionOrder();
+      photos.sort((a, b) => {
+        const ia = order.indexOf(a.id), ib = order.indexOf(b.id);
+        return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
+      });
+      const cols = photos.length === 1 ? 1 : photos.length === 2 ? 2
+        : photos.length === 3 ? 3 : photos.length === 4 ? 2 : 3;
       const col = document.createElement('div');
       col.className = 'vision-collage vcc' + cols;
       photos.forEach((g) => {
         const cell = document.createElement('div');
         cell.className = 'vc-cell' + (g.status === 'done' ? ' done' : '');
-        cell.innerHTML = '<img loading="lazy" alt="">';
+        cell.dataset.gid = g.id;
+        cell.innerHTML = '<img loading="lazy" alt="" draggable="false">';
         cell.querySelector('img').src = photoURL(g.photo_key);
-        cell.onclick = () => { haptic('light'); cell.classList.toggle('expanded'); };
-        // long-press на СВЁРНУТОМ — удалить; на раскрытом молчим, чтобы
-        // системное меню iOS «Сохранить фото» работало без помех
+        cell.onclick = () => {
+          if (cell.dataset.dragged) { delete cell.dataset.dragged; return; }
+          haptic('light'); cell.classList.toggle('expanded');
+        };
         bindLongPress(cell, () => {
           if (!cell.classList.contains('expanded')) confirmDelete('это намерение', () => deleteGoal(g));
         });
+        bindCollageDrag(cell, col);
         col.appendChild(cell);
       });
       list.appendChild(col);
@@ -5831,6 +5843,65 @@ function goalRow(g, interactive) {
   }
   return row;
 }
+// ---- Коллаж Видения (v131): локальный порядок фото + перестановка пальцем ----
+// Порядок живёт в localStorage (verum_vision_order, массив goal.id): сервер
+// порядок не хранит, а локально он переживает и перезагрузку, и синк.
+function visionOrder() {
+  try { return JSON.parse(localStorage.getItem('verum_vision_order') || '[]'); } catch (e) { return []; }
+}
+function saveVisionOrder(ids) {
+  try { localStorage.setItem('verum_vision_order', JSON.stringify(ids)); } catch (e) {}
+}
+// Перетаскивание: повела палец по фото (>12px) — ячейка едет за пальцем и
+// меняется местами с той, над которой оказалась. Держит палец на месте —
+// работает долгое нажатие (удалить). Тап без движения — раскрыть.
+function bindCollageDrag(cell, col) {
+  if (!window.PointerEvent) return;
+  let startX = 0, startY = 0, dragging = false, pid = null;
+  cell.addEventListener('pointerdown', (e) => {
+    if (cell.classList.contains('expanded')) return; // раскрытое не таскаем
+    pid = e.pointerId; startX = e.clientX; startY = e.clientY; dragging = false;
+  });
+  cell.addEventListener('pointermove', (e) => {
+    if (e.pointerId !== pid) return;
+    const dx = e.clientX - startX, dy = e.clientY - startY;
+    if (!dragging && Math.hypot(dx, dy) > 12) {
+      dragging = true;
+      cell.classList.add('dragging');
+      cell.setPointerCapture(pid);
+      haptic('light');
+    }
+    if (!dragging) return;
+    e.preventDefault();
+    cell.style.transform = 'translate(' + dx + 'px,' + dy + 'px) scale(1.06)';
+    // над кем палец: своя ячейка прозрачна для elementFromPoint через CSS
+    const under = document.elementFromPoint(e.clientX, e.clientY);
+    const target = under && under.closest ? under.closest('.vc-cell') : null;
+    if (target && target !== cell && target.parentElement === col) {
+      // меняем местами в DOM; смещение пересчитываем от новой позиции
+      const cells = [...col.children];
+      const ci = cells.indexOf(cell), ti = cells.indexOf(target);
+      col.insertBefore(cell, ci < ti ? target.nextSibling : target);
+      // ячейка встала на новое место — тянем дальше от новой точки
+      startX = e.clientX; startY = e.clientY;
+      cell.style.transform = 'scale(1.06)';
+      haptic('light');
+    }
+  });
+  const finish = (e) => {
+    if (e.pointerId !== pid) return;
+    pid = null;
+    if (!dragging) return;
+    dragging = false;
+    cell.classList.remove('dragging');
+    cell.style.transform = '';
+    cell.dataset.dragged = '1'; // гасим следующий click (не раскрывать)
+    saveVisionOrder([...col.children].map((c) => Number(c.dataset.gid)).filter(Boolean));
+  };
+  cell.addEventListener('pointerup', finish);
+  cell.addEventListener('pointercancel', finish);
+}
+
 // точки недели: в какие дни намерения написаны — мягкий ритм без давления стрика
 function renderGoalWeekDots() {
   const box = document.getElementById('goalWeekDots');
@@ -6217,6 +6288,12 @@ function openManiForm(opts) {
     if (mi.autoGrowFit) mi.autoGrowFit();
   }
   document.getElementById('maniSheet').classList.add('show');
+  // v131: авторост поля — после показа (в скрытом шите scrollHeight = 0,
+  // и длинный prefill схлопывался в одну строку)
+  requestAnimationFrame(() => {
+    const mi = document.getElementById('maniInput');
+    if (mi.autoGrowFit) mi.autoGrowFit();
+  });
   syncBack();
 }
 function closeManiForm() {
@@ -7012,7 +7089,7 @@ const FOUNDING_SEATS = 43;
 
 // Валютная оплата через Lava.top ($ / €). Ссылки на подписки:
 // стандарт: $39/мес · $329/год; основательницы: $25/мес · $259/год (период выбирается на странице Lava)
-const APP_BUILD = 130; // внутренняя метка (= блок VERUM v130, полировка 30.07 вечер)
+const APP_BUILD = 131; // внутренняя метка (= блок VERUM v131; архив сборки — builds/index-v130.html)
 
 // клавиатура iOS: поле email в фокусе → шторка поднимается наверх
 document.querySelectorAll('.claim-input').forEach(inp => {
@@ -9401,6 +9478,18 @@ renderTodayCheckin();
   .ps-man-text { font-size: 13.5px; line-height: 1.55; color: var(--soft-ink); }
   .fc-r i { font-size: 13.5px; line-height: 1.55; color: var(--soft-ink); }
   .fc-r span { margin-top: 4px; }
+
+  /* VERUM v131 — коллаж: ровная сетка во всю ширину + перестановка пальцем;
+     карточка дня без «изменить»; поле «Сбылось» на 4 строки. */
+  .vc-cell { touch-action: none; }
+  .vc-cell.dragging {
+    pointer-events: none; position: relative; z-index: 6;
+  }
+  .vc-cell.dragging img {
+    border-color: rgba(246,231,194,0.75);
+    box-shadow: 0 10px 28px rgba(0,4,4,0.55), 0 0 18px rgba(246,231,194,0.2);
+  }
+  #maniInput { min-height: 106px; }
 
   /* дыхание дневников: скролл везде, ничего не обрезается */
   .ci-card { max-height: 86vh; overflow-y: auto; -webkit-overflow-scrolling: touch; }
