@@ -5446,6 +5446,7 @@ function checkinCardTap() {
 function openBook() {
   if (!subActive) { openPaywall(); return; }
   haptic('light');
+  navTick('arch');
   archOffset = 0;
   archTabOpen = false;
   renderArchive();
@@ -5453,6 +5454,7 @@ function openBook() {
   syncBack();
 }
 function closeBook() {
+  navTick(navScreen());
   document.getElementById('journalBook').classList.remove('show');
   syncBack();
 }
@@ -5462,6 +5464,7 @@ function closeBook() {
 function openWriteSheet() {
   if (!subActive) { openPaywall(); return; }
   haptic('light');
+  navTick('write');
   const key = dateKey(new Date());
   const ci = journal.checkins[key] || {};
   const wsLevel = ci.evening || ci.morning || null;
@@ -5482,6 +5485,7 @@ function openWriteSheet() {
   syncBack();
 }
 function closeWriteSheet() {
+  navTick(navScreen());
   document.getElementById('writeSheet').classList.remove('show');
   syncBack();
 }
@@ -5651,6 +5655,7 @@ function saveCheckin() {
 function openJournal(which) {
   if (!subActive) { openPaywall(); return; }
   haptic('light');
+  navTick(which === 'goals' ? 'goals' : 'mani'); // время дневников — отдельной строкой
   const el = document.getElementById(which === 'goals' ? 'journalGoals' : 'journalMani');
   el.classList.add('show');
   if (which === 'goals') renderGoals();
@@ -5659,6 +5664,7 @@ function openJournal(which) {
 }
 function closeJournal(which) {
   haptic('light');
+  navTick(navScreen());
   document.getElementById(which === 'goals' ? 'journalGoals' : 'journalMani').classList.remove('show');
   syncBack();
 }
@@ -6572,7 +6578,9 @@ document.addEventListener('visibilitychange', () => {
 
 // Время по вкладкам: копим секунды на каждой (today/library/timer/path),
 // шлём ОДНИМ сводным событием при сворачивании — без спама сети на каждый переход
-const navTime = { today: 0, library: 0, timer: 0, path: 0 };
+// v132: + поверхности дневников (goals/mani/arch/write) — Ане видно,
+// чем живут: что усиливать, что дорабатывать, что не юзают совсем
+const navTime = { today: 0, library: 0, timer: 0, path: 0, goals: 0, mani: 0, arch: 0, write: 0 };
 let navCur = 'today', navSince = Date.now();
 function navTick(next) {
   const sec = Math.round((Date.now() - navSince) / 1000);
@@ -6580,17 +6588,22 @@ function navTick(next) {
   navSince = Date.now();
   if (next) navCur = next;
 }
+// активная вкладка дока — контекст, куда возвращаемся после закрытия оверлея
+function navScreen() {
+  const el = document.querySelector('.screen.active');
+  return el ? el.id.replace('screen-', '') : 'today';
+}
 document.addEventListener('visibilitychange', () => {
   if (!document.hidden) { navSince = Date.now(); return; }
   navTick();
-  const total = navTime.today + navTime.library + navTime.timer + navTime.path;
+  const total = Object.values(navTime).reduce((a, b) => a + b, 0);
   if (!total || !tg || !tg.initData) return;
   try {
     fetch(WORKER_URL + '/stat', {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, keepalive: true,
       body: JSON.stringify({ init: tg.initData, ev: 'nav', screens: navTime }),
     });
-    navTime.today = navTime.library = navTime.timer = navTime.path = 0;
+    for (const k in navTime) navTime[k] = 0;
   } catch (e) {}
 });
 function sendStat(ev) {
@@ -7089,7 +7102,7 @@ const FOUNDING_SEATS = 43;
 
 // Валютная оплата через Lava.top ($ / €). Ссылки на подписки:
 // стандарт: $39/мес · $329/год; основательницы: $25/мес · $259/год (период выбирается на странице Lava)
-const APP_BUILD = 131; // внутренняя метка (= блок VERUM v131; архив сборки — builds/index-v130.html)
+const APP_BUILD = 132; // внутренняя метка (= блок VERUM v132: тайм-трекинг дневников; архив — builds/index-v131.html)
 
 // клавиатура iOS: поле email в фокусе → шторка поднимается наверх
 document.querySelectorAll('.claim-input').forEach(inp => {
