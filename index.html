@@ -3988,10 +3988,30 @@ renderCats();
 renderMeds();
 renderPathCarousel();
 
-// ===== SOUND ENGINE (Web Audio, без файлов) =====
+// ===== SOUND ENGINE =====
 let audioCtx = null;
 let soundNodes = [];
 let currentSound = 'none';
+
+// ===== ФОНОВЫЕ ЗАПИСИ (v136) =====
+// Настоящие записи океана/дождя вместо синтеза. Живут ВНУТРИ существующего
+// audioCtx — новых <audio> не появляется. Это принципиально: премикс финала
+// (chimeAudio) — самая хрупкая часть приложения, и лишний медиа-элемент может
+// перехватить у него аудиосессию iOS, из-за чего пропадёт колокольчик.
+// ⚠️ НИКОГДА не подключать chimeAudio через createMediaElementSource: премикс
+// попадёт под правила Web Audio и замолчит на беззвучном режиме.
+// Файлов ещё нет в R2 — движок молча остаётся на синтезе, пока Ана их не зальёт.
+const AMB_FILES = { ocean: 'amb-ocean.m4a', rain: 'amb-rain.m4a' }; // 'om' — когда будет ровный дрон
+const AMB_GAIN = { ocean: 0.60, rain: 0.55, om: 0.50 };
+const AMB_FADE_IN = 4;      // секунд появления
+const AMB_TAIL_FROM = 15;   // за сколько секунд до конца начать затухать
+const AMB_TAIL_TO = 3;      // сколько секунд ЧИСТОЙ тишины перед колокольчиком
+const AMB_XFADE = 3;        // кроссфейд стыка петли
+const AMB_MAX_SEC = 300;    // предохранитель памяти: длиннее не декодируем
+const ambBuffers = new Map();
+const ambPending = new Map();
+let ambSource = null, ambGain = null, ambToken = 0;
+let synthOut = null;        // отдельный узел: гасим синтез, не трогая LFO
 
 document.querySelectorAll('#soundRow .dur-btn').forEach(btn => {
   btn.addEventListener('click', () => {
@@ -4000,6 +4020,10 @@ document.querySelectorAll('#soundRow .dur-btn').forEach(btn => {
     document.querySelectorAll('#soundRow .dur-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     currentSound = btn.dataset.sound;
+    // прогрев: тап по «Океан» случается за минуты до старта — файл успевает
+    // скачаться и раскодироваться заранее, не совпадая по времени с рендером
+    // премикса (у 40-минутного таймера он тяжёлый)
+    try { ensureCtx(); ensureAmbBuffer(currentSound); } catch (e) {}
     if (timerRunning || breathRunning) startSound(currentSound);
   });
 });
@@ -4024,15 +4048,45 @@ function makeNoiseBuffer() {
   return buf;
 }
 
+// Диспетчер: если запись готова — играем её; иначе включаем синтез сразу
+// (человек слышит звук мгновенно) и подменяем на запись, когда она доедет.
 function startSound(type) {
-  stopSound();
+  stopSound(0.6);
   if (type === 'none') return;
+  ensureCtx();
+  const token = ++ambToken;
+  const ready = ambBuffers.get(type);
+  if (ready) { playAmbBuffer(ready, type, AMB_FADE_IN); return; }
+
+  startSynthSound(type);
+  const pending = ensureAmbBuffer(type);
+  if (!pending) return;                       // для этого звука записи не предусмотрено
+  pending.then((b) => {
+    if (token !== ambToken || !b || !audioCtx) return;   // успели остановить или переключить
+    const t = audioCtx.currentTime;
+    if (synthOut) {
+      try {
+        synthOut.gain.cancelScheduledValues(t);
+        synthOut.gain.setValueAtTime(synthOut.gain.value, t);
+        synthOut.gain.linearRampToValueAtTime(0.0001, t + 2);
+      } catch (e) {}
+    }
+    playAmbBuffer(b, type, 2);
+  }).catch(() => {});                         // нет сети/файла — тихо остаёмся на синтезе
+}
+
+function startSynthSound(type) {
   ensureCtx();
   const master = audioCtx.createGain();
   master.gain.value = 0;
-  master.connect(audioCtx.destination);
+  // синтез идёт через свой выход: гасим его целиком, не трогая LFO, который
+  // подмешан в master.gain (иначе под записью остался бы слышимый шорох)
+  synthOut = audioCtx.createGain();
+  synthOut.gain.value = 1;
+  synthOut.connect(audioCtx.destination);
+  master.connect(synthOut);
   master.gain.linearRampToValueAtTime(0.14, audioCtx.currentTime + 2.5);
-  soundNodes.push(master);
+  soundNodes.push(master, synthOut);
 
   if (type === 'ocean' || type === 'rain') {
     const src = audioCtx.createBufferSource();
@@ -4092,12 +4146,131 @@ function startSound(type) {
 
 }
 
-function stopSound() {
-  soundNodes.forEach(n => {
-    try { if (n.stop) n.stop(); } catch(e) {}
-    try { n.disconnect(); } catch(e) {}
+function playAmbBuffer(buf, type, fadeIn) {
+  const src = audioCtx.createBufferSource();
+  src.buffer = buf;
+  src.loop = true;
+  src.loopStart = 0;
+  src.loopEnd = buf.duration;
+  const g = audioCtx.createGain();
+  const target = AMB_GAIN[type] || 0.5;
+  const t = audioCtx.currentTime;
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.linearRampToValueAtTime(target, t + (fadeIn || 0.05));
+  src.connect(g);
+  g.connect(audioCtx.destination);
+  src.start();
+  ambSource = src;
+  ambGain = g;
+  soundNodes.push(src, g);
+  scheduleAmbTail(type);
+}
+
+// Затухание вешаем на часы АУДИОПОТОКА (audioCtx.currentTime), а не на setInterval:
+// JS-таймеры при погашенном экране замирают, аудио-часы — нет. Последние секунды
+// практики — чистая тишина, колокольчик приходит В НЕЁ.
+function scheduleAmbTail(type) {
+  if (!ambGain || !ambSource || !audioCtx) return;
+  if (mode !== 'timer' || !timerRunning || !timerEndAt) return;  // «Дыхание» — просто петля
+  const left = Math.max(0, (timerEndAt - Date.now()) / 1000);
+  const target = AMB_GAIN[type || currentSound] || 0.5;
+  const now = audioCtx.currentTime;
+  const t0 = now + Math.max(0, left - AMB_TAIL_FROM);
+  const t1 = now + Math.max(0.5, left - AMB_TAIL_TO);
+  try {
+    ambGain.gain.cancelScheduledValues(t0);
+    ambGain.gain.setValueAtTime(target, t0);
+    ambGain.gain.exponentialRampToValueAtTime(0.0008, t1);  // экспонента в ноль запрещена спекой
+    ambGain.gain.setValueAtTime(0, t1 + 0.02);
+    ambSource.stop(t1 + 0.05);
+  } catch (e) {}
+}
+
+function ensureAmbBuffer(type) {
+  if (!type || !AMB_FILES[type]) return null;
+  if (ambBuffers.has(type)) return Promise.resolve(ambBuffers.get(type));
+  if (ambPending.has(type)) return ambPending.get(type);
+  const p = (async () => {
+    ensureCtx();
+    const key = AMB_FILES[type];
+    let bytes = await ambFromCache(key);
+    if (!bytes) {
+      if (navigator.onLine === false) throw new Error('offline');
+      const init = tg ? encodeURIComponent(tg.initData || '') : '';
+      const url = WORKER_URL.includes('r2.dev')
+        ? WORKER_URL + '/' + encodeURIComponent(key)
+        : WORKER_URL + '/audio/' + encodeURIComponent(key) + '?init=' + init;
+      const r = await fetch(url);
+      if (!r.ok) throw new Error('amb ' + r.status);  // 401/403/404 — тихо, пейволл НЕ зовём
+      bytes = await r.arrayBuffer();
+      ambToCache(key, bytes.slice(0));                // копию в кеш: оригинал заберёт декодер
+    }
+    // decodeAudioData ЗАБИРАЕТ переданный ArrayBuffer — только через slice(0)
+    const raw = await new Promise((res, rej) => audioCtx.decodeAudioData(bytes.slice(0), res, rej));
+    if (raw.duration > AMB_MAX_SEC) throw new Error('amb too long');
+    const buf = makeSeamless(raw, AMB_XFADE);
+    ambBuffers.clear();                                // держим максимум ОДИН буфер в памяти
+    ambBuffers.set(type, buf);
+    return buf;
+  })();
+  ambPending.set(type, p);
+  p.catch(() => {}).then(() => ambPending.delete(type));
+  return p;
+}
+
+// сшиваем стык петли равномощным кроссфейдом — «loop-ready» файл не нужен
+function makeSeamless(buf, xf) {
+  const sr = buf.sampleRate, n = buf.length;
+  const x = Math.min(Math.floor(xf * sr), Math.floor(n / 3));
+  if (x < 1) return buf;
+  const out = audioCtx.createBuffer(buf.numberOfChannels, n - x, sr);
+  for (let c = 0; c < buf.numberOfChannels; c++) {
+    const s = buf.getChannelData(c), d = out.getChannelData(c);
+    d.set(s.subarray(0, n - x));
+    for (let i = 0; i < x; i++) {
+      const k = i / x, a = Math.cos(k * Math.PI / 2), b = Math.sin(k * Math.PI / 2);
+      d[i] = s[i] * b + s[n - x + i] * a;
+    }
+  }
+  return out;
+}
+
+// ?init= меняется при каждом открытии мини-аппа, поэтому HTTP-кеш браузера
+// промахивался бы всегда — кладём по стабильному ключу сами (работает и офлайн)
+async function ambFromCache(key) {
+  try {
+    const c = await caches.open('verum-amb-v1');
+    const r = await c.match('amb/' + key);
+    return r ? await r.arrayBuffer() : null;
+  } catch (e) { return null; }
+}
+function ambToCache(key, bytes) {
+  try {
+    caches.open('verum-amb-v1').then(c => c.put('amb/' + key, new Response(bytes))).catch(() => {});
+  } catch (e) {}
+}
+
+function stopSound(fade) {
+  const nodes = soundNodes;
+  soundNodes = [];              // забираем СРАЗУ: повторный вызов становится пустым
+  const out = synthOut, g = ambGain;
+  synthOut = null; ambSource = null; ambGain = null;
+  ambToken++;                   // отменяет отложенную подмену синтеза на запись
+  const kill = () => nodes.forEach(n => {
+    try { if (n.stop) n.stop(); } catch (e) {}
+    try { n.disconnect(); } catch (e) {}
   });
-  soundNodes = [];
+  if (!fade || !audioCtx) { kill(); return; }
+  try {
+    const t = audioCtx.currentTime;
+    [out, g].forEach(node => {
+      if (!node) return;
+      node.gain.cancelScheduledValues(t);
+      node.gain.setValueAtTime(Math.max(0.0001, node.gain.value), t);
+      node.gain.linearRampToValueAtTime(0.0001, t + fade);
+    });
+  } catch (e) { kill(); return; }
+  setTimeout(kill, fade * 1000 + 120);
 }
 
 // ===== TIMER / BREATH =====
@@ -4192,7 +4365,13 @@ function releaseWake() {
 
 // если экран всё же гас — при возвращении снова просим не засыпать
 document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'visible' && (timerRunning || breathRunning)) requestWake();
+  if (document.visibilityState !== 'visible') return;
+  if (!(timerRunning || breathRunning)) return;
+  requestWake();
+  // iOS усыпляет AudioContext в фоне: его часы замирают, и запланированное
+  // затухание фона уезжает позже реального конца таймера. Будим и пересобираем.
+  try { if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume(); } catch (e) {}
+  try { scheduleAmbTail(currentSound); } catch (e) {}
 });
 
 function askWakeThen(fn) {
@@ -4255,7 +4434,7 @@ function pauseTimer() {
   stopChimeKeepalive();
   timerRunning = false;
   clearInterval(timerInterval);
-  stopSound();
+  stopSound(0.8);   // фон уходит мягко, а не щелчком
   releaseWake();
   document.getElementById('playBtn').innerHTML = ICON_PLAY;
   document.getElementById('sessionNote').textContent = 'пауза — вернитесь когда готовы';
@@ -4364,6 +4543,7 @@ function armTimerChime(seconds) {
 }
 
 function armOrResumeTimerChime() {
+  chimeFinaleUntil = 0;   // новая сессия: защита прошлого финала снимается
   try {
     if (premixArmed && premixUrl && chimeAudio) {
       // возобновление после паузы: перемотка дорожки на текущее место таймера
@@ -4393,8 +4573,29 @@ function startChimeKeepalive() {
   } catch (e) {}
 }
 
+// v136. Пока звучит финал — дорожку не глушим.
+// Причина (баг Аны «после истечения времени нет музыки»): completeTimer звал
+// playCompletionChime, а следом, в том же синхронном блоке, resetTimer → и он
+// первым делом делал chimeAudio.pause(). На главном пути (премикс) мелодия
+// живёт ВНУТРИ уже играющей дорожки, поэтому пауза убивала её раньше, чем она
+// начиналась. Замер в превью: дорожка вставала на паузу на 3.49с при старте
+// колокольчика на 4.0с — то есть не звучало вообще ничего.
+let chimeFinaleUntil = 0;
+
+function holdChimeFinale() {
+  try {
+    const left = (chimeAudio && isFinite(chimeAudio.duration))
+      ? chimeAudio.duration - (chimeAudio.currentTime || 0)
+      : 12;
+    chimeFinaleUntil = Date.now() + Math.min(20, Math.max(6, left + 1)) * 1000;
+  } catch (e) { chimeFinaleUntil = Date.now() + 13000; }
+}
+
 function stopChimeKeepalive() {
-  try { if (chimeAudio) { chimeAudio.pause(); chimeAudio.loop = false; } } catch (e) {}
+  try {
+    if (Date.now() < chimeFinaleUntil) return;   // финал звучит — не трогаем
+    if (chimeAudio) { chimeAudio.pause(); chimeAudio.loop = false; }
+  } catch (e) {}
 }
 
 function bufferToWav(buf) {
@@ -4464,8 +4665,20 @@ function playCompletionChime() {
   // главный путь: дорожка с колокольчиком УЖЕ играет — ничего запускать не нужно,
   // просто отпускаем её дозвучать (это и есть весь секрет беззвучного режима)
   try {
-    if (premixArmed && premixUrl && chimeAudio && !chimeAudio.paused) {
+    // currentSrc сверяем с premixUrl: если рендер премикса провалился, а старая
+    // ссылка осталась в переменной, ветка сработала бы вхолостую — и финал бы
+    // промолчал вместо того, чтобы уйти в запасной колокольчик.
+    if (premixArmed && premixUrl && chimeAudio && chimeAudio.currentSrc === premixUrl && !chimeAudio.paused) {
       premixArmed = false;
+      // «Готово» раньше срока (кнопка doneBtn): колокольчик лежит в дорожке на
+      // отметке premixLead и до него ещё далеко — подматываем прямо к нему.
+      // Дорожка уже играет, поэтому перемотка не требует нового жеста и не
+      // ломает право звучать на беззвучном режиме.
+      try {
+        const pos = chimeAudio.currentTime || 0;
+        if (premixLead - pos > 1.5) chimeAudio.currentTime = premixLead;
+      } catch (e) {}
+      holdChimeFinale();   // resetTimer ниже по стеку теперь её не заглушит
       return;
     }
   } catch (e) {}
@@ -4498,6 +4711,8 @@ function legacyChime() {
       chimeAudio.currentTime = 0;
       chimeAudio.volume = 1;
       const p = chimeAudio.play();
+      holdChimeFinale();   // иначе resetTimer прервёт play() и звук уйдёт в Web Audio,
+                           // а его iOS в беззвучном режиме глушит — то есть тишина
       if (p && p.catch) p.catch(() => { liveChime(); });
       return;
     }
@@ -4516,7 +4731,10 @@ function liveChime() {
 function completeTimer() {
   clearInterval(timerInterval);
   timerRunning = false;
-  stopSound();
+  // при штатном финале фон уже отзвучал по расписанию (тишина за AMB_TAIL_TO сек
+  // до конца) — здесь это пустая операция. Работает только для кнопки «Готово»
+  // раньше срока: фон уходит за полторы секунды, освобождая место колокольчику.
+  stopSound(1.5);
   releaseWake();
   hapticFinale();
   playCompletionChime();
@@ -4602,7 +4820,7 @@ function stopBreath(save) {
   const wasRunning = breathRunning;
   breathRunning = false;
   clearTimeout(breathTimeout);
-  stopSound();
+  stopSound(0.8);
   releaseWake();
   document.getElementById('playBtn').innerHTML = ICON_PLAY;
   document.getElementById('phaseLabel').textContent = '';
@@ -7145,7 +7363,7 @@ const FOUNDING_SEATS = 43;
 
 // Валютная оплата через Lava.top ($ / €). Ссылки на подписки:
 // стандарт: $39/мес · $329/год; основательницы: $25/мес · $259/год (период выбирается на странице Lava)
-const APP_BUILD = 135; // внутренняя метка (= блок VERUM v135: Android — золото кнопок, спокойные шторки; тексты; архив — builds/index-v134.html)
+const APP_BUILD = 136; // внутренняя метка (v136: починен звук финала таймера + фоновые записи океан/дождь; архив — builds/index-v135.html)
 
 // клавиатура iOS: поле email в фокусе → шторка поднимается наверх
 document.querySelectorAll('.claim-input').forEach(inp => {
