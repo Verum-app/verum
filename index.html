@@ -2983,7 +2983,7 @@
 
     <div class="pw-list">
       <div class="pw-item">Все авторские медитации библиотеки</div>
-      <div class="pw-item"><span><b>Дневник мыслей</b> — выплеснуть день на бумагу и перечитать себя месяцы спустя</span></div>
+      <div class="pw-item"><span><b>Дневник мыслей</b> — выплеснуть сокровенное и перечитать месяцы спустя</span></div>
       <div class="pw-item"><span><b>Дневник намерений</b> — ежедневная практика создания реальности</span></div>
       <div class="pw-item"><span><b>Дневник манифестаций</b> — летопись сбывшегося: твоё доказательство, что метод работает</span></div>
       <div class="pw-item">Дыхательные практики, таймер тишины и ваш путь в цифрах</div>
@@ -3315,8 +3315,19 @@ if (tg) {
       // Telegram иногда присылает пустые инсеты при закрытии окон
       if (top < 40 && (applySafeArea._last || 0) >= 40) top = applySafeArea._last;
       applySafeArea._last = top;
-      document.documentElement.style.setProperty('--tg-content-safe-area-inset-top', top + 'px');
-      document.documentElement.style.setProperty('--tg-content-safe-area-inset-bottom', bottom + 'px');
+      // v135: переменные переписываем ТОЛЬКО когда значение реально изменилось.
+      // Раньше каждый вызов (а идут они очередью: событие Telegram + __reapplySafe
+      // сразу и ещё раз через 350мс) переустанавливал их и заставлял браузер
+      // пересчитать раскладку всего, что от них зависит (шапки оверлеев, паддинг
+      // пейволла). На Android WebView эта серия пересчётов видна морганием.
+      if (applySafeArea._top !== top) {
+        applySafeArea._top = top;
+        document.documentElement.style.setProperty('--tg-content-safe-area-inset-top', top + 'px');
+      }
+      if (applySafeArea._bottom !== bottom) {
+        applySafeArea._bottom = bottom;
+        document.documentElement.style.setProperty('--tg-content-safe-area-inset-bottom', bottom + 'px');
+      }
     } catch (e) {}
   }
   applySafeArea();
@@ -3332,7 +3343,10 @@ if (tg) {
   document.addEventListener('visibilitychange', function () {
     if (!document.hidden) {
       applySafeArea(); setTimeout(applySafeArea, 350);
-      if (window.showSplash) window.showSplash(800);
+      // сплэш нужен только iOS (там экран пересобирается на возврате). На Android
+      // возврат мгновенный, и сплэш читался как лишнее мигание — например, когда
+      // возвращаешься со страницы оплаты (v135, фидбек Аны).
+      if (window.showSplash && tg.platform !== 'android') window.showSplash(800);
       checkSubscription();
       setTimeout(checkSubscription, 4000);
     }
@@ -3807,7 +3821,7 @@ const categories = ['Общие', '♡ Любимые', 'Шаг 1 · Тело', 
 // философия каждого шага — показывается над списком практик
 const STEP_INTROS = {
   '♡ Любимые': 'Твоя личная полка. Отмечай сердечком практики, которые откликаются глубже всего, — и они всегда будут под рукой. <em>Сердце знает, что тебе сейчас нужно.</em>',
-  'Общие': 'Пять шагов — один путь: от тела, которому безопасно, до реальности, которая слушается. Каждая практика стоит на своей ступени, и ни одну нельзя перепрыгнуть — но начать можно с любой. <em>Путь сам поведёт.</em>',
+  'Общие': 'Пять шагов — один путь: тело, психика, идентичность, Мета-Я, управление реальностью. Пройди все пять — в своём порядке и в своём темпе. <em>Куда бы ты ни вошла, путь соберёт целое.</em>',
   'Шаг 1 · Тело': 'Тело — единственный дом, в котором ты живёшь всю жизнь, и первая ступень силы. Пока нервная система в тревоге, никакие практики не работают: выживание всегда громче творения. Здесь ты возвращаешься в тело и учишь его безопасности. <em>С этой земли начинается всё.</em>',
   'Шаг 2 · Психика': 'Здесь живёт то, что управляло тобой из тени: запертые эмоции, старые страхи, части, которые жмут на тормоз. Ты не будешь с ними воевать — ты вернёшь силу, запертую в них. Каждая расчищенная эмоция — твоя энергия, вернувшаяся домой. <em>Там, где было страшно или стыдно, становится спокойно. И из этого глубокого спокойствия рождается сила.</em>',
   'Шаг 3 · Идентичность': 'Этот шаг отвечает на вопрос «кто я?». Ты меняешь главную героиню: из выученной, выжившей, удобной — в подлинную. Меняются убеждения, осанка, выборы — сама ткань твоего «я». <em>Ты становишься той, кем была всегда — под слоями.</em>',
@@ -3820,7 +3834,7 @@ const WORKER_URL = 'https://verum-audio.annverum-aaf.workers.dev';
 
 const meditations = [
 { name: 'Поток · утренняя медитация', desc: 'Сила и энергия Творца на весь день', descLong: 'Утренняя настройка на день из состояния Творца. Вы наполнитесь светом и энергией Источника — и войдёте в день спокойной, собранной, в контакте с собой и самой жизнью.\n\nПосле практики: ровное сильное состояние с самого утра — и весь день вы создаёте по своему намерению, а не плывёте по течению.', dur: '14 мин', level: 'Шаг 1 · Тело', cat: 'Здоровье', free: true, file: 'potok.m4a', step: 'Общие' },
-  { name: 'Тело — мой дом', desc: 'Возвращение домой — в своё тело', descLong: 'Ваше тело ни разу вас не бросило: оно дышало за вас, когда вы спали, и несло вас через все кризисы — даже когда вы ругали его перед зеркалом. А всё «лишнее» — вес, зажимы, усталость — не слабость и не враг: это броня, которой тело защищало вас, как умело. Эта практика — встреча, которую оно ждёт очень давно.\n\nПосле практики: тепло и покой в теле, чувство «я наконец дома», ясность, чем питать себя и какой заботы просит тело, — и лёгкость, которая возвращается сама, когда телу с вами безопасно. И один маленький шаг заботы — уже на сегодня.', dur: '21 мин', level: 'Шаг 1 · Тело', cat: 'Здоровье', free: false, file: 'telodom.mp3', step: 'Шаг 1 · Тело' },
+  { name: 'Тело — мой дом', desc: 'Возвращение домой — в своё тело', descLong: 'Ваше тело ни разу вас не бросило: оно дышало за вас, когда вы спали, и несло вас через все кризисы — даже когда вы ругали его перед зеркалом. А всё «лишнее» — вес, зажимы, усталость — не слабость и не враг: это броня, которой тело защищало вас, как умело. Эта практика — встреча, которую оно ждёт очень давно.\n\nПосле практики: тепло и покой в теле, чувство «я наконец дома», ясность, чем питать себя и какой заботы просит тело, — и лёгкость, которая возвращается сама, когда телу безопасно.', dur: '21 мин', level: 'Шаг 1 · Тело', cat: 'Здоровье', free: false, file: 'telodom.mp3', step: 'Шаг 1 · Тело' },
   { name: 'Точка опоры', desc: 'Устойчивость, которую не отнять', descLong: 'Для периодов, когда всё разрушается: уходят люди, заканчиваются деньги, меняются планы. Вы вернёте себе внутренний стержень — опору, которую невозможно отнять.\n\nПосле практики: устойчивость и ясная голова даже посреди шторма.', dur: '17 мин', level: 'Шаг 1 · Тело', cat: 'Кризис', free: false, file: 'opora.m4a', step: 'Шаг 1 · Тело' },
   { name: 'Источник радости', desc: 'Радость без условий', descLong: 'Взрослая жизнь учит откладывать радость до достижения результата. Но в вас живёт та, что умела радоваться просто так, — и она помнит, что вас наполняет и вдохновляет на самом деле. Вы встретитесь с ней и почувствуете телом свою подлинную радость из детства.\n\nПосле практики: больше живой энергии и ясность, чего вы хотите от жизни.', dur: '13 мин', level: 'Шаг 2 · Психика', cat: 'Самоценность', free: false, file: 'radost.m4a', step: 'Шаг 2 · Психика' },
   { name: 'Соединение с Высшим Я', desc: 'Самоценность и поток изобилия', descLong: 'Пока самоценность зависит от результатов и чужих оценок, изобилие приходится заслуживать. Эта практика возвращает в другую точку. Вы подниметесь по потоку света в пространство Высшего Я, наполнитесь его энергией до каждой клеточки и вспомните телом: вы — не роли, не страхи и не мысли. Слова «Я есть любовь. Я есть изобилие» станут не аффирмацией, а состоянием.\n\nПосле практики: глубокое спокойствие, расширенное состояние, чувство «я есть — и этого достаточно» и открытость потоку изобилия — без напряжения и заслуживания.', dur: '18 мин', level: 'Шаг 4 · Мета-Я', cat: 'Самоценность', free: false, file: 'Higherself1.m4a', step: 'Шаг 4 · Мета-Я' },
@@ -5074,6 +5088,28 @@ function autoGrow(el) {
 }
 ['goalInput', 'maniInput', 'ciNote', 'ciAppend', 'goalObstacle', 'goalStep'].forEach((id) => autoGrow(document.getElementById(id)));
 
+// v134: клавиатура iOS. WebKit скроллит документ к сфокусированному полю даже
+// при overflow:hidden (оверлеи fixed), а после закрытия клавиатуры сдвиг не
+// всегда снимается: контент уезжает под шапку и скролл оверлея «замерзает»
+// (кейс Аны 06.08: Намерения → «Записать» → зависло, работал только «назад»).
+// Правило: фокус ушёл из поля НЕ в другое поле → возвращаем окно в ноль.
+// На Android клавиатура просто сжимает viewport — сброс там безвреден.
+document.addEventListener('focusout', () => {
+  setTimeout(() => {
+    const a = document.activeElement;
+    if (a && (a.tagName === 'TEXTAREA' || a.tagName === 'INPUT')) return;
+    window.scrollTo(0, 0);
+    if (document.documentElement.scrollTop) document.documentElement.scrollTop = 0;
+    if (document.body.scrollTop) document.body.scrollTop = 0;
+  }, 80);
+});
+// «Записать/Сохранить» закрывают клавиатуру сами — сброс выше срабатывает
+// сразу, а не после случайного тапа мимо поля
+function dropKeyboard() {
+  const a = document.activeElement;
+  if (a && a.blur && (a.tagName === 'TEXTAREA' || a.tagName === 'INPUT')) a.blur();
+}
+
 // Долгое нажатие (600мс) вместо крестиков ✕: разрушительное действие уходит
 // с глаз, хроника остаётся чистой. Сдвиг пальца >8px (скролл) отменяет жест.
 function bindLongPress(el, fn) {
@@ -5491,6 +5527,7 @@ function closeWriteSheet() {
   syncBack();
 }
 function saveWriteSheet() {
+  dropKeyboard();
   const key = dateKey(new Date());
   const note = document.getElementById('wsInput').value.slice(0, 4000);
   const ci = journal.checkins[key] || { date: key };
@@ -5626,6 +5663,7 @@ function renderCiStars() {
 }
 function saveCheckin() {
   if (!ciDate) return;
+  dropKeyboard();
   const ci = journal.checkins[ciDate] || { date: ciDate };
   let note;
   if (ciEditableDay) {
@@ -6103,6 +6141,7 @@ function renderWeekReflect() {
   box.querySelectorAll('textarea').forEach((t) => { autoGrow(t); t.autoGrowFit(); });
 }
 function savePeriodReflection(key, suf) {
+  dropKeyboard();
   const r = {
     week_key: key,
     went_well: document.getElementById('rWell' + suf).value.slice(0, 2000),
@@ -6170,8 +6209,10 @@ function addGoal() {
     meApi('/me/goal', { horizon: 'vision', period_key: '', text: g.text, photo_key: g.photo_key },
       (d) => { if (d && d.id) { g.id = d.id; saveJournalCache(); } });
   }
+  dropKeyboard();
   saveJournalCache();
   inp.value = '';
+  if (inp.autoGrowFit) inp.autoGrowFit(); // выросшее поле возвращается к базовой высоте
   goalPhotoKey = null;
   document.getElementById('goalPhotoBtn').classList.remove('has');
   haptic('success');
@@ -6320,6 +6361,7 @@ function addManifest() {
   const inp = document.getElementById('maniInput');
   const text = inp.value.trim().slice(0, 2000);
   if (!text) { showToast('Опиши, что произошло, — хотя бы строчку'); return; }
+  dropKeyboard();
   const amountRaw = document.getElementById('maniAmount').value;
   const m = {
     id: 'tmp' + Date.now(), date: maniDate || dateKey(new Date()), kind: maniKind, text,
@@ -7103,7 +7145,7 @@ const FOUNDING_SEATS = 43;
 
 // Валютная оплата через Lava.top ($ / €). Ссылки на подписки:
 // стандарт: $39/мес · $329/год; основательницы: $25/мес · $259/год (период выбирается на странице Lava)
-const APP_BUILD = 133; // внутренняя метка (v133: +медитация «Тело — мой дом» (Шаг 1), CSS не менялся; архив — builds/index-v132.html)
+const APP_BUILD = 135; // внутренняя метка (= блок VERUM v135: Android — золото кнопок, спокойные шторки; тексты; архив — builds/index-v134.html)
 
 // клавиатура iOS: поле email в фокусе → шторка поднимается наверх
 document.querySelectorAll('.claim-input').forEach(inp => {
@@ -9511,6 +9553,33 @@ renderTodayCheckin();
   .period-sum textarea { overflow: hidden; }
   .jo-past-hint { line-height: 1.6; }
   .ps-chip .pc-l { line-height: 1.45; padding: 0 2px; }
+
+  /* === VERUM v135 · Android: золото кнопок и спокойные шторки ===
+     Обе правки — по фидбеку Аны с Android. На iPhone ничего не меняется:
+     всё внутри .droid. */
+
+  /* 1) Кнопка «Открыть пространство» была зелёной с золотым контуром.
+     Причина: `.droid .glass-pill { background: … !important }` (лёгкое стекло
+     для Android) перебивал золотую заливку `.glass-pill.gold` — оставался
+     только бордюр. Возвращаем золото ЯВНО и с !important, чтобы порядок
+     блоков больше не решал. Заливка — та же, что на iPhone (эталон). */
+  .droid .glass-pill.gold {
+    background:
+      linear-gradient(115deg, rgba(255,255,255,0.16), transparent 42%),
+      linear-gradient(180deg, rgba(242,218,162,0.74), rgba(196,156,92,0.64) 55%, rgba(148,112,60,0.60)) !important;
+    border: 1px solid rgba(242,224,182,0.85) !important;
+    color: #f6e7c2 !important;
+  }
+
+  /* 2) «Мигает 2 раза» при открытии окна оплаты и 2–3 раза на «картой».
+     На Android WebView полноэкранный слой, который въезжает анимацией
+     (opacity+transform), поднимается в отдельный композиторский слой и
+     перерисовывается рывком. Показываем шторки сразу — без въезда.
+     Прокрутка внутри и всё остальное не трогаются. */
+  .droid .paywall.show { animation: none !important; }
+  .droid .paysheet.show,
+  .droid .paysheet-card { animation: none !important; }
+  .droid .player.show { animation: none !important; }
 </style>
 </body>
 </html>
