@@ -3834,20 +3834,11 @@ const thoughts = [
   "Всё, что ты искала во всех этих словах, смотрело на них твоими глазами.",
 ];
 
-// ⚠️⚠️ ВРЕМЕННО ДЛЯ СКРИНА В ТГ — СНЯТЬ ПОСЛЕ СЪЁМКИ ⚠️⚠️
-// Сдвигает «сегодня» на +1 день: дата в шапке и мысль дня показывают завтрашние.
-// Чтобы вернуть как было — поставить 0 (используется здесь и в блоке даты ниже).
-const DEMO_DAY_SHIFT = 1;
-// И приколотая мысль для того же скрина: номер из банка (0 = как обычно, по дню).
-// 219 = «Мечта — это память о том, что уже существует. Ты вспоминаешь будущее.»
-const DEMO_THOUGHT = 219;
-
 // мысль дня — стабильна в течение суток, меняется ежедневно
 // псевдослучайный порядок: полный цикл из 365 мыслей без повторов, вперемешку по темам
-const dayNumber = Math.floor(Date.now() / 86400000) + DEMO_DAY_SHIFT;
+const dayNumber = Math.floor(Date.now() / 86400000);
 const dayIndex = (dayNumber * 199) % thoughts.length;
-document.getElementById('thoughtText').textContent =
-  '«' + thoughts[DEMO_THOUGHT ? DEMO_THOUGHT - 1 : dayIndex] + '»';
+document.getElementById('thoughtText').textContent = '«' + thoughts[dayIndex] + '»';
 
 // ===== STORAGE =====
 let sessions = [];
@@ -3879,11 +3870,8 @@ function saveSessions() {
 const months = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
 const days = ['воскресенье','понедельник','вторник','среда','четверг','пятница','суббота'];
 const now = new Date();
-// ⚠️ ВРЕМЕННО ДЛЯ СКРИНА: дата берётся со сдвигом DEMO_DAY_SHIFT (см. блок «мысль дня»).
-// Вернуть как было — DEMO_DAY_SHIFT = 0.
-const nowShown = new Date(now.getTime() + DEMO_DAY_SHIFT * 86400000);
 document.getElementById('todayDate').textContent =
-  days[nowShown.getDay()] + ', ' + nowShown.getDate() + ' ' + months[nowShown.getMonth()];
+  days[now.getDay()] + ', ' + now.getDate() + ' ' + months[now.getMonth()];
 
 // ===== СКРОЛЛ: возврат шапки на место (v137) =====
 // Единственный реальный скроллер приложения — #scrollRoot: у html/body стоит
@@ -7476,7 +7464,7 @@ const FOUNDING_SEATS = 43;
 
 // Валютная оплата через Lava.top ($ / €). Ссылки на подписки:
 // стандарт: $39/мес · $329/год; основательницы: $25/мес · $259/год (период выбирается на странице Lava)
-const APP_BUILD = 139; // внутренняя метка (v139: шапка под кнопками Telegram — режим определяется замером, не флагом isFullscreen; метки блоков у openPaywall; очистка verum_wipe138. ⚠️ активны DEMO_DAY_SHIFT=1 и DEMO_THOUGHT=219 — снять)
+const APP_BUILD = 139; // внутренняя метка (v139: 365 мыслей v2, шапка под кнопками Telegram — режим определяется замером, а не флагом isFullscreen; сброс прокрутки при смене вкладки; метки блоков у openPaywall; разовая очистка аккаунта Аны verum_wipe138)
 
 // клавиатура iOS: поле email в фокусе → шторка поднимается наверх
 document.querySelectorAll('.claim-input').forEach(inp => {
