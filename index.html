@@ -3312,6 +3312,45 @@ if (tg) {
     }
   } catch (e) {}
 
+  // v139: «во весь экран» определяем ДВУМЯ способами. Раньше минимум отступа
+  // применялся только `if (tg.isFullscreen)` — а на аппарате Аны этот флаг не
+  // поднимался (iOS присылает лишь высоту статус-бара, ряд кнопок в инсет не
+  // входит). Минимум не срабатывал, и слово VERUM вставало ровно под
+  // плавающими кнопками Telegram. Второй признак — замер: если окно занимает
+  // экран целиком, значит кнопки Telegram лежат ПОВЕРХ нас.
+  function isOverlayMode() {
+    try {
+      if (tg.isFullscreen) return true;
+      const sh = (window.screen && window.screen.height) || 0;
+      return sh > 0 && window.innerHeight >= sh - 40;
+    } catch (e) { return false; }
+  }
+
+  // v139: последняя проверка — глазами, а не по API. Смотрим, где на самом деле
+  // оказалось слово VERUM, и добираем недостающее. Клиенты присылают инсеты
+  // по-разному, а замер не врёт: сколько бы ни насчитали env() и переменная,
+  // итог доводится ровно до need. Функция только ДОБАВЛЯЕТ и запоминает
+  // найденный пол, ниже которого applySafeArea больше не опускается, — поэтому
+  // не зацикливается и не даёт «прыжка» отступа туда-обратно.
+  function guardHeader() {
+    try {
+      if (!isOverlayMode()) return;
+      const root = document.getElementById('scrollRoot');
+      if (root && root.scrollTop > 0) return;   // мерить можно только от верха ленты
+      const wm = document.querySelector('.wordmark');
+      if (!wm) return;
+      const need = tg.platform === 'android' ? 88 : 100; // низ ряда кнопок Telegram + воздух
+      const gap = need - wm.getBoundingClientRect().top;
+      if (gap < 1) return;
+      const cur = parseFloat(getComputedStyle(document.documentElement)
+        .getPropertyValue('--tg-content-safe-area-inset-top')) || 0;
+      const next = Math.round(cur + gap);
+      guardHeader._floor = next;
+      applySafeArea._top = next;
+      document.documentElement.style.setProperty('--tg-content-safe-area-inset-top', next + 'px');
+    } catch (e) {}
+  }
+
   // сейф-зоны: берём напрямую из API (CSS-переменные Telegram приходят не на всех клиентах)
   function applySafeArea() {
     try {
@@ -3322,13 +3361,17 @@ if (tg) {
       // ПОВЕРХ приложения. iOS часто присылает только высоту статус-бара (~47–59px)
       // без высоты ряда кнопок — прежняя проверка top < 40 это пропускала,
       // и кнопки плеера прятались под стрелками. Теперь минимум = полный ряд.
+      const fs = isOverlayMode();
       const minTop = tg.platform === 'ios' ? 102 : 86;
-      if (tg.isFullscreen && top < minTop) top = minTop;
-      if (tg.isFullscreen) top += 6; // воздух под кнопками Telegram
+      if (fs && top < minTop) top = minTop;
+      if (fs) top += 6; // воздух под кнопками Telegram
       const bottom = (ca.bottom || 0);
       // защита: в полноэкранном режиме отступ не может резко схлопнуться —
       // Telegram иногда присылает пустые инсеты при закрытии окон
       if (top < 40 && (applySafeArea._last || 0) >= 40) top = applySafeArea._last;
+      // v139: пол, найденный замером, — ниже него не опускаемся никогда,
+      // иначе шапка ныряла бы обратно под кнопки на каждом событии Telegram
+      if (guardHeader._floor && top < guardHeader._floor) top = guardHeader._floor;
       applySafeArea._last = top;
       // v135: переменные переписываем ТОЛЬКО когда значение реально изменилось.
       // Раньше каждый вызов (а идут они очередью: событие Telegram + __reapplySafe
@@ -3343,10 +3386,17 @@ if (tg) {
         applySafeArea._bottom = bottom;
         document.documentElement.style.setProperty('--tg-content-safe-area-inset-bottom', bottom + 'px');
       }
+      // v139: даём кадр на раскладку и проверяем замером — так guardHeader
+      // подключается ко ВСЕМ путям вызова разом (события Telegram, возвраты,
+      // закрытие плеера и шторки оплаты), без правки каждого места
+      setTimeout(guardHeader, 60);
     } catch (e) {}
   }
   applySafeArea();
   setTimeout(applySafeArea, 400); // повтор после входа в полноэкранный режим
+  // шапка выезжает анимацией rise (задержка 150мс + 900мс) — мерим, когда она села
+  setTimeout(guardHeader, 1300);
+  setTimeout(guardHeader, 2600);
   window.__reapplySafe = function () { applySafeArea(); setTimeout(applySafeArea, 350); };
   try {
     tg.onEvent('safeAreaChanged', applySafeArea);
@@ -7426,7 +7476,7 @@ const FOUNDING_SEATS = 43;
 
 // Валютная оплата через Lava.top ($ / €). Ссылки на подписки:
 // стандарт: $39/мес · $329/год; основательницы: $25/мес · $259/год (период выбирается на странице Lava)
-const APP_BUILD = 138; // внутренняя метка (v138: метки блоков у openPaywall для пульта, полная предзапусковая очистка аккаунта Аны verum_wipe138, фикс шапки под кнопками Telegram. ⚠️ активны DEMO_DAY_SHIFT=1 и DEMO_THOUGHT=219 — снять)
+const APP_BUILD = 139; // внутренняя метка (v139: шапка под кнопками Telegram — режим определяется замером, не флагом isFullscreen; метки блоков у openPaywall; очистка verum_wipe138. ⚠️ активны DEMO_DAY_SHIFT=1 и DEMO_THOUGHT=219 — снять)
 
 // клавиатура iOS: поле email в фокусе → шторка поднимается наверх
 document.querySelectorAll('.claim-input').forEach(inp => {
