@@ -6975,35 +6975,59 @@ function navScreen() {
   const el = document.querySelector('.screen.active');
   return el ? el.id.replace('screen-', '') : 'today';
 }
-document.addEventListener('visibilitychange', () => {
-  if (!document.hidden) { navSince = Date.now(); return; }
-  navTick();
-  const total = Object.values(navTime).reduce((a, b) => a + b, 0);
-  if (!total || !tg || !tg.initData) return;
+// v141: раньше время уходило ТОЛЬКО при сворачивании — пока женщина внутри,
+// в пульте по ней был ноль, а если она закрывала приложение крестиком или
+// свайпом, время пропадало совсем. Теперь тот же свод уходит ещё и пульсом
+// раз в минуту, поэтому пульт показывает живую картину, а потеря при жёстком
+// закрытии — максимум последняя минута.
+function flushNav(force) {
   try {
+    navTick();
+    const total = Object.values(navTime).reduce((a, b) => a + b, 0);
+    if (!tg || !tg.initData) return;
+    if (total < (force ? 1 : 20)) return;   // пульсом не шумим из-за пары секунд
     fetch(WORKER_URL + '/stat', {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, keepalive: true,
       body: JSON.stringify({ init: tg.initData, ev: 'nav', screens: navTime }),
-    });
+    }).catch(() => {});
     for (const k in navTime) navTime[k] = 0;
   } catch (e) {}
+}
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) {
+    navSince = Date.now();
+    // вернулась из фона: практика могла играть в наушниках — доложим прослушанное
+    if (currentMed && audio && audio.duration) sendStat('tick');
+    return;
+  }
+  flushNav(true);
 });
+window.addEventListener('pagehide', () => flushNav(true));
+// пульс: раз в минуту, только когда экран открыт. В фоне iOS таймеры морозит —
+// это нормально, накопленное уедет при возврате или сворачивании.
+setInterval(() => {
+  if (document.hidden) return;
+  flushNav(false);
+  if (currentMed && audio && audio.duration) sendStat('tick');
+}, 60000);
 function sendStat(ev) {
   try {
     if (!currentMed || !tg || !tg.initData) return;
     const body = { init: tg.initData, ev: ev, file: currentMed.file, name: currentMed.name,
       played: 0, dur: audio.duration || 0 };
-    if (ev === 'end') {
+    if (ev === 'end' || ev === 'tick') {
       if (!audio.duration) return;
       // v140: раньше тут стоял одноразовый латч statEndSent — первое 'end'
       // закрывало практику навсегда. Свернула на третьей минуте, вернулась и
       // дослушала 21 — засчитывались те самые три. Теперь каждое 'end' досылает
       // ТОЛЬКО новые секунды, поэтому повторы безопасны и ничего не пропадает.
       const delta = Math.max(0, playedSec - sentSec);
-      if (delta < 1 && endAnySent) return;      // нового нет — молчим
+      // v141: 'tick' — промежуточный доклад прослушанного (пульс раз в минуту и
+      // возврат из фона). Он НЕ является точкой остановки, поэтому в карту
+      // «где бросают» не попадает — это решает воркер по полю ev.
+      if (delta < 1 && (ev === 'tick' || endAnySent)) return;
       sentSec = playedSec;
-      endAnySent = true;
-      statEndSent = true;
+      if (ev === 'end') { endAnySent = true; statEndSent = true; }
       const done = !doneSent && audio.duration > 60 && playedSec / audio.duration >= 0.8;
       if (done) doneSent = true;
       body.played = Math.round(delta);                                    // сколько добавить к минутам
@@ -7500,7 +7524,7 @@ const FOUNDING_SEATS = 43;
 
 // Валютная оплата через Lava.top ($ / €). Ссылки на подписки:
 // стандарт: $39/мес · $329/год; основательницы: $25/мес · $259/год (период выбирается на странице Lava)
-const APP_BUILD = 140; // внутренняя метка (v140: честные минуты практик — реально прослушанное вместо позиции ползунка, дельта вместо одноразового латча, фиксация с паузы и на pagehide. Требует воркер v30+)
+const APP_BUILD = 141; // внутренняя метка (v141: время по вкладкам уходит пульсом раз в минуту, а не только при сворачивании; прослушанное в фоне докладывается при возврате. Требует воркер v32+)
 
 // клавиатура iOS: поле email в фокусе → шторка поднимается наверх
 document.querySelectorAll('.claim-input').forEach(inp => {
