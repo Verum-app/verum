@@ -6916,7 +6916,26 @@ function showToast(msg, gold, ms) {
 }
 
 // анонимная статистика для Анны: что слушают и дослушивают ли
+// v140: считаем РЕАЛЬНО прослушанные секунды, а не позицию ползунка.
+//  playedSec — накоплено за практику (перемотка не добавляет);
+//  sentSec   — сколько уже отправлено: шлём дельту, поэтому повторные 'end'
+//              безопасны и ничего не теряется при сворачивании приложения;
+//  doneSent  — «дослушано» засчитываем один раз за практику;
+//  lastTick  — прошлая позиция, чтобы отличить проигрывание от перемотки.
 let statEndSent = false;
+let playedSec = 0, sentSec = 0, lastTick = 0, doneSent = false, endAnySent = false;
+
+// Отдельный слушатель, чтобы не вмешиваться в отрисовку обоих плееров.
+// Шаг между тиками меньше 2 секунд — обычное проигрывание, копим. Больше или
+// назад — перемотка: позицию запоминаем, прослушанное время не растёт.
+audio.addEventListener('timeupdate', () => {
+  const t = audio.currentTime || 0;
+  const step = t - lastTick;
+  if (step > 0 && step < 2) playedSec += step;
+  lastTick = t;
+});
+audio.addEventListener('play', () => { lastTick = audio.currentTime || 0; });
+audio.addEventListener('seeked', () => { lastTick = audio.currentTime || 0; });
 
 // Пульс открытия приложения (анонимный счётчик дня + «когда была» в карточке):
 // одно событие на запуск — для метрик DAU и «кто сейчас пользуется»
@@ -6931,9 +6950,13 @@ try {
 
 // Точка прерывания: свернула приложение с играющей практикой — фиксируем,
 // на какой минуте остановилась (для карты «где бросают практику»)
-document.addEventListener('visibilitychange', () => {
-  if (document.hidden && currentMed && audio && !audio.paused && !statEndSent) sendStat('end');
-});
+// v140: условия !audio.paused и !statEndSent убраны — на паузе прослушанное
+// тоже надо доложить, а повторные отправки теперь безопасны (шлём дельту).
+// pagehide добавлен как более надёжный сигнал: при жёстком закрытии Mini App
+// visibilitychange срабатывает не всегда.
+const flushMedStat = () => { if (currentMed && audio && audio.duration) sendStat('end'); };
+document.addEventListener('visibilitychange', () => { if (document.hidden) flushMedStat(); });
+window.addEventListener('pagehide', flushMedStat);
 
 // Время по вкладкам: копим секунды на каждой (today/library/timer/path),
 // шлём ОДНИМ сводным событием при сворачивании — без спама сети на каждый переход
@@ -6968,22 +6991,29 @@ document.addEventListener('visibilitychange', () => {
 function sendStat(ev) {
   try {
     if (!currentMed || !tg || !tg.initData) return;
+    const body = { init: tg.initData, ev: ev, file: currentMed.file, name: currentMed.name,
+      played: 0, dur: audio.duration || 0 };
     if (ev === 'end') {
-      if (statEndSent || !audio.duration) return;
+      if (!audio.duration) return;
+      // v140: раньше тут стоял одноразовый латч statEndSent — первое 'end'
+      // закрывало практику навсегда. Свернула на третьей минуте, вернулась и
+      // дослушала 21 — засчитывались те самые три. Теперь каждое 'end' досылает
+      // ТОЛЬКО новые секунды, поэтому повторы безопасны и ничего не пропадает.
+      const delta = Math.max(0, playedSec - sentSec);
+      if (delta < 1 && endAnySent) return;      // нового нет — молчим
+      sentSec = playedSec;
+      endAnySent = true;
       statEndSent = true;
+      const done = !doneSent && audio.duration > 60 && playedSec / audio.duration >= 0.8;
+      if (done) doneSent = true;
+      body.played = Math.round(delta);                                    // сколько добавить к минутам
+      body.total = Math.round(playedSec);                                 // реально прослушано всего
+      body.pos = audio.duration ? (audio.currentTime || 0) / audio.duration : 0;  // докуда доехала
+      body.done = done;                                                   // «дослушано» — один раз
     }
     fetch(WORKER_URL + '/stat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      keepalive: true,
-      body: JSON.stringify({
-        init: tg.initData,
-        ev: ev,
-        file: currentMed.file,
-        name: currentMed.name,
-        played: audio.currentTime || 0,
-        dur: audio.duration || 0,
-      }),
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, keepalive: true,
+      body: JSON.stringify(body),
     }).catch(() => {});
   } catch (e) {}
 }
@@ -7014,7 +7044,8 @@ function paintSeek(el) {
 }
 
 function playMeditation(m) {
-  if (currentMed && !audio.paused) sendStat('end'); // сменила практику на середине — фиксируем прослушанное
+  // v140: убрано условие !audio.paused — уход С ПАУЗЫ терял всё прослушанное
+  if (currentMed) sendStat('end'); // сменила практику на середине — фиксируем прослушанное
   ['fpProgress', 'playerProgress'].forEach(id => {
     const el = document.getElementById(id);
     el.value = 0;
@@ -7023,6 +7054,7 @@ function playMeditation(m) {
   currentMed = m;
   medSaved = false;
   statEndSent = false;
+  playedSec = 0; sentSec = 0; lastTick = 0; doneSent = false; endAnySent = false;   // v140
   sendStat('start');
   const init = tg ? encodeURIComponent(tg.initData || '') : '';
   // поддержка двух режимов: Worker (/audio/...) и временный публичный r2.dev (прямой путь)
@@ -7078,6 +7110,7 @@ audio.addEventListener('timeupdate', () => {
 
 document.getElementById('playerProgress').addEventListener('input', e => {
   if (isFinite(audio.duration)) audio.currentTime = (e.target.value / 100) * audio.duration;
+  lastTick = audio.currentTime || 0;   // v140: перемотка — не прослушанное время
   paintSeek(e.target);
 });
 
@@ -7115,7 +7148,9 @@ audio.addEventListener('ended', () => {
 function saveMedSession(full) {
   // записываем сессию, если прослушано больше 3 минут
   if (!currentMed || medSaved) return;
-  const mins = Math.round((full ? audio.duration : audio.currentTime) / 60);
+  // v140: по реально прослушанному, а не по позиции ползунка — иначе перемотка
+  // в конец записывала в дневник практику, которую женщина не слушала
+  const mins = Math.round((full ? audio.duration : Math.max(playedSec, 0)) / 60);
   if (mins >= 3) {
     medSaved = true;
     sessions.unshift({ date: new Date().toISOString(), type: currentMed.name, minutes: mins, step: currentMed.step || (currentMed.potokDay ? 'Игра ПОТОК' : '') });
@@ -7193,6 +7228,7 @@ audio.addEventListener('pause', syncPlayIcons);
 
 document.getElementById('fpProgress').addEventListener('input', e => {
   if (isFinite(audio.duration)) audio.currentTime = (e.target.value / 100) * audio.duration;
+  lastTick = audio.currentTime || 0;   // v140: перемотка — не прослушанное время
   paintSeek(e.target);
 });
 
@@ -7464,7 +7500,7 @@ const FOUNDING_SEATS = 43;
 
 // Валютная оплата через Lava.top ($ / €). Ссылки на подписки:
 // стандарт: $39/мес · $329/год; основательницы: $25/мес · $259/год (период выбирается на странице Lava)
-const APP_BUILD = 139; // внутренняя метка (v139: 365 мыслей v2, шапка под кнопками Telegram — режим определяется замером, а не флагом isFullscreen; сброс прокрутки при смене вкладки; метки блоков у openPaywall; разовая очистка аккаунта Аны verum_wipe138)
+const APP_BUILD = 140; // внутренняя метка (v140: честные минуты практик — реально прослушанное вместо позиции ползунка, дельта вместо одноразового латча, фиксация с паузы и на pagehide. Требует воркер v30+)
 
 // клавиатура iOS: поле email в фокусе → шторка поднимается наверх
 document.querySelectorAll('.claim-input').forEach(inp => {
