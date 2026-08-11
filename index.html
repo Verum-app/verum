@@ -9972,6 +9972,24 @@ renderTodayCheckin();
      кромку: видно, что кликабельна, но иерархия сохранена.
      Дописано новым блоком, старые правила не переписывались. */
 
+  /* Обе карточки — одна типографика: название тем же весом 500, что цена и
+     подарок. Раньше название шло 400 и выпадало из ряда (запрос Аны 10.08). */
+  .plan-card .plan-name { font-weight: 500 !important; }
+
+  /* Зачёркнутая цена на тёмной карточке — зеркало золотой: та же логика, но
+     светлеем, а не темним. У .plan-old есть своя opacity 0.78 поверх цвета,
+     поэтому её тоже снимаем, иначе правка цвета почти не видна. */
+  .plan-card .plan-old {
+    color: rgba(242,224,182,0.66) !important;
+    opacity: 1 !important;
+    font-weight: 500 !important;
+    text-decoration-color: rgba(242,224,182,0.52) !important;
+  }
+  /* подпись и «в месяц» — тёплый приглушённый тон вместо холодного серого,
+     чтобы карточки звучали одинаково */
+  .plan-card .plan-note,
+  .plan-card .plan-per { color: rgba(226,214,190,0.62) !important; }
+
   /* месяц — вторичное действие: золотая кромка и золотая цена */
   .plan-card {
     border: 1.5px solid rgba(242,224,182,0.66) !important;
@@ -10003,6 +10021,9 @@ renderTodayCheckin();
     color: #10262b !important;
     text-shadow: 0 1px 0 rgba(255,252,240,0.30) !important;
   }
+  /* Название шло весом 400, а цена и подарок — 500, из-за чего «Подписка — год»
+     выглядела тоньше всего на карточке. Выравниваем на 500 (запрос Аны 10.08). */
+  .plan-card.best .plan-name { font-weight: 500 !important; }
   .plan-card.best .plan-note,
   .plan-card.best .plan-per { color: rgba(16,38,43,0.72) !important; }
   .plan-card.best .plan-gift {
@@ -10011,7 +10032,14 @@ renderTodayCheckin();
     text-shadow: 0 1px 0 rgba(255,252,240,0.28) !important;
   }
   .plan-card.best .gift-ic { color: #10262b !important; }
-  .plan-card.best .plan-old { color: rgba(16,38,43,0.55) !important; }
+  /* Зачёркнутая цена почти пропадала: поверх цвета лежала ещё и opacity 0.78,
+     в сумме выходило около 0.43. Гасим прозрачность, темним и добавляем вес. */
+  .plan-card.best .plan-old {
+    color: rgba(16,38,43,0.80) !important;
+    opacity: 1 !important;
+    font-weight: 500 !important;
+    text-decoration-color: rgba(16,38,43,0.62) !important;
+  }
   /* бейдж «Лучшая цена» на золоте — тёмный, иначе сливается с заливкой */
   .plan-card.best .plan-badge {
     background: linear-gradient(180deg, rgba(9,30,34,0.97), rgba(4,16,20,0.99)) !important;
