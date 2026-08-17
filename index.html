@@ -3001,7 +3001,7 @@
     <div class="pw-list">
       <div class="pw-item">Все авторские медитации библиотеки</div>
       <div class="pw-item">Три дневника: мыслей, намерений, манифестаций</div>
-      <div class="pw-item">Каждый месяц — новая медитация</div>
+      <div class="pw-item">Каждый месяц — новые медитации</div>
     </div>
 
     <div class="pw-more" id="pwMore" onclick="pwMore()">что ещё внутри →</div>
@@ -7553,7 +7553,7 @@ const FOUNDING_SEATS = 43;
 
 // Валютная оплата через Lava.top ($ / €). Ссылки на подписки:
 // стандарт: $39/мес · $329/год; основательницы: $25/мес · $259/год (период выбирается на странице Lava)
-const APP_BUILD = 144; // внутренняя метка (v144: пейволл — цена строкой под заголовком, тарифы над списком, месяц золотом, год шампанью)
+const APP_BUILD = 145; // внутренняя метка (v145: цены на Manrope — цифры не скачут; год вернулся в тил-стекло, золото осталось месяцу)
 
 // клавиатура iOS: поле email в фокусе → шторка поднимается наверх
 document.querySelectorAll('.claim-input').forEach(inp => {
@@ -10197,6 +10197,101 @@ renderTodayCheckin();
   .paywall .plan-card.best .plan-badge {
     background: linear-gradient(180deg, rgba(9,30,34,0.97), rgba(4,16,20,0.99)) !important;
     border-color: rgba(242,224,182,0.7) !important;
+    color: #f6e7c2 !important;
+  }
+
+  /* === VERUM v145 · цифры перестали скакать, год отделён от месяца ===
+     Правки по живым скринам Аны 17.08 (сборка 144 на телефоне).
+
+     1) ЦИФРЫ. В Cormorant Garamond цифры старостильные: 6 и 9 уходят под
+     базовую линию, 1 и 2 ниже прописных — в ценах это читается как «прыгают».
+     Переключить их внутри шрифта нельзя: в подключённых `fonts/cormorant-*.woff2`
+     из OpenType-фич есть только `liga` (проверено fontTools), маюскульных цифр
+     в файле нет. Поэтому все цены переведены на Manrope 500 — ровная базовая
+     линия, плотнее по весу, а рядом с серифным названием получается пара
+     «имя серифом — число гротеском». Серифными цифры остаются везде, кроме цен.
+
+     2) ЦВЕТ. Месяц и год оба были золотыми и отличались слишком слабо, чтобы
+     это читалось замыслом. Золото оставлено одному месяцу — как единственная
+     точка внимания на экране (канон), год вернулся в тил-стекло с золотой
+     кромкой: кликабельность видна по кромке и золотой цене, спор двух золотых
+     пятен снят. Буквальный тон `.ps-btn` для года не подошёл: его градиент
+     полупрозрачный, и на карточке такого размера низ уходит в тёмное — тёмный
+     текст там теряется, а кремовый «плывёт» на светлом верху (это же проверялось
+     в v143). */
+
+  /* ── цены: Manrope, ровная линия цифр ─────────────────────────────────── */
+  .plan-price,
+  .plan-old,
+  .pw-priceline,
+  .ps-price {
+    font-family: 'Manrope', sans-serif !important;
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum' 1;
+  }
+  /* Кегль подобран так, чтобы строка цены осталась той же ширины, что была
+     серифом: Manrope при равном размере заметно шире, и на 18.5px подпись
+     «цена основательниц · навсегда» переносилась на вторую строку. */
+  .plan-price {
+    font-size: 16px !important;
+    font-weight: 500 !important;
+    letter-spacing: 0 !important;
+  }
+  .plan-old {
+    font-size: 11.5px !important;
+    font-weight: 400 !important;
+    letter-spacing: 0 !important;
+    margin-top: 4px !important;
+  }
+  .pw-priceline {
+    font-size: 19px !important;
+    font-weight: 500 !important;
+    letter-spacing: 0.02em !important;
+  }
+  .ps-price { font-size: 18px !important; font-weight: 500 !important; }
+
+  /* шторка оплаты и выбор валюты — те же ровные цифры, вес плотнее */
+  .ps-btn { font-weight: 500 !important; font-variant-numeric: tabular-nums; }
+  .cur-pill { font-weight: 500 !important; font-variant-numeric: tabular-nums; }
+  .lava-gift { font-variant-numeric: tabular-nums; }
+
+  /* ── ГОД: тил-стекло с золотой кромкой ────────────────────────────────── */
+  .paywall .plan-card.best {
+    border: 1.5px solid rgba(242,224,182,0.66) !important;
+    background: linear-gradient(180deg, rgba(24,50,54,0.72), rgba(12,26,29,0.82)) !important;
+    box-shadow:
+      0 12px 40px rgba(0,4,6,0.45),
+      inset 0 1px 0 rgba(255,255,255,0.18),
+      inset 0 0 22px rgba(242,224,182,0.06),
+      0 0 20px rgba(234,206,150,0.18) !important;
+  }
+  .paywall .plan-card.best .plan-name {
+    color: #f2f6f6 !important;
+    text-shadow: none !important;
+  }
+  .paywall .plan-card.best .plan-price {
+    color: #f6e7c2 !important;
+    text-shadow: 0 0 18px rgba(201,174,125,0.3) !important;
+  }
+  .paywall .plan-card.best .plan-note,
+  .paywall .plan-card.best .plan-per {
+    color: rgba(226,214,190,0.62) !important;
+    font-weight: 400 !important;
+  }
+  .paywall .plan-card.best .plan-gift {
+    color: #f6e7c2 !important;
+    font-weight: 400 !important;
+    text-shadow: none !important;
+  }
+  .paywall .plan-card.best .gift-ic { color: #f6e7c2 !important; }
+  .paywall .plan-card.best .plan-old {
+    color: rgba(242,224,182,0.66) !important;
+    opacity: 1 !important;
+    text-decoration-color: rgba(242,224,182,0.52) !important;
+  }
+  .paywall .plan-card.best .plan-badge {
+    background: linear-gradient(180deg, rgba(16,68,76,0.95), rgba(5,22,26,0.98)) !important;
+    border-color: rgba(201,174,125,0.6) !important;
     color: #f6e7c2 !important;
   }
 
