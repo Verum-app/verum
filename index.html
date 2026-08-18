@@ -3243,7 +3243,7 @@
     <div class="comp-icon">✦</div>
     <h2>Тело вспомнило дом</h2>
     <p>Это первый шаг из пяти: тело. Дальше — психика, идентичность, Мета-Я и управление реальностью. Весь путь открыт в пространстве VERUM.</p>
-    <button class="glass-pill gold" onclick="document.getElementById('giftBridge').classList.remove('show'); openPaywall('gift-body');">Открыть пространство VERUM</button>
+    <button class="glass-pill gold" onclick="document.getElementById('giftBridge').classList.remove('show'); openPaywall('gift-body');">Открыть все медитации</button>
     <div class="comp-share" onclick="document.getElementById('giftBridge').classList.remove('show'); openFeedback('gift-body');">Поделитесь впечатлениями 🤍</div>
     <div class="comp-later" onclick="document.getElementById('giftBridge').classList.remove('show')" style="margin-top:4px;font-size:12px;color:var(--faint);cursor:pointer;">позже</div>
   </div>
@@ -6969,6 +6969,7 @@ audio.addEventListener('error', () => {
 });
 let currentMed = null;
 let medSaved = false;
+let bridgeShown = false;   // v148: мостик к подписке показывается один раз за практику
 
 function fmt(t) {
   if (!isFinite(t)) return '–:––';
@@ -7151,6 +7152,7 @@ function playMeditation(m) {
   });
   currentMed = m;
   medSaved = false;
+  bridgeShown = false;
   statEndSent = false;
   playedSec = 0; sentSec = 0; lastTick = 0; doneSent = false; endAnySent = false;   // v140
   sendStat('start');
@@ -7203,6 +7205,15 @@ audio.addEventListener('timeupdate', () => {
     if (currentMed && currentMed.potokDay && audio.currentTime / audio.duration >= 0.8) {
       markPotokDone(currentMed.potokDay);
     }
+    // v148: мостик к подписке всплывает за 15 секунд ДО конца, а практика
+    // продолжает звучать. В финале играет музыка, и женщина часто закрывает
+    // плеер или ставит паузу за несколько секунд до самого конца — на событии
+    // 'ended' мостик до неё просто уже не доходил.
+    if (!subActive && currentMed && !bridgeShown && audio.duration - audio.currentTime <= 15) {
+      const el = currentMed.file === GIFT_FILE ? 'giftBridge'
+        : currentMed.potokDay === 5 ? 'potokBridge' : '';
+      if (el) { bridgeShown = true; document.getElementById(el).classList.add('show'); }
+    }
   }
 });
 
@@ -7223,13 +7234,13 @@ audio.addEventListener('ended', () => {
     // мостик к подписке — только тем, у кого её ещё нет;
     // подписчица, переслушивая день 5, видит обычное завершение
     if (currentMed.potokDay === 5 && !subActive) {
-      document.getElementById('potokBridge').classList.add('show');
+      if (!bridgeShown) { bridgeShown = true; document.getElementById('potokBridge').classList.add('show'); }
       return;
     }
   }
   // подарок недели: тот же мостик к подписке, что после 5-го дня ПОТОКа
   if (currentMed && currentMed.file === GIFT_FILE && !subActive) {
-    document.getElementById('giftBridge').classList.add('show');
+    if (!bridgeShown) { bridgeShown = true; document.getElementById('giftBridge').classList.add('show'); }
     return;
   }
   // предложить добавить в избранное — только если практики там ещё нет
@@ -7619,7 +7630,7 @@ const FOUNDING_SEATS = 43;
 
 // Валютная оплата через Lava.top ($ / €). Ссылки на подписки:
 // стандарт: $39/мес · $329/год; основательницы: $25/мес · $259/год (период выбирается на странице Lava)
-const APP_BUILD = 147; // внутренняя метка (v147: «Тело — мой дом» бесплатна 7 дней, закреплена практикой дня 17–18.08, мостик к подписке в конце)
+const APP_BUILD = 148; // внутренняя метка (v148: поля в окне завершения, мостик за 15 секунд до конца практики)
 
 // клавиатура iOS: поле email в фокусе → шторка поднимается наверх
 document.querySelectorAll('.claim-input').forEach(inp => {
@@ -10432,6 +10443,28 @@ renderTodayCheckin();
   }
   /* чип стоит в потоке под описанием: абсолютным справа он накрывал
      длительность и сердечко — правый край карточки уже занят */
+
+  /* === VERUM v148 · поля в окне завершения и мостик за 15 секунд ===
+     По скрину Аны с телефона: у карточки завершения внутренних полей нет вовсе —
+     `.completion-inner` несёт только класс `glass-card`, а он задаёт фон, кромку
+     и скругление, но padding в нём отсутствует. Текст упирался в края карточки.
+     Теперь поля заданы явно, ширина ограничена — на большом экране карточка
+     перестаёт растягиваться во всю ширину оверлея. */
+
+  .completion-inner {
+    width: 100%;
+    max-width: 358px;
+    padding: 32px 26px 26px;
+  }
+  .completion-inner .comp-icon { margin-bottom: 4px; }
+  /* длинная надпись «Открыть пространство VERUM» шире карточки, ставшей уже —
+     разрешаем кнопке ужиматься в границы и переносить строку */
+  .completion-inner .glass-pill {
+    max-width: 100%;
+    box-sizing: border-box;
+    white-space: normal;
+    line-height: 1.35;
+  }
 
 </style>
 </body>
