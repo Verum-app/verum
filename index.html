@@ -3238,6 +3238,17 @@
   </div>
 </div>
 
+<div class="completion" id="giftBridge">
+  <div class="completion-inner glass-card">
+    <div class="comp-icon">✦</div>
+    <h2>Тело вспомнило дом</h2>
+    <p>Это первый шаг из пяти: тело. Дальше — психика, идентичность, Мета-Я и управление реальностью. Весь путь открыт в пространстве VERUM.</p>
+    <button class="glass-pill gold" onclick="document.getElementById('giftBridge').classList.remove('show'); openPaywall('gift-body');">Открыть пространство VERUM</button>
+    <div class="comp-share" onclick="document.getElementById('giftBridge').classList.remove('show'); openFeedback('gift-body');">Поделитесь впечатлениями 🤍</div>
+    <div class="comp-later" onclick="document.getElementById('giftBridge').classList.remove('show')" style="margin-top:4px;font-size:12px;color:var(--faint);cursor:pointer;">позже</div>
+  </div>
+</div>
+
 <div class="completion" id="wakeModal">
   <div class="completion-orb"><svg viewBox="0 0 64 64" width="46" height="46" xmlns="http://www.w3.org/2000/svg"><g fill="none"><circle cx="32" cy="32" r="21" stroke="rgba(201,174,125,0.35)" stroke-width="1"/><circle cx="32" cy="32" r="13.5" stroke="rgba(224,203,160,0.8)" stroke-width="1.1"/></g><circle cx="32" cy="32" r="7.5" fill="url(#bnCore)"/><rect x="31.55" y="11" width="0.9" height="42" fill="url(#bnRayV)"/><rect x="11" y="31.6" width="42" height="0.8" fill="url(#bnRayH)"/><circle cx="32" cy="32" r="1.7" fill="#fff8e4"/></svg></div>
   <h2>Экран должен гореть</h2>
@@ -3944,10 +3955,59 @@ const meditations = [
   { name: 'Исцеление отношений с мамой', desc: 'Растворение обид · возвращение любви', descLong: 'Самые первые отношения вашей жизни определяют все остальные. Вы бережно отпустите старые обиды и вернёте себе тепло и силу, которые за ними скрыты.\n\nПосле практики: легче дышать, меньше вины и обиды, больше внутренней свободы и гармонии — что бы ни было в прошлом.', dur: '24 мин', level: 'Шаг 2 · Психика', cat: 'Отношения', free: false, file: 'Mom.mp3', step: 'Шаг 2 · Психика' },
 ];
 
+// ===== ПОДАРОК ПЕРВОЙ НЕДЕЛИ =====
+// «Тело — мой дом» открыта бесплатно на 7 дней — второй бесплатный вход после
+// игры ПОТОК. Отсчёт идёт от первого открытия ЭТОЙ сборки, а не от первого
+// захода в приложение: так подарок достаётся и тем, кто пришёл раньше.
+// Срок и файл меняются здесь; чтобы открыть практику навсегда — поставить ей
+// free: true в массиве meditations и убрать её из подарка.
+const GIFT_FILE = 'telodom.mp3';
+const GIFT_DAYS = 7;
+let giftStart = 0;
+try { giftStart = Number(localStorage.getItem('verum_gift_body')) || 0; } catch (e) {}
+if (!giftStart) {
+  giftStart = Date.now();
+  try { localStorage.setItem('verum_gift_body', String(giftStart)); } catch (e) {}
+}
+// облако Telegram: если на другом устройстве подарок начался раньше — берём ту дату,
+// иначе окно продлевалось бы бесконечно при каждой смене телефона
+if (typeof tg !== 'undefined' && tg && tg.CloudStorage) {
+  tg.CloudStorage.getItem('verum_gift_body', (err, val) => {
+    const cloud = Number(val) || 0;
+    if (cloud && cloud < giftStart) {
+      giftStart = cloud;
+      try { localStorage.setItem('verum_gift_body', String(cloud)); } catch (e) {}
+      try { renderMeds(); placeUnlock(); } catch (e) {}
+    } else if (!cloud) {
+      tg.CloudStorage.setItem('verum_gift_body', String(giftStart), () => {});
+    }
+  });
+}
+function giftDaysLeft() {
+  const left = GIFT_DAYS - Math.floor((Date.now() - giftStart) / 86400000);
+  return left > 0 ? left : 0;
+}
+// открыта ли практика без подписки: своя бесплатность или действующий подарок
+function isOpen(m) {
+  return !!(m && (m.free || (m.file === GIFT_FILE && giftDaysLeft() > 0)));
+}
+
 // ===== ПРАКТИКА ДНЯ: автоматическая ротация =====
 // Каждый день показывается следующая медитация из библиотеки по кругу.
 // С 10 медитациями цикл повторяется каждые 10 дней; добавишь новые — цикл удлинится сам.
-const daily = meditations[dayIndex % meditations.length];
+// Отдельные даты можно закрепить вручную — на 17 и 18 августа стоит подарок недели.
+const DAILY_PINNED = {
+  '2026-08-17': 'Тело — мой дом',
+  '2026-08-18': 'Тело — мой дом',
+};
+function todayKeyLocal() {
+  const d = new Date();
+  const p = (n) => String(n).padStart(2, '0');
+  return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
+}
+const pinnedDaily = DAILY_PINNED[todayKeyLocal()];
+const daily = (pinnedDaily && meditations.find(m => m.name === pinnedDaily))
+  || meditations[dayIndex % meditations.length];
 document.getElementById('dailyName').textContent = daily.name;
 document.getElementById('dailyDesc').textContent = daily.desc;
 document.getElementById('dailyDur').textContent = daily.dur.toUpperCase();
@@ -4021,18 +4081,19 @@ function renderMeds() {
       card.className = 'glass-card med-card';
       card.onclick = () => {
       haptic('light');
-      const unlocked = m.free || subActive;
+      const unlocked = isOpen(m) || subActive;
       if (unlocked && m.file) playMeditation(m);
       else if (unlocked) showToast('Эта практика скоро появится ✨');
       else openPaywall('med');
     };
       card.innerHTML = `
-        <div class="med-icon">${(m.free || subActive) ? `<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" style="margin-left:2px"><path d="M7.5 5.2c0-.9 1-1.5 1.8-1L19 11a1.2 1.2 0 0 1 0 2L9.3 19.8c-.8.5-1.8-.1-1.8-1V5.2Z"/></svg>` : '✦'}<span class="step-badge">${stepGlyph(m)}</span></div>
+        <div class="med-icon">${(isOpen(m) || subActive) ? `<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" style="margin-left:2px"><path d="M7.5 5.2c0-.9 1-1.5 1.8-1L19 11a1.2 1.2 0 0 1 0 2L9.3 19.8c-.8.5-1.8-.1-1.8-1V5.2Z"/></svg>` : '✦'}<span class="step-badge">${stepGlyph(m)}</span></div>
         <div class="med-body">
           <div class="med-name">${m.name}</div>
           <div class="med-tags">
             <span class="med-desc">${m.desc}</span>
           </div>
+          ${m.file === GIFT_FILE && !subActive && giftDaysLeft() > 0 ? `<div class="free-chip">подарок · ещё ${giftDaysLeft()} дн.</div>` : ''}
         </div>
         <div class="med-side">
           <svg class="fav-heart${favs.has(m.name) ? ' on' : ''}" viewBox="0 0 24 22" onclick="toggleFav('${m.name.replace(/'/g, "\\'")}', event)">
@@ -4041,7 +4102,7 @@ function renderMeds() {
           <div class="med-dur">${m.dur}</div>
         </div>
         <div class="med-arrow">›</div>
-        ${(m.free || subActive) ? '' : '<div class="lock-chip"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="5" y="10.6" width="14" height="9.8" rx="3.4" stroke="rgba(201,174,125,0.8)" stroke-width="1.5"/><path d="M8.3 10.6V7.9c0-2.3 1.6-4.1 3.7-4.1s3.7 1.8 3.7 4.1v2.7" stroke="rgba(201,174,125,0.8)" stroke-width="1.5" stroke-linecap="round"/><circle cx="12" cy="15.5" r="1.25" fill="rgba(201,174,125,0.85)"/></svg></div>'}
+        ${(isOpen(m) || subActive) ? '' : '<div class="lock-chip"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="5" y="10.6" width="14" height="9.8" rx="3.4" stroke="rgba(201,174,125,0.8)" stroke-width="1.5"/><path d="M8.3 10.6V7.9c0-2.3 1.6-4.1 3.7-4.1s3.7 1.8 3.7 4.1v2.7" stroke="rgba(201,174,125,0.8)" stroke-width="1.5" stroke-linecap="round"/><circle cx="12" cy="15.5" r="1.25" fill="rgba(201,174,125,0.85)"/></svg></div>'}
       `;
       list.appendChild(card);
     });
@@ -7108,7 +7169,7 @@ function playMeditation(m) {
 
 function playDaily() {
   haptic('light');
-  if (!daily.free && !subActive) { openPaywall('daily'); return; }
+  if (!isOpen(daily) && !subActive) { openPaywall('daily'); return; }
   if (daily.file) playMeditation(daily);
   else showToast('Эта практика скоро появится ✨');
 }
@@ -7165,6 +7226,11 @@ audio.addEventListener('ended', () => {
       document.getElementById('potokBridge').classList.add('show');
       return;
     }
+  }
+  // подарок недели: тот же мостик к подписке, что после 5-го дня ПОТОКа
+  if (currentMed && currentMed.file === GIFT_FILE && !subActive) {
+    document.getElementById('giftBridge').classList.add('show');
+    return;
   }
   // предложить добавить в избранное — только если практики там ещё нет
   const cf = document.getElementById('compFav');
@@ -7553,7 +7619,7 @@ const FOUNDING_SEATS = 43;
 
 // Валютная оплата через Lava.top ($ / €). Ссылки на подписки:
 // стандарт: $39/мес · $329/год; основательницы: $25/мес · $259/год (период выбирается на странице Lava)
-const APP_BUILD = 146; // внутренняя метка (v146: год светится золотом от кромки внутрь; тёмный текст месяца уплотнён под инверсию)
+const APP_BUILD = 147; // внутренняя метка (v147: «Тело — мой дом» бесплатна 7 дней, закреплена практикой дня 17–18.08, мостик к подписке в конце)
 
 // клавиатура iOS: поле email в фокусе → шторка поднимается наверх
 document.querySelectorAll('.claim-input').forEach(inp => {
@@ -7713,6 +7779,10 @@ function closeFeedback() {
   // с кнопкой «Открыть пространство VERUM», а не главный экран
   if (fbContext === 'potok5') {
     document.getElementById('potokBridge').classList.add('show');
+    fbContext = 'path';
+  }
+  if (fbContext === 'gift-body') {
+    document.getElementById('giftBridge').classList.add('show');
     fbContext = 'path';
   }
   syncBack();
@@ -10336,6 +10406,32 @@ renderTodayCheckin();
   .paywall .plan-card:not(.best) .plan-old {
     -webkit-text-stroke: 0.2px currentColor;
   }
+
+  /* === VERUM v147 · «Тело — мой дом» открыта на 7 дней ===
+     Второй бесплатный вход после игры ПОТОК (решение Аны 17.08). Практика стоит
+     второй в библиотеке — как и была в массиве, — закреплена практикой дня на
+     17 и 18 августа, а в конце прослушивания показывает тот же мостик к подписке,
+     что и пятый день ПОТОКа.
+     Чип с остатком дней делает подарок видимым: без счётчика окно закрывается
+     молча, и повода вернуться раньше срока просто нет. */
+
+  .free-chip {
+    display: inline-block;
+    margin-top: 7px;
+    padding: 3px 10px;
+    border-radius: 50px;
+    background: linear-gradient(180deg, rgba(16,68,76,0.92), rgba(5,22,26,0.96));
+    border: 1px solid rgba(201,174,125,0.55);
+    color: var(--gold);
+    font-size: 9px;
+    font-weight: 400;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+  /* чип стоит в потоке под описанием: абсолютным справа он накрывал
+     длительность и сердечко — правый край карточки уже занят */
 
 </style>
 </body>
