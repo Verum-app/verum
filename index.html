@@ -10,6 +10,15 @@
      сервис-воркер держит их на телефоне. Два главных подгружаем заранее, без мигания. -->
 <link rel="preload" href="fonts/cormorant-400.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="fonts/manrope-400.woff2" as="font" type="font/woff2" crossorigin>
+<!-- v152: предзагружаются ВСЕ начертания, которые встречаются на первых экранах и
+     на пейволле. Раньше грузились только 400-е, а Cormorant 500, курсив и Manrope
+     300/500 подтягивались в момент показа — с font-display:swap текст успевал
+     нарисоваться запасным шрифтом и через секунду перескакивал в нужный вес.
+     Именно это Ана видела на окне подписки: «сначала тонкие, потом жирнее». -->
+<link rel="preload" href="fonts/cormorant-500.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/cormorant-400-italic.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/manrope-300.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/manrope-500.woff2" as="font" type="font/woff2" crossorigin>
 <!-- Italiana — шрифт буквы V в фирменном знаке (печать манифеста) -->
 <link href="https://fonts.googleapis.com/css2?family=Italiana&display=swap" rel="stylesheet">
 <style>
@@ -7680,7 +7689,7 @@ const FOUNDING_SEATS = 43;
 
 // Валютная оплата через Lava.top ($ / €). Ссылки на подписки:
 // стандарт: $39/мес · $329/год; основательницы: $25/мес · $259/год (период выбирается на странице Lava)
-const APP_BUILD = 151; // внутренняя метка (v151: замер залипания вкладки таймера, :has() заменён классом on-timer)
+const APP_BUILD = 152; // внутренняя метка (v152: снято живое размытие с кнопок таймера, предзагрузка всех начертаний)
 
 // клавиатура iOS: поле email в фокусе → шторка поднимается наверх
 document.querySelectorAll('.claim-input').forEach(inp => {
@@ -10571,6 +10580,37 @@ renderTodayCheckin();
     font-size: 9px;
     vertical-align: super;
     margin-left: 2px;
+  }
+
+  /* === VERUM v152 · таймер перестал залипать: снято живое размытие с мелочи ===
+     Ана: «переключаюсь между вкладками — виснет только таймер, на 2–5 секунд».
+     Причина найдена подсчётом: на этом экране одновременно живут ПЯТНАДЦАТЬ
+     элементов с `backdrop-filter` — переключатель режимов, восемь кнопок
+     длительности и звука, три кнопки управления и сфера. Каждый заставляет
+     WebKit отдельным проходом размывать фон под собой, а фон ещё и анимирован
+     (аврора и зерно). На других вкладках столько живого стекла разом нет.
+
+     Это ровно то, о чём предупреждает канон проекта: «blur — только на больших
+     картах и доке, на мелких и списочных запрещён». Кнопки таймера под правило
+     не попали. Теперь у них плотная подложка вместо размытия — на глаз стекло
+     то же, а проходов размытия на экране остаётся ноль.
+     **Урок: считать элементы с `backdrop-filter` на экране, а не смотреть на
+     каждый по отдельности — цена складывается.** */
+
+  .mode-toggle,
+  .dur-btn,
+  .ctrl-glass,
+  .play-glass {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+  .mode-toggle { background: rgba(14, 34, 40, 0.55) !important; }
+  .dur-btn { background: rgba(18, 42, 48, 0.52) !important; }
+  .dur-btn.active { background: rgba(30, 66, 72, 0.72) !important; }
+  .ctrl-glass { background: rgba(18, 42, 48, 0.62) !important; }
+  .play-glass {
+    background:
+      linear-gradient(180deg, rgba(30, 70, 76, 0.82), rgba(12, 32, 38, 0.88)) !important;
   }
 
 </style>
