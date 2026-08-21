@@ -4003,29 +4003,19 @@ const meditations = [
 // Срок и файл меняются здесь; чтобы открыть практику навсегда — поставить ей
 // free: true в массиве meditations и убрать её из подарка.
 const GIFT_FILE = 'telodom.mp3';
-const GIFT_DAYS = 7;
-let giftStart = 0;
-try { giftStart = Number(localStorage.getItem('verum_gift_body')) || 0; } catch (e) {}
-if (!giftStart) {
-  giftStart = Date.now();
-  try { localStorage.setItem('verum_gift_body', String(giftStart)); } catch (e) {}
-}
-// облако Telegram: если на другом устройстве подарок начался раньше — берём ту дату,
-// иначе окно продлевалось бы бесконечно при каждой смене телефона
-if (typeof tg !== 'undefined' && tg && tg.CloudStorage) {
-  tg.CloudStorage.getItem('verum_gift_body', (err, val) => {
-    const cloud = Number(val) || 0;
-    if (cloud && cloud < giftStart) {
-      giftStart = cloud;
-      try { localStorage.setItem('verum_gift_body', String(cloud)); } catch (e) {}
-      try { renderMeds(); placeUnlock(); } catch (e) {}
-    } else if (!cloud) {
-      tg.CloudStorage.setItem('verum_gift_body', String(giftStart), () => {});
-    }
-  });
-}
+// v154: срок подарка — ОБЩИЙ ДЛЯ ВСЕХ и жёсткий: 27 августа 2026, 23:59 МСК.
+// Именно 27-е, а не 28-е: рассылка уходит 21 августа, и с 21 по 27 включительно
+// получается ровно семь календарных дней — столько, сколько обещано в письме.
+// Раньше отсчёт шёл от первого открытия сборки, то есть у каждой женщины
+// заканчивался в свой день. Под рассылку в канал нужен один срок на всех:
+// в письме и в приложении должна стоять одна и та же дата.
+// МСК = UTC+3, поэтому 23:59:59 по Москве — это 20:59:59 UTC.
+const GIFT_UNTIL = Date.UTC(2026, 7, 27, 20, 59, 59);
+// Синхронизация начала подарка через CloudStorage убрана вместе с индивидуальным
+// отсчётом: срок теперь один для всех, сверять между устройствами нечего.
+// Ключ verum_gift_body от прежней схемы просто перестаёт читаться.
 function giftDaysLeft() {
-  const left = GIFT_DAYS - Math.floor((Date.now() - giftStart) / 86400000);
+  const left = Math.ceil((GIFT_UNTIL - Date.now()) / 86400000);
   return left > 0 ? left : 0;
 }
 // открыта ли практика без подписки: своя бесплатность или действующий подарок
@@ -4040,6 +4030,9 @@ function isOpen(m) {
 const DAILY_PINNED = {
   '2026-08-17': 'Тело — мой дом',
   '2026-08-18': 'Тело — мой дом',
+  // v153: день рассылки в канал и следующий за ним
+  '2026-08-21': 'Тело — мой дом',
+  '2026-08-22': 'Тело — мой дом',
 };
 function todayKeyLocal() {
   const d = new Date();
@@ -4134,7 +4127,7 @@ function renderMeds() {
           <div class="med-tags">
             <span class="med-desc">${m.desc}</span>
           </div>
-          ${m.file === GIFT_FILE && !subActive && giftDaysLeft() > 0 ? `<div class="free-chip">подарок · ещё ${giftDaysLeft()} дн.</div>` : ''}
+          ${m.file === GIFT_FILE && !subActive && giftDaysLeft() > 0 ? `<div class="free-chip">подарок · ${giftDaysLeft()} ${plural3(giftDaysLeft(), 'день', 'дня', 'дней')}</div>` : ''}
         </div>
         <div class="med-side">
           <svg class="fav-heart${favs.has(m.name) ? ' on' : ''}" viewBox="0 0 24 22" onclick="toggleFav('${m.name.replace(/'/g, "\\'")}', event)">
@@ -7689,7 +7682,7 @@ const FOUNDING_SEATS = 43;
 
 // Валютная оплата через Lava.top ($ / €). Ссылки на подписки:
 // стандарт: $39/мес · $329/год; основательницы: $25/мес · $259/год (период выбирается на странице Lava)
-const APP_BUILD = 152; // внутренняя метка (v152: снято живое размытие с кнопок таймера, предзагрузка всех начертаний)
+const APP_BUILD = 154; // внутренняя метка (v154: подарок до 27.08 23:59 МСК, чип считает дни со склонением)
 
 // клавиатура iOS: поле email в фокусе → шторка поднимается наверх
 document.querySelectorAll('.claim-input').forEach(inp => {
