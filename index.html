@@ -4179,7 +4179,6 @@ let synthOut = null;        // отдельный узел: гасим синт�
 document.querySelectorAll('#soundRow .dur-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     haptic('light');
-    if (btn.dataset.sound !== 'none' && !subActive) { openPaywall('timer-sound'); return; }
     document.querySelectorAll('#soundRow .dur-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     currentSound = btn.dataset.sound;
@@ -4455,7 +4454,6 @@ let breathTimeout = null;
 
 function switchMode(m) {
   haptic('light');
-  if (m === 'breath' && !subActive) { openPaywall('breath'); return; }
   if (timerRunning) pauseTimer();
   if (breathRunning) stopBreath(false);
   mode = m;
@@ -5335,8 +5333,10 @@ function feedRow(key, d) {
   const dd = new Date(key + 'T12:00:00');
   const dateStr = dd.toLocaleDateString('ru', { weekday: 'short', day: 'numeric', month: 'long' });
   const rel = feedDateLabel(key);
-  const note = (d.ci && d.ci.note) || '';
-  const photo = d.ci && d.ci.photo_key;
+  // v150: в летописи закрытый день показывает дату и луну, вместо текста — приглашение
+  const rowLocked = !subActive && d.ci && d.ci.locked;
+  const note = rowLocked ? '✦ запись хранится в пространстве VERUM' : ((d.ci && d.ci.note) || '');
+  const photo = rowLocked ? null : (d.ci && d.ci.photo_key);
   const open = feedExpanded.has(key);
   const longNote = note.length > 160 || note.split('\n').length > 5;
   // правая подпись: сегодня/вчера, иначе слово состояния
@@ -5563,7 +5563,7 @@ function flushQueue() {
 window.addEventListener('online', flushQueue);
 
 function loadJournal() {
-  if (!subActive || !tg || !tg.initData) return;
+  if (!tg || !tg.initData) return;
   const init = encodeURIComponent(tg.initData);
   fetch(WORKER_URL + '/me/journal?init=' + init)
     .then((r) => r.json())
@@ -5769,12 +5769,14 @@ function renderCtStep(level, ci) {
   // v127: неподписчица отмечает искру бесплатно — и здесь же видит, что дальше.
   // Это честный момент конверсии: приглашение появляется после её действия.
   if (!subActive) {
+    // v149: дневник состояния открыт всем — шаг ведёт в запись дня, а не в пейволл.
+    // Намерения и творения остаются за подпиской, их продают табы на вкладке «Путь».
     if (prog) prog.style.display = 'none';
     ctStepSeen = null;
     if (!level) { el.style.display = 'none'; return; }
     el.style.display = 'block';
-    el.textContent = '✦ записать мысли и намерения';
-    el.dataset.act = 'paywall';
+    el.textContent = '✦ записать мысли о дне';
+    el.dataset.act = 'write';
     return;
   }
   if (!st) {
@@ -5804,7 +5806,6 @@ function renderCtStep(level, ci) {
   }
 }
 function ctStepAction() {
-  if (!subActive) { openPaywall('ritual'); return; }
   const act = document.getElementById('ctStep').dataset.act;
   if (act === 'goals') openGoalsFromToday();
   else if (act === 'write') openWriteSheet();
@@ -5826,12 +5827,16 @@ function recordSpark(p) {
   journal.checkins[key] = ci;
   saveJournalCache();
   // без подписки сервер /me/* закрыт — искра копится локально и уедет при оплате
-  if (subActive) meApi('/me/checkin', { date: key, morning: p, evening: p, note: ci.note || '' });
+  // v150: дневник состояния синхронизируется у всех — иначе схема «бесплатно
+  // писать, платно помнить» ломается: женщина пишет три недели, оплачивает и
+  // видит пустой архив, потому что копилось только на телефоне
+  meApi('/me/checkin', { date: key, morning: p, evening: p, note: ci.note || '' });
   if (document.getElementById('screen-path').classList.contains('active')) renderCalendar();
 }
 // после оплаты: досылаем искры, отмеченные до подписки (сервер их ещё не видел)
 function pushLocalCheckins(serverKeys) {
-  if (!subActive) return;
+  // v150: досылаем у всех, а не только после оплаты — записи, накопленные
+  // на телефоне до этой сборки, уезжают на сервер при первом же открытии
   Object.keys(journal.checkins).forEach((k) => {
     if (serverKeys.has(k)) return;
     const c = journal.checkins[k];
@@ -5867,7 +5872,6 @@ function checkinCardTap() {
 // ===== Архив (v128): вся летопись в отдельном окне, вход из карточки дня =====
 // (бывш. «Книга дней» — тот же оверлей journalBook, контент теперь renderArchive)
 function openBook() {
-  if (!subActive) { openPaywall('arch'); return; }
   haptic('light');
   navTick('arch');
   archOffset = 0;
@@ -5885,7 +5889,6 @@ function closeBook() {
 // Полноэкранный лист письма: одна фраза, крупный серифный текст, ничего лишнего —
 // медленный осознанный ввод вместо формы в шите.
 function openWriteSheet() {
-  if (!subActive) { openPaywall('write'); return; }
   haptic('light');
   navTick('write');
   const key = dateKey(new Date());
@@ -5929,7 +5932,6 @@ function saveWriteSheet() {
 }
 
 function openDayCard(key) {
-  if (!subActive) { openPaywall('daycard'); return; }
   ciDate = key;
   ciEditableDay = key === dateKey(new Date()) || key === dateKey(new Date(Date.now() - 86400000));
   const ci = journal.checkins[key] || {};
@@ -5940,7 +5942,23 @@ function openDayCard(key) {
   document.getElementById('ciTitle').textContent =
     d.toLocaleDateString('ru', { weekday: 'short', day: 'numeric', month: 'long' });
   const noteEl = document.getElementById('ciNote');
-  noteEl.value = ci.note || '';
+  // v150: у неподписчицы записи глубже свободного окна приходят с флагом locked —
+  // луна и дата на месте, текста нет. Замок называет то, что за ним лежит.
+  const ciLocked = !subActive && !!ci.locked;
+  const ciSubEl = document.getElementById('ciSub');
+  if (ciLocked) {
+    noteEl.value = '';
+    noteEl.placeholder = 'Запись этого дня хранится в пространстве VERUM';
+    if (ciSubEl) {
+      ciSubEl.textContent = '✦ открыть свою историю';
+      ciSubEl.style.color = 'var(--gold)';
+      ciSubEl.style.cursor = 'pointer';
+      ciSubEl.onclick = () => { closeCheckin(); openPaywall('history'); };
+    }
+  } else {
+    noteEl.value = ci.note || '';
+    if (ciSubEl) { ciSubEl.style.color = ''; ciSubEl.style.cursor = ''; ciSubEl.onclick = null; }
+  }
   if (noteEl.autoGrowFit) noteEl.autoGrowFit();
   // «моменты дня»: сохранённое фото внизу записи, тап раскрывает
   const pv = document.getElementById('ciPhotoView');
@@ -5985,7 +6003,7 @@ function openDayCard(key) {
   }
   // v131 (решение Аны): в пределах 48 часов день открывается СРАЗУ в режиме
   // записи — поле мыслей активно без кнопки «изменить». Read-only только >48ч.
-  ciReadonly = !ciEditableDay;
+  ciReadonly = !ciEditableDay || ciLocked;
   applyCiMode();
   document.getElementById('checkinSheet').classList.add('show');
   syncBack();
@@ -7630,7 +7648,7 @@ const FOUNDING_SEATS = 43;
 
 // Валютная оплата через Lava.top ($ / €). Ссылки на подписки:
 // стандарт: $39/мес · $329/год; основательницы: $25/мес · $259/год (период выбирается на странице Lava)
-const APP_BUILD = 148; // внутренняя метка (v148: поля в окне завершения, мостик за 15 секунд до конца практики)
+const APP_BUILD = 150; // внутренняя метка (v150: дневник состояния синхронизируется без подписки, история глубже 7 дней под замком)
 
 // клавиатура iOS: поле email в фокусе → шторка поднимается наверх
 document.querySelectorAll('.claim-input').forEach(inp => {
@@ -7941,7 +7959,7 @@ async function checkSubscription() {
       renderPath();
     }
     // дневники: подтверждённая подписка → подтянуть с сервера + разовая миграция истории
-    if (subActive) { loadJournal(); migrateSessionsOnce(); flushQueue(); }
+    loadJournal(); migrateSessionsOnce(); flushQueue();
   } catch (e) {}
 }
 checkSubscription();
@@ -10464,6 +10482,60 @@ renderTodayCheckin();
     box-sizing: border-box;
     white-space: normal;
     line-height: 1.35;
+  }
+
+  /* === VERUM v149 · таймер целиком, дневник состояния открыт, лаг вкладки ===
+
+     1) 🔴 ЛАГ ПРИ ОТКРЫТИИ ТАЙМЕРА (5–10 секунд, тапы не проходят нигде).
+     На экране таймера сходятся три дорогих слоя разом: `.glass-sphere` с живым
+     `backdrop-filter: blur(14px)` на большом круге, поверх всего — киноплёночное
+     зерно (`body::before`, SVG feTurbulence, `position: fixed`, `z-index: 999`,
+     анимация `grainLive` каждые 0.7 с) и под ними бесконечная аврора. Каждый шаг
+     зерна заставляет WebKit пересчитывать размытие под сферой во весь экран —
+     композитор захлёбывается, и подвисает вся страница, включая другие вкладки.
+     Лечим точечно, ничего не отключая глобально: со сферы снят live-blur (её
+     стеклянность держат собственные градиенты и тени, фон под ней почти
+     однотонный — визуально потеря минимальна), из перехода убрана тень
+     (анимировать `box-shadow` дорого), а зерно и аврора замирают, пока таймер
+     открыт. **Урок: `backdrop-filter` под полноэкранным анимированным слоем
+     пересчитывается на каждом кадре — вместе они дают залипание интерфейса.**
+
+     2) ТАЙМЕР И ДЫХАНИЕ ОТКРЫТЫ ЦЕЛИКОМ, включая фоновые звуки: это утилиты,
+     они формируют ежедневную привычку и на рынке бесплатны у всех.
+
+     3) ДНЕВНИК СОСТОЯНИЯ ОТКРЫТ неподписчицам — календарь, карточка дня, запись
+     мыслей, архив, история практик и форма отзыва. Под подпиской остались
+     НАМЕРЕНИЯ и ТВОРЕНИЯ: их продают табы дневника, отмеченные искрой.
+     Смысл подписки смещается с «права записывать» на глубину пути. */
+
+  /* ── 1 · лаг вкладки «Таймер» ─────────────────────────────────────────── */
+  .glass-sphere {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    background:
+      radial-gradient(circle at 32% 24%, rgba(222,238,244,0.20), rgba(20,88,98,0.30) 42%, rgba(6,26,32,0.72) 78%),
+      linear-gradient(180deg, rgba(16,68,76,0.62), rgba(4,18,23,0.86)) !important;
+    transition: transform 4s ease-in-out !important;
+  }
+  body:has(#screen-timer.active)::before { animation: none !important; }
+  body:has(#screen-timer.active) .aurora i { animation: none !important; }
+
+  /* ── 3 · вкладка «Путь» под замком показывает состояние ───────────────── */
+  .sub-locked .path-preview {
+    filter: none !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+  }
+  .sub-locked .fb-card, .sub-locked .path-links { display: block !important; }
+  .sub-locked .path-lock { display: none !important; }
+  /* искра на табах, которые ждут подписку */
+  .sub-locked .journal-tabs .jt-tab:nth-child(2)::after,
+  .sub-locked .journal-tabs .jt-tab:nth-child(3)::after {
+    content: ' ✦';
+    color: var(--gold);
+    font-size: 9px;
+    vertical-align: super;
+    margin-left: 2px;
   }
 
 </style>
