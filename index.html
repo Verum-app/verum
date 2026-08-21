@@ -3917,6 +3917,7 @@ function unstickHeader() {
 
 // ===== NAV =====
 function nav(name) {
+  const __t0 = performance.now();
   try { navTick(name); } catch (e) {}
   haptic('light');
   resetScroll();   // вкладка всегда открывается сверху
@@ -3924,8 +3925,39 @@ function nav(name) {
     d.classList.toggle('active', d.dataset.screen === name));
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById('screen-' + name).classList.add('active');
+  document.body.classList.toggle('on-timer', name === 'timer');
   if (name === 'path') renderPath();
   if (name === 'today') { renderTodayStats(); renderTodayCheckin(); }
+  perfProbe(name, __t0);
+}
+
+// ===== v151 · замер залипания вкладок (только аккаунт Аны) =====
+// Показывает в подписи под таймером, сколько заняла отрисовка вкладки и какой
+// была самая долгая задача главного потока. Нужен, чтобы найти причину лага,
+// который на десктопе не воспроизводится. Снять после диагностики.
+let perfOn = false, perfWorst = 0;
+try {
+  const u = tg && tg.initDataUnsafe && tg.initDataUnsafe.user;
+  perfOn = !!(u && String(u.id) === '1047280655');
+} catch (e) {}
+if (perfOn) {
+  try {
+    new PerformanceObserver((l) => {
+      l.getEntries().forEach((e) => { if (e.duration > perfWorst) perfWorst = Math.round(e.duration); });
+    }).observe({ entryTypes: ['longtask'] });
+  } catch (e) {}
+}
+function perfProbe(name, t0) {
+  if (!perfOn || name !== 'timer') return;
+  const sync = Math.round(performance.now() - t0);
+  perfWorst = 0;
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    const paint = Math.round(performance.now() - t0);
+    setTimeout(() => {
+      const el = document.getElementById('sessionNote');
+      if (el) el.textContent = `⏱ код ${sync} · кадр ${paint} · задача ${perfWorst} мс`;
+    }, 1200);
+  }));
 }
 
 // ===== LIBRARY: категории + уровни метода =====
@@ -7648,7 +7680,7 @@ const FOUNDING_SEATS = 43;
 
 // Валютная оплата через Lava.top ($ / €). Ссылки на подписки:
 // стандарт: $39/мес · $329/год; основательницы: $25/мес · $259/год (период выбирается на странице Lava)
-const APP_BUILD = 150; // внутренняя метка (v150: дневник состояния синхронизируется без подписки, история глубже 7 дней под замком)
+const APP_BUILD = 151; // внутренняя метка (v151: замер залипания вкладки таймера, :has() заменён классом on-timer)
 
 // клавиатура iOS: поле email в фокусе → шторка поднимается наверх
 document.querySelectorAll('.claim-input').forEach(inp => {
@@ -10517,8 +10549,11 @@ renderTodayCheckin();
       linear-gradient(180deg, rgba(16,68,76,0.62), rgba(4,18,23,0.86)) !important;
     transition: transform 4s ease-in-out !important;
   }
-  body:has(#screen-timer.active)::before { animation: none !important; }
-  body:has(#screen-timer.active) .aurora i { animation: none !important; }
+  /* v151: было `body:has(#screen-timer.active)` — в WebKit `:has()` на body
+     заставляет пересчитывать соответствие при КАЖДОЙ смене классов в документе,
+     а они у приложения меняются постоянно. Класс ставит nav() — дёшево и точно. */
+  body.on-timer::before { animation: none !important; }
+  body.on-timer .aurora i { animation: none !important; }
 
   /* ── 3 · вкладка «Путь» под замком показывает состояние ───────────────── */
   .sub-locked .path-preview {
