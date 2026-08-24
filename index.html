@@ -2902,7 +2902,7 @@
 
     <div class="glass-card fb-card">
       <div class="fb-title">Поделитесь впечатлениями<br>о приложении и любимых практиках</div>
-      <div class="fb-sub">Мне важно каждое слово. Это анонимно.</div>
+      <div class="fb-sub">Мне важно каждое слово. Ваш отзыв будет анонимным.</div>
       <div class="fb-sign">— Анна
         <svg class="fb-heart" viewBox="0 0 24 22" xmlns="http://www.w3.org/2000/svg">
           <defs>
@@ -3083,9 +3083,8 @@
 <div class="paysheet" id="fbsheet" onclick="if(event.target===this)closeFeedback()">
   <div class="paysheet-card">
     <div class="ps-title">Поделитесь впечатлениями</div>
-    <div class="ps-sub" style="color: var(--gold)">Это анонимно — сообщение уйдёт Анне без вашего имени</div>
+    <div class="ps-sub" style="color: var(--gold)">Мне важно каждое слово. Ваш отзыв будет анонимным.</div>
     <textarea class="claim-input fb-input" id="fbText" rows="5" placeholder="Что вы почувствовали?&#10;Как меняется ваше состояние и жизнь после практик?&#10;Как вам приложение?"></textarea>
-    <label class="fb-pub"><input type="checkbox" id="fbPub"><span>можно опубликовать анонимно</span></label>
     <button class="ps-btn" id="fbBtn" onclick="submitFeedback()">Отправить 🤍</button>
     <div class="ps-cancel" onclick="closeFeedback()">← назад</div>
   </div>
@@ -4033,6 +4032,12 @@ const DAILY_PINNED = {
   // v153: день рассылки в канал и следующий за ним
   '2026-08-21': 'Тело — мой дом',
   '2026-08-22': 'Тело — мой дом',
+  // v155: практика дня держится до конца подарка — 27 августа включительно
+  '2026-08-23': 'Тело — мой дом',
+  '2026-08-24': 'Тело — мой дом',
+  '2026-08-25': 'Тело — мой дом',
+  '2026-08-26': 'Тело — мой дом',
+  '2026-08-27': 'Тело — мой дом',
 };
 function todayKeyLocal() {
   const d = new Date();
@@ -7682,7 +7687,7 @@ const FOUNDING_SEATS = 43;
 
 // Валютная оплата через Lava.top ($ / €). Ссылки на подписки:
 // стандарт: $39/мес · $329/год; основательницы: $25/мес · $259/год (период выбирается на странице Lava)
-const APP_BUILD = 154; // внутренняя метка (v154: подарок до 27.08 23:59 МСК, чип считает дни со склонением)
+const APP_BUILD = 156; // внутренняя метка (v156: текст формы отзыва — «Мне важно каждое слово. Ваш отзыв будет анонимным.»)
 
 // клавиатура iOS: поле email в фокусе → шторка поднимается наверх
 document.querySelectorAll('.claim-input').forEach(inp => {
@@ -7859,14 +7864,15 @@ async function submitFeedback() {
     const r = await fetch(WORKER_URL + '/feedback', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      // v155: галочка «можно опубликовать» убрана — согласие теперь проговорено
+      // прямо в подписи формы, поэтому каждый отзыв приходит с publish: true
       body: JSON.stringify({ init: (tg && tg.initData) || '', text: text, context: fbContext,
-        publish: !!(document.getElementById('fbPub') && document.getElementById('fbPub').checked) }),
+        publish: true }),
     });
     const data = await r.json();
     if (data.ok) {
       haptic('success');
       document.getElementById('fbText').value = '';
-      const fbPub = document.getElementById('fbPub'); if (fbPub) fbPub.checked = false;
       closeFeedback();
       showToast('🤍 Спасибо — ваши слова уже у Анны', true);
     } else if (data.reason === 'rate') {
