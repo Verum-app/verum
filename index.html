@@ -3925,7 +3925,6 @@ function unstickHeader() {
 
 // ===== NAV =====
 function nav(name) {
-  const __t0 = performance.now();
   try { navTick(name); } catch (e) {}
   haptic('light');
   resetScroll();   // вкладка всегда открывается сверху
@@ -3936,37 +3935,11 @@ function nav(name) {
   document.body.classList.toggle('on-timer', name === 'timer');
   if (name === 'path') renderPath();
   if (name === 'today') { renderTodayStats(); renderTodayCheckin(); }
-  perfProbe(name, __t0);
 }
 
-// ===== v151 · замер залипания вкладок (только аккаунт Аны) =====
-// Показывает в подписи под таймером, сколько заняла отрисовка вкладки и какой
-// была самая долгая задача главного потока. Нужен, чтобы найти причину лага,
-// который на десктопе не воспроизводится. Снять после диагностики.
-let perfOn = false, perfWorst = 0;
-try {
-  const u = tg && tg.initDataUnsafe && tg.initDataUnsafe.user;
-  perfOn = !!(u && String(u.id) === '1047280655');
-} catch (e) {}
-if (perfOn) {
-  try {
-    new PerformanceObserver((l) => {
-      l.getEntries().forEach((e) => { if (e.duration > perfWorst) perfWorst = Math.round(e.duration); });
-    }).observe({ entryTypes: ['longtask'] });
-  } catch (e) {}
-}
-function perfProbe(name, t0) {
-  if (!perfOn || name !== 'timer') return;
-  const sync = Math.round(performance.now() - t0);
-  perfWorst = 0;
-  requestAnimationFrame(() => requestAnimationFrame(() => {
-    const paint = Math.round(performance.now() - t0);
-    setTimeout(() => {
-      const el = document.getElementById('sessionNote');
-      if (el) el.textContent = `⏱ код ${sync} · кадр ${paint} · задача ${perfWorst} мс`;
-    }, 1200);
-  }));
-}
+// v157: временный замер залипания вкладок из v151 снят — причина найдена
+// (v152, живое размытие у мелочи таймера), а строка «⏱ код · кадр · задача»
+// перекрывала собой подпись под сферой в аккаунте Аны.
 
 // ===== LIBRARY: категории + уровни метода =====
 const categories = ['Общие', '♡ Любимые', 'Шаг 1 · Тело', 'Шаг 2 · Психика', 'Шаг 3 · Идентичность', 'Шаг 4 · Мета-Я', 'Шаг 5 · Управление реальностью'];
@@ -5497,13 +5470,35 @@ function moonSvg(level, size) {
 
 // Авторост письменных полей: поле растёт вместе с текстом (до 45vh, дальше
 // внутренний скролл) — длинные записи не обрезаются и не прячутся.
+//
+// v157: раньше на КАЖДУЮ нажатую букву делался полный пересчёт — высота
+// сбрасывалась в 'auto', замерялась заново и ставилась обратно. Для поля,
+// в котором в этот момент стоит курсор, это переверстка под пальцем: iOS
+// держит ещё не подтверждённое слово (автозамена) и после переверстки рисует
+// его подсветку мимо строки — курсор уезжает вниз, под поле.
+// Кейс Аны 26.08, поле «что может помешать» в Намерениях.
+//
+// Теперь во время набора высота только ДОБАВЛЯЕТСЯ и только когда текст
+// действительно перестал помещаться. Полный пересчёт (он один умеет ужимать
+// поле обратно) уходит на момент, когда женщина из поля выходит, — и на
+// прежние явные вызовы autoGrowFit при открытии форм.
 function autoGrow(el) {
   if (!el) return;
+  if (el.autoGrowFit) return;            // страховка от повторной привязки
+  const cap = () => window.innerHeight * 0.45;
+  // полный пересчёт: единственный способ увидеть, что текст стал КОРОЧЕ
   const fit = () => {
     el.style.height = 'auto';
-    el.style.height = Math.min(el.scrollHeight + 2, window.innerHeight * 0.45) + 'px';
+    el.style.height = Math.min(el.scrollHeight + 2, cap()) + 'px';
   };
-  el.addEventListener('input', fit);
+  // во время набора: подрастаем, высоту в 'auto' не сбрасываем
+  const grow = () => {
+    if (el.scrollHeight <= el.clientHeight) return;   // всё умещается — не трогаем
+    const next = Math.min(el.scrollHeight + 2, cap()) + 'px';
+    if (el.style.height !== next) el.style.height = next;
+  };
+  el.addEventListener('input', grow);
+  el.addEventListener('blur', fit);
   el.autoGrowFit = fit;
 }
 ['goalInput', 'maniInput', 'ciNote', 'ciAppend', 'goalObstacle', 'goalStep'].forEach((id) => autoGrow(document.getElementById(id)));
@@ -7690,7 +7685,7 @@ const FOUNDING_SEATS = 43;
 
 // Валютная оплата через Lava.top ($ / €). Ссылки на подписки:
 // стандарт: $39/мес · $329/год; основательницы: $25/мес · $259/год (период выбирается на странице Lava)
-const APP_BUILD = 157; // внутренняя метка (v157: полноэкранный плеер без живого размытия — лечение залипания практики)
+const APP_BUILD = 158; // внутренняя метка (v158: курсор в полях дневника — авторост перестал переверстывать поле на каждую букву)
 
 // клавиатура iOS: поле email в фокусе → шторка поднимается наверх
 document.querySelectorAll('.claim-input').forEach(inp => {
